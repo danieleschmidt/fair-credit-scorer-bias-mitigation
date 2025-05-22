@@ -1,0 +1,23 @@
+gender,credit_risk,age,loan_amount,employment_duration,education
+Male,0,25,5000,2,Bachelor
+Female,1,34,10000,5,Master
+Male,0,45,15000,10,PhD
+Female,0,22,2000,1,High School
+Male,1,58,8000,20,Bachelor
+Female,0,30,12000,3,Master
+Male,1,28,6000,4,Bachelor
+Female,0,50,20000,15,PhD
+Male,0,33,7000,6,High School
+Female,1,42,18000,8,Master
+Male,1,29,3000,2,Bachelor
+Female,0,38,9000,7,PhD
+Male,0,41,11000,9,Bachelor
+Female,1,26,4000,3,High School
+Male,1,55,25000,25,Master
+Female,0,32,13000,4,Bachelor
+Male,0,48,16000,12,PhD
+Female,1,23,1000,1,High School
+Male,1,37,14000,7,Master
+Female,0,40,17000,11,Bachelor
+Male,0,31,7500,5,Some College
+Female,1,46,19000,13,Vocational
