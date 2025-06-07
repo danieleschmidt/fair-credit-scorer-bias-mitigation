@@ -45,7 +45,7 @@ def load_and_preprocess_credit_data(file_path, protected_attribute_col, target_c
     # Identify numerical and categorical columns
     numerical_cols = X_df.select_dtypes(include=['int64', 'float64']).columns.tolist()
     categorical_cols = X_df.select_dtypes(include=['object', 'category']).columns.tolist()
-    
+
     # Ensure no overlap (though select_dtypes should handle this)
     numerical_cols = [col for col in numerical_cols if col not in [target_col, protected_attribute_col]]
     categorical_cols = [col for col in categorical_cols if col not in [target_col, protected_attribute_col]]
@@ -61,7 +61,7 @@ def load_and_preprocess_credit_data(file_path, protected_attribute_col, target_c
         transformers.append(('num', numerical_transformer, numerical_cols))
     if categorical_cols:
         transformers.append(('cat', categorical_transformer, categorical_cols))
-    
+
     if not transformers:
         print("No features to process after removing target and protected attribute.")
         # If X_df is empty or only contains columns that were removed
@@ -72,7 +72,7 @@ def load_and_preprocess_credit_data(file_path, protected_attribute_col, target_c
 
     try:
         X_processed = preprocessor.fit_transform(X_df)
-        
+
         # Rely ONLY on get_feature_names_out, assuming modern scikit-learn
         # This method is generally available and robust.
         processed_feature_names = preprocessor.get_feature_names_out()
@@ -82,7 +82,7 @@ def load_and_preprocess_credit_data(file_path, protected_attribute_col, target_c
             data_for_df = X_processed.toarray()
         else: # It's already a dense numpy array
             data_for_df = X_processed
-            
+
         X_processed_df = pd.DataFrame(data=data_for_df, columns=processed_feature_names)
 
         # Ensure column names are unique if any duplication occurred (e.g. from passthrough or complex feature names)
@@ -98,7 +98,7 @@ def load_and_preprocess_credit_data(file_path, protected_attribute_col, target_c
                     # Check if this name (even without suffix) already exists due to other processing steps
                     # This also handles the first time we see a name that might eventually get a suffix
                     if cols.count(col_name) > 1:
-                        counts[col_name] = 0 
+                        counts[col_name] = 0
                         new_cols.append(col_name) # Append original name for the first time
                     else:
                         # If name is already unique, no need to track for suffixing
@@ -127,7 +127,7 @@ def load_and_preprocess_credit_data(file_path, protected_attribute_col, target_c
 if __name__ == '__main__':
     # Example Usage (assuming credit_data.csv is in data directory relative to script execution)
     # Corrected path for running from /app directory
-    file_path = 'data/credit_data.csv' 
+    file_path = 'data/credit_data.csv'
     # Create dummy data for testing if the file doesn't exist
     try:
         # Create data directory if it doesn't exist for the main example
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         print(X_temp.head())
         print(f"\nX_temp shape: {X_temp.shape}")
         print(f"Protected attribute (sex) categories: {pa_temp.unique()}")
-    
+
     # Clean up temporary file
     import os
     try:
@@ -217,7 +217,7 @@ if __name__ == '__main__':
         print(f"\nX_num_pa shape: {X_num_pa.shape}")
         print(f"Protected attribute (group_id) head: \n{pa_num_pa.head()}")
         print(f"Protected attribute (group_id) dtype: {pa_num_pa.dtype}")
-    
+
     try:
         os.remove(temp_data_num_pa_path)
     except OSError as e:
@@ -271,4 +271,3 @@ if __name__ == '__main__':
         os.remove(temp_data_only_cat_path)
     except OSError as e:
         print(f"Error removing temporary file {temp_data_only_cat_path}: {e}")
-

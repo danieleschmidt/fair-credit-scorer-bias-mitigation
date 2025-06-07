@@ -38,7 +38,7 @@ try:
     from sklearn.linear_model import LogisticRegression
     from sklearn.model_selection import train_test_split
     # print("Successfully imported sklearn components for ThresholdOptimizer testing.")
-except ImportError as e: 
+except ImportError as e:
     SklearnImportError = e
 except Exception as e_gen:
     SklearnImportError = e_gen
@@ -55,8 +55,8 @@ def apply_threshold_optimizer(estimator, X_train, y_train, sensitive_features_tr
         sensitive_features_train (pd.Series or np.ndarray): Sensitive features for training data (1D array-like).
         X_test (pd.DataFrame or np.ndarray): Test features.
         sensitive_features_test (pd.Series or np.ndarray): Sensitive features for test data (1D array-like).
-        constraint (str, optional): The fairness constraint to apply. 
-                                    Defaults to 'demographic_parity'. 
+        constraint (str, optional): The fairness constraint to apply.
+                                    Defaults to 'demographic_parity'.
                                     Other options include 'equalized_odds', etc.
 
     Returns:
@@ -87,19 +87,19 @@ def apply_threshold_optimizer(estimator, X_train, y_train, sensitive_features_tr
     if sf_train_processed is None: return None
     sf_test_processed = process_sensitive_features(sensitive_features_test, "sensitive_features_test")
     if sf_test_processed is None: return None
-    
+
     try:
         threshold_optimizer = ThresholdOptimizer(
             estimator=estimator,
             constraints=constraint,
-            objective='accuracy_score', 
+            objective='accuracy_score',
             prefit=True,
             predict_method='predict_proba'
         )
 
         threshold_optimizer.fit(X_train, y_train, sensitive_features=sf_train_processed)
         y_pred_postprocessed = threshold_optimizer.predict(X_test, sensitive_features=sf_test_processed)
-        
+
         return y_pred_postprocessed
     except Exception as e:
         print(f"Error during ThresholdOptimizer application: {e}")
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         X_to = pd.DataFrame({
             'featureA': np.random.rand(num_samples_to) * 10, # Ensure X has at least two features
             'featureB': np.random.rand(num_samples_to) * 5,
-            'featureC': np.random.choice([0,1,2,3], num_samples_to) 
+            'featureC': np.random.choice([0,1,2,3], num_samples_to)
         })
         y_to = pd.Series((X_to['featureA'] + X_to['featureB'] * 0.75 + X_to['featureC'] > 8.0).astype(int), name="target")
         sensitive_features_to = pd.Series(np.random.choice(['GroupX', 'GroupY', 'GroupZ'], num_samples_to), name="SensitiveGroup")
@@ -136,11 +136,11 @@ if __name__ == '__main__':
         X_train_to, X_test_to, y_train_to, y_test_to, sf_train_to, sf_test_to = train_test_split(
             X_to, y_to, sensitive_features_to, test_size=0.4, random_state=42, stratify=y_to
         )
-        
+
         print("Training baseline LogisticRegression model for ThresholdOptimizer...")
         baseline_model_to = LogisticRegression(solver='liblinear', random_state=42) # Using liblinear for small datasets
         baseline_model_to.fit(X_train_to, y_train_to)
-        
+
         y_pred_baseline_to = baseline_model_to.predict(X_test_to)
         accuracy_baseline = np.mean(y_pred_baseline_to == y_test_to) # Manual accuracy calculation
         print(f"Baseline model accuracy on test set: {accuracy_baseline:.4f}")

@@ -67,7 +67,7 @@ def main():
 
     # 5. Calculate fairness metrics
     print("\nCalculating fairness metrics...")
-    
+
     # Ensure sensitive_features_test is a 1D array or Series as expected by fairlearn
     if isinstance(sensitive_features_test, pd.DataFrame):
         sensitive_features_test = sensitive_features_test.squeeze() # Convert to Series if it's a single-column DataFrame
@@ -120,7 +120,7 @@ def main():
     print("but could not be implemented or evaluated due to persistent library")
     print("import issues encountered with those specific modules in this environment.")
     print("--------------------------------------------------------------------")
-    
+
     print("\nPipeline finished.")
 
 if __name__ == '__main__':

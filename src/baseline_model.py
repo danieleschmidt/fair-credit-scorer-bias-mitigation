@@ -68,7 +68,7 @@ if __name__ == '__main__':
     X_train_mf, X_test_mf, y_train_mf, y_test_mf = train_test_split(
         X_dummy_more_features, y_dummy_more_features, test_size=0.3, random_state=123
     )
-    
+
     model_mf, acc_mf = train_baseline_classifier(X_train_mf, y_train_mf, X_test_mf, y_test_mf)
     print(f"\nTrained Model (10 features): {model_mf}")
     print(f"Accuracy (10 features): {acc_mf:.4f}")
