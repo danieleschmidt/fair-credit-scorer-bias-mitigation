@@ -111,14 +111,42 @@ def main():
         print(f"Demographic Parity Difference: {dpd_postprocessed:.4f}")
         print(f"Equalized Odds Difference: {eod_postprocessed:.4f}")
     else:
-        print("ThresholdOptimizer application failed or was skipped due to import issues in bias_mitigator.py.")
+        print("ThresholdOptimizer application (demographic_parity) failed or was skipped (check bias_mitigator.py for import/execution errors).")
+
+    # 8. Apply ThresholdOptimizer with Equalized Odds constraint
+    print("\nApplying ThresholdOptimizer (constraint: equalized_odds)...")
+    y_pred_eq_odds = apply_threshold_optimizer(
+        model, # Pass the trained baseline model
+        X_train,
+        y_train,
+        sensitive_features_train,
+        X_test,
+        sensitive_features_test,
+        constraint='equalized_odds'
+    )
+
+    print("\n--- ThresholdOptimizer (constraint: equalized_odds) ---")
+    if y_pred_eq_odds is not None:
+        accuracy_eq_odds = accuracy_score(y_test, y_pred_eq_odds)
+        dpd_eq_odds = calculate_demographic_parity_difference(
+            y_test, y_pred_eq_odds, sensitive_features=sensitive_features_test
+        )
+        eod_eq_odds = calculate_equalized_odds_difference(
+            y_test, y_pred_eq_odds, sensitive_features=sensitive_features_test
+        )
+        print(f"Accuracy: {accuracy_eq_odds:.4f}")
+        print(f"Demographic Parity Difference: {dpd_eq_odds:.4f}")
+        print(f"Equalized Odds Difference: {eod_eq_odds:.4f}")
+    else:
+        print("ThresholdOptimizer application (equalized_odds) failed or was skipped (check bias_mitigator.py for import/execution errors).")
 
     print("\n\n--------------------------------------------------------------------")
-    print("NOTE: `fairlearn.postprocessing.ThresholdOptimizer` was successfully applied.")
-    print("Other fairness mitigation techniques (Reweighing from `fairlearn.preprocessing`")
-    print("and ExponentiatedGradient from `fairlearn.reductions`) were planned")
-    print("but could not be implemented or evaluated due to persistent library")
-    print("import issues encountered with those specific modules in this environment.")
+    print("NOTE: `fairlearn.postprocessing.ThresholdOptimizer` was attempted with different constraints.")
+    print("      Please check its output above. Other fairness mitigation techniques")
+    print("      (Reweighing from `fairlearn.preprocessing` and ExponentiatedGradient")
+    print("      from `fairlearn.reductions`) were planned but could not be fully")
+    print("      implemented or evaluated due to persistent library import issues")
+    print("      encountered with those specific modules in this environment.")
     print("--------------------------------------------------------------------")
 
     print("\nPipeline finished.")
