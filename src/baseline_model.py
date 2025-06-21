@@ -9,7 +9,10 @@ def train_baseline_model(X_train, y_train, sample_weight=None):
     return model
 
 
-def evaluate_model(model, X_test, y_test):
-    """Return accuracy score for the model."""
-    predictions = model.predict(X_test)
-    return accuracy_score(y_test, predictions)
+def evaluate_model(model, X_test, y_test, sensitive_features=None):
+    """Return accuracy score and predictions for the model."""
+    if sensitive_features is not None:
+        predictions = model.predict(X_test, sensitive_features=sensitive_features)
+    else:
+        predictions = model.predict(X_test)
+    return accuracy_score(y_test, predictions), predictions
