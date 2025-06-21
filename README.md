@@ -5,7 +5,8 @@ This project aims to build a credit scoring model and explore techniques to iden
 
 ## Project Goals
 - Develop a baseline credit scoring model.
-- Implement and calculate fairness metrics (e.g., demographic parity, equalized odds).
+- Implement and calculate fairness metrics (e.g., demographic parity difference, equalized odds difference,
+  false positive/negative rate differences, accuracy difference).
 - Apply at least one bias mitigation technique (e.g., re-weighting, adversarial debiasing, or a post-processing method).
 - Evaluate and compare the model's performance and fairness before and after mitigation.
 - Discuss the trade-offs between fairness and accuracy.
@@ -49,8 +50,16 @@ pip install -r requirements.txt
 ## Usage
 The dataset is generated automatically the first time you run the pipeline. Execute the evaluation script to train the model and print fairness metrics:
 ```bash
-python src/evaluate_fairness.py  # add --help for options
+python -m src.evaluate_fairness  # add --help for options
 ```
+Choose a training method with `--method`. Options are `baseline`,
+`reweight`, or `postprocess`. Use `--test-size` to adjust the train/test
+split (default 0.3) and `--random-state` for reproducible splits.
+Pass `--output-json metrics.json` to also save the results to a file.
+Interactive exploration is available in `notebooks/fairness_exploration.ipynb`,
+which demonstrates running the pipeline with each mitigation approach.
+The `run_pipeline` function used by the CLI also returns a dictionary of the
+accuracy and fairness metrics so you can incorporate the results programmatically.
 
 ## Testing
 Run the unit tests with pytest:
