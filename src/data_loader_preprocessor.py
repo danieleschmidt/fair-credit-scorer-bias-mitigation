@@ -18,8 +18,8 @@ def load_credit_data(path="data/credit_data.csv", test_size=0.3, random_state=42
 
     Returns
     -------
-    tuple(pd.DataFrame, pd.Series, pd.DataFrame, pd.Series)
-        X_train, y_train, X_test, y_test
+    tuple(pd.DataFrame, pd.DataFrame, pd.Series, pd.Series)
+        X_train, X_test, y_train, y_test
     """
     if os.path.exists(path):
         df = pd.read_csv(path)
