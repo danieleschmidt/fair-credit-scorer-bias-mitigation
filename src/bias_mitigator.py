@@ -1,4 +1,33 @@
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+
+
+def expgrad_demographic_parity(X, y, protected):
+    """Train a classifier using the Exponentiated Gradient algorithm.
+
+    The returned model is optimized for demographic parity using
+    ``fairlearn.reductions.ExponentiatedGradient``.
+
+    Parameters
+    ----------
+    X : pandas.DataFrame
+        Training features.
+    y : array-like
+        Training labels.
+    protected : array-like
+        Protected attribute values for each training sample.
+
+    Returns
+    -------
+    ExponentiatedGradient
+        Fitted model enforcing demographic parity.
+    """
+    from fairlearn.reductions import ExponentiatedGradient, DemographicParity
+
+    base_est = LogisticRegression(max_iter=1000)
+    mitigator = ExponentiatedGradient(base_est, DemographicParity())
+    mitigator.fit(X, y, sensitive_features=protected)
+    return mitigator
 
 
 def reweight_samples(y, protected):
