@@ -5,8 +5,13 @@ This project aims to build a credit scoring model and explore techniques to iden
 
 ## Project Goals
 - Develop a baseline credit scoring model.
-- Implement and calculate fairness metrics (e.g., demographic parity difference, equalized odds difference,
-  false positive/negative rate differences, accuracy difference).
+ - Implement and calculate fairness metrics (e.g., demographic parity difference, equalized odds difference,
+  false positive/negative rates and their differences, true positive/negative rate
+  differences, accuracy, balanced accuracy, precision, recall, F1,
+  false discovery rate and its difference, ROC AUC differences,
+  demographic parity and equalized odds ratios,
+  false/true positive/negative rate ratios, accuracy ratio,
+  and log loss difference).
 - Apply at least one bias mitigation technique (e.g., re-weighting, adversarial debiasing, or a post-processing method).
 - Evaluate and compare the model's performance and fairness before and after mitigation.
 - Discuss the trade-offs between fairness and accuracy.
@@ -53,9 +58,18 @@ The dataset is generated automatically the first time you run the pipeline. Exec
 python -m src.evaluate_fairness  # add --help for options
 ```
 Choose a training method with `--method`. Options are `baseline`,
-`reweight`, or `postprocess`. Use `--test-size` to adjust the train/test
+`reweight`, `postprocess`, or `expgrad`. Use `--test-size` to adjust the train/test
 split (default 0.3) and `--random-state` for reproducible splits.
-Pass `--output-json metrics.json` to also save the results to a file.
+Specify `--data-path` to load or save the dataset at a different location.
+Pass `--output-json metrics.json` to also save the results to a file. The JSON
+contains the overall and by‑group metrics in nested dictionaries so it can be
+easily parsed.
+Use `--cv N` to evaluate with `N`-fold cross-validation instead of a single split.
+Provide `--threshold T` to apply a custom probability threshold `T` when
+converting model scores to predicted labels.
+When cross-validation is enabled, the script prints the average metrics across all folds and
+also computes their standard deviation. `--output-json` will write these aggregated results,
+including the per-fold metrics and fold-level statistics, to the specified path.
 Interactive exploration is available in `notebooks/fairness_exploration.ipynb`,
 which demonstrates running the pipeline with each mitigation approach.
 The `run_pipeline` function used by the CLI also returns a dictionary of the
