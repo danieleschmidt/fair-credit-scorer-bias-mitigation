@@ -3,3 +3,6 @@ pandas
 numpy
 matplotlib
 fairlearn
+networkx
+pytest
+pytest-cov

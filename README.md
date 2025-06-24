@@ -75,10 +75,30 @@ which demonstrates running the pipeline with each mitigation approach.
 The `run_pipeline` function used by the CLI also returns a dictionary of the
 accuracy and fairness metrics so you can incorporate the results programmatically.
 
-## Testing
-Run the unit tests with pytest:
+## Architecture Overview
+The project is organized around a simple data pipeline and model training flow:
+
+1. **Data Loading** – `data_loader_preprocessor.py` provides helper functions
+   to generate or load a CSV dataset and split it into train and test sets.
+2. **Model Training** – `baseline_model.py` trains a logistic regression model
+   on the provided features. Additional bias mitigation utilities are implemented
+   in `bias_mitigator.py`.
+3. **Fairness Evaluation** – `evaluate_fairness.py` orchestrates the pipeline,
+   applying mitigation techniques and computing metrics via `fairness_metrics.py`.
+
+Run the architecture review tool to generate a dependency diagram and summary:
+
 ```bash
-pytest -q
+python -m src.architecture_review
+```
+
+This will create `architecture/diagram.svg` and `architecture/architecture_review.md`
+which document module relationships and external dependencies.
+
+## Testing
+Run the unit tests with coverage:
+```bash
+python -m src.run_tests
 ```
 
 ## Findings

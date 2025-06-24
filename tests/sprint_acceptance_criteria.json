@@ -1,0 +1,32 @@
+{
+  "audit-repository-structure-and-dependencies": {
+    "test_file": "tests/test_audit-repository-structure-and-dependencies.py",
+    "cases": {
+      "exists": "File exists with initial content"
+    }
+  },
+  "document-data-pipeline-and-model": {
+    "test_file": "tests/test_document-data-pipeline-and-model.py",
+    "cases": {
+      "exists": "File exists with initial content"
+    }
+  },
+  "create-architecture-diagram": {
+    "test_file": "tests/test_create-architecture-diagram.py",
+    "cases": {
+      "exists": "File exists with initial content"
+    }
+  },
+  "identify-missing-tasks-and-update": {
+    "test_file": "tests/test_identify-missing-tasks-and-update.py",
+    "cases": {
+      "exists": "File exists with initial content"
+    }
+  },
+  "write-summary-of-review-findings": {
+    "test_file": "tests/test_write-summary-of-review-findings.py",
+    "cases": {
+      "exists": "File exists with initial content"
+    }
+  }
+}

@@ -47,4 +47,6 @@ def load_credit_data(path="data/credit_data.csv", test_size=0.3, random_state=42
     """
     # Reuse ``load_credit_dataset`` so dataset generation logic lives in one place
     X, y = load_credit_dataset(path=path, random_state=random_state)
-    return train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
+    return train_test_split(
+        X, y, test_size=test_size, random_state=random_state, stratify=y
+    )
