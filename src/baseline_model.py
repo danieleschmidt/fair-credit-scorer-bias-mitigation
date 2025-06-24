@@ -34,16 +34,26 @@ def evaluate_model(
     use_proba = threshold is not None or return_probs
     if use_proba and hasattr(model, "predict_proba"):
         if sensitive_features is not None:
-            proba = model.predict_proba(X_test, sensitive_features=sensitive_features)[:, 1]
+            proba = model.predict_proba(X_test, sensitive_features=sensitive_features)[
+                :, 1
+            ]
         else:
             proba = model.predict_proba(X_test)[:, 1]
         if threshold is None:
-            predictions = model.predict(X_test, sensitive_features=sensitive_features) if sensitive_features is not None else model.predict(X_test)
+            predictions = (
+                model.predict(X_test, sensitive_features=sensitive_features)
+                if sensitive_features is not None
+                else model.predict(X_test)
+            )
         else:
             predictions = (proba >= threshold).astype(int)
     else:
         # Fall back to the model's predict method if predict_proba is unavailable
-        predictions = model.predict(X_test, sensitive_features=sensitive_features) if sensitive_features is not None else model.predict(X_test)
+        predictions = (
+            model.predict(X_test, sensitive_features=sensitive_features)
+            if sensitive_features is not None
+            else model.predict(X_test)
+        )
         proba = None
 
     acc = accuracy_score(y_test, predictions)

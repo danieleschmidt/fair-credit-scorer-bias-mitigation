@@ -96,7 +96,9 @@ def run_pipeline(
 
     if method == "reweight":
         sample_weights = reweight_samples(y_train, X_train["protected"])
-        model = train_baseline_model(features_train, y_train, sample_weight=sample_weights)
+        model = train_baseline_model(
+            features_train, y_train, sample_weight=sample_weights
+        )
     else:
         model = train_baseline_model(features_train, y_train)
         if method == "postprocess":
@@ -230,7 +232,9 @@ def run_cross_validation(
         )
         overall_metrics.append(overall)
         by_group_metrics.append(by_group)
-        fold_results.append({"accuracy": overall["accuracy"], "overall": overall, "by_group": by_group})
+        fold_results.append(
+            {"accuracy": overall["accuracy"], "overall": overall, "by_group": by_group}
+        )
 
     metrics_concat = pd.concat(overall_metrics, axis=1)
     mean_overall = metrics_concat.mean(axis=1)
