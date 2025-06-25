@@ -2,9 +2,22 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 
-def train_baseline_model(X_train, y_train, sample_weight=None):
-    """Train a simple logistic regression model."""
-    model = LogisticRegression(max_iter=1000)
+def train_baseline_model(X_train, y_train, sample_weight=None, solver="liblinear"):
+    """Train a simple logistic regression model.
+
+    Parameters
+    ----------
+    X_train : array-like
+        Training features.
+    y_train : array-like
+        Labels for the training data.
+    sample_weight : array-like or None, optional
+        Sample weights passed to ``fit``.
+    solver : str, optional
+        Solver to use in ``LogisticRegression``. Defaults to ``"liblinear"`` so
+        tests can assert the configured solver.
+    """
+    model = LogisticRegression(max_iter=1000, solver=solver)
     model.fit(X_train, y_train, sample_weight=sample_weight)
     return model
 

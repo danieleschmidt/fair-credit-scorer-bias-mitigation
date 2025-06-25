@@ -1,16 +1,13 @@
 import argparse
 
-from .data_loader_preprocessor import (
-    load_credit_data,
-    load_credit_dataset,
-)
-from .baseline_model import train_baseline_model, evaluate_model
-from .bias_mitigator import (
+from data_loader_preprocessor import load_credit_data, load_credit_dataset
+from baseline_model import train_baseline_model, evaluate_model
+from bias_mitigator import (
     reweight_samples,
     postprocess_equalized_odds,
     expgrad_demographic_parity,
 )
-from .fairness_metrics import compute_fairness_metrics
+from fairness_metrics import compute_fairness_metrics
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 import json

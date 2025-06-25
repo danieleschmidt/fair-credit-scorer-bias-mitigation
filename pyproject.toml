@@ -4,26 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fair_credit_scorer_bias_mitigation"
-version = "0.1.0"
+version = "0.0.1"
 requires-python = ">=3.8"
-dependencies = [
-    "scikit-learn",
-    "pandas",
-    "numpy",
-    "matplotlib",
-    "fairlearn",
-    "networkx",
-]
-
-[project.optional-dependencies]
-tests = ["pytest", "pytest-cov"]
-
-[tool.pytest.ini_options]
-addopts = "-ra --cov=src --cov-report=term-missing"
-testpaths = ["tests"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+packages = ["fair_credit_scorer_bias_mitigation"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[project.scripts]
+fairness-eval = "fair_credit_scorer_bias_mitigation.cli:main"
