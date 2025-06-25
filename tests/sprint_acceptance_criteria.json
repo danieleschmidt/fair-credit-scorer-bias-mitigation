@@ -1,32 +1,27 @@
 {
-  "audit-repository-structure-and-dependencies": {
-    "test_file": "tests/test_audit-repository-structure-and-dependencies.py",
+  "dataset-loader": {
+    "test_file": "tests/test_dataset-loader.py",
     "cases": {
-      "exists": "File exists with initial content"
+      "generates_file_if_missing": "Generates dataset CSV when file does not exist",
+      "returns_train_test_split": "Returns train/test splits with matching lengths"
     }
   },
-  "document-data-pipeline-and-model": {
-    "test_file": "tests/test_document-data-pipeline-and-model.py",
+  "baseline-model-training": {
+    "test_file": "tests/test_baseline-model-training.py",
     "cases": {
-      "exists": "File exists with initial content"
+      "returns_logistic_regression": "Returns a fitted LogisticRegression model"
     }
   },
-  "create-architecture-diagram": {
-    "test_file": "tests/test_create-architecture-diagram.py",
+  "evaluation-metrics": {
+    "test_file": "tests/test_evaluation-metrics.py",
     "cases": {
-      "exists": "File exists with initial content"
+      "includes_fairness_metrics": "Overall metrics include fairness measures like equalized_odds_difference"
     }
   },
-  "identify-missing-tasks-and-update": {
-    "test_file": "tests/test_identify-missing-tasks-and-update.py",
+  "cli-evaluation-script": {
+    "test_file": "tests/test_cli-evaluation-script.py",
     "cases": {
-      "exists": "File exists with initial content"
-    }
-  },
-  "write-summary-of-review-findings": {
-    "test_file": "tests/test_write-summary-of-review-findings.py",
-    "cases": {
-      "exists": "File exists with initial content"
+      "creates_output_json": "CLI writes metrics JSON when --output-json is provided"
     }
   }
 }
