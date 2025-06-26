@@ -1,5 +1,7 @@
 import argparse
 
+from fair_credit_scorer_bias_mitigation import __version__
+
 from data_loader_preprocessor import load_credit_data, load_credit_dataset
 from baseline_model import train_baseline_model, evaluate_model
 from bias_mitigator import (
@@ -259,6 +261,7 @@ def run_cross_validation(
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate model fairness")
+    parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument(
         "--method",
         choices=["baseline", "reweight", "postprocess", "expgrad"],

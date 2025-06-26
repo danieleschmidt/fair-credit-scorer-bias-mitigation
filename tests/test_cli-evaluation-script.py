@@ -1,7 +1,6 @@
 import json
 import subprocess
 import sys
-from pathlib import Path
 
 
 def test_creates_output_json(tmp_path):
@@ -26,3 +25,20 @@ def test_creates_output_json(tmp_path):
     assert "accuracy" in loaded
     assert "overall" in loaded
     assert "by_group" in loaded
+
+
+def test_cli_reports_version():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "fair_credit_scorer_bias_mitigation.cli",
+            "--version",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    from fair_credit_scorer_bias_mitigation import __version__
+
+    assert __version__ in result.stdout
