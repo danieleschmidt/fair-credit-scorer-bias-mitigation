@@ -4,12 +4,37 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fair_credit_scorer_bias_mitigation"
-version = "0.0.1"
+version = "0.1.0"
 requires-python = ">=3.8"
+dependencies = [
+    "scikit-learn==1.7.0",
+    "pandas==2.3.0",
+    "numpy==2.3.1",
+    "matplotlib==3.10.3",
+    "fairlearn==0.12.0",
+    "networkx==3.5",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = ["fair_credit_scorer_bias_mitigation"]
+py-modules = [
+    "architecture_review",
+    "baseline_model",
+    "bias_mitigator",
+    "data_loader_preprocessor",
+    "evaluate_fairness",
+    "fairness_metrics",
+    "run_tests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.0",
+    "pytest-cov==6.2.1",
+    "ruff==0.11.13",
+    "bandit==1.8.5",
+]
 
 [project.scripts]
 fairness-eval = "fair_credit_scorer_bias_mitigation.cli:main"

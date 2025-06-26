@@ -1,6 +1,7 @@
 # fair-credit-scorer-bias-mitigation
 
 Fair Credit Scorer: Bias Mitigation in Lending Models
+**Version 0.1.0**
 This project aims to build a credit scoring model and explore techniques to identify and mitigate demographic bias. The goal is to develop a model that is not only accurate but also fair with respect to specified protected attributes.
 
 ## Project Goals
@@ -74,6 +75,7 @@ Interactive exploration is available in `notebooks/fairness_exploration.ipynb`,
 which demonstrates running the pipeline with each mitigation approach.
 The `run_pipeline` function used by the CLI also returns a dictionary of the
 accuracy and fairness metrics so you can incorporate the results programmatically.
+For more examples see [API_USAGE_GUIDE.md](API_USAGE_GUIDE.md).
 
 ## Architecture Overview
 The project is organized around a simple data pipeline and model training flow:
@@ -94,6 +96,7 @@ python -m src.architecture_review
 
 This will create `architecture/diagram.svg` and `architecture/architecture_review.md`
 which document module relationships and external dependencies.
+For a full description of the project layout see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Testing
 Run the unit tests with coverage:
@@ -108,3 +111,5 @@ sample reweighting strategy improves the equalized odds difference from roughly
 0.28 to 0.21 and makes selection rates more similar across protected groups,
 with accuracy dropping slightly to about 0.79. This demonstrates the trade-off
 between fairness and performance when using basic mitigation techniques.
+For a deeper discussion, see [TRADEOFFS.md](TRADEOFFS.md).
+See [CHANGELOG.md](CHANGELOG.md) for a list of recent updates.

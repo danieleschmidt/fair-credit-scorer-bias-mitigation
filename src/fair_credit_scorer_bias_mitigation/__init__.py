@@ -1,5 +1,7 @@
 """Public API for the Fair Credit Scorer package."""
 
+__version__ = "0.1.0"
+
 from baseline_model import evaluate_model, train_baseline_model
 from bias_mitigator import (
     expgrad_demographic_parity,
@@ -12,6 +14,7 @@ from fairness_metrics import compute_fairness_metrics
 from architecture_review import ArchitectureReview
 
 __all__ = [
+    "__version__",
     "ArchitectureReview",
     "compute_fairness_metrics",
     "evaluate_model",
