@@ -1,8 +1,17 @@
+from typing import Iterable, Tuple
+
+import numpy as np
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 
-def train_baseline_model(X_train, y_train, sample_weight=None, solver="liblinear"):
+def train_baseline_model(
+    X_train: pd.DataFrame | np.ndarray,
+    y_train: pd.Series | np.ndarray,
+    sample_weight: Iterable[float] | None = None,
+    solver: str = "liblinear",
+) -> LogisticRegression:
     """Train a simple logistic regression model.
 
     Parameters
@@ -23,8 +32,13 @@ def train_baseline_model(X_train, y_train, sample_weight=None, solver="liblinear
 
 
 def evaluate_model(
-    model, X_test, y_test, sensitive_features=None, return_probs=False, threshold=None
-):
+    model: LogisticRegression,
+    X_test: pd.DataFrame | np.ndarray,
+    y_test: pd.Series | np.ndarray,
+    sensitive_features: pd.Series | np.ndarray | None = None,
+    return_probs: bool = False,
+    threshold: float | None = None,
+) -> Tuple[float, np.ndarray] | Tuple[float, np.ndarray, np.ndarray | None]:
     """Return accuracy score, predictions, and optionally probabilities.
 
     Parameters

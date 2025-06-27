@@ -1,10 +1,14 @@
 import os
+from typing import Tuple
+
 import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
 
-def load_credit_dataset(path="data/credit_data.csv", random_state=42):
+def load_credit_dataset(
+    path: str = "data/credit_data.csv", random_state: int = 42
+) -> Tuple[pd.DataFrame, pd.Series]:
     """Return the entire credit dataset as features and labels."""
     if os.path.exists(path):
         df = pd.read_csv(path)
@@ -28,7 +32,11 @@ def load_credit_dataset(path="data/credit_data.csv", random_state=42):
     return X, y
 
 
-def load_credit_data(path="data/credit_data.csv", test_size=0.3, random_state=42):
+def load_credit_data(
+    path: str = "data/credit_data.csv",
+    test_size: float = 0.3,
+    random_state: int = 42,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Load credit data from CSV or generate a synthetic dataset.
 
     Parameters

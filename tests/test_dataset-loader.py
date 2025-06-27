@@ -1,5 +1,4 @@
 
-import os
 from fair_credit_scorer_bias_mitigation import load_credit_data
 
 

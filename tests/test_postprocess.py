@@ -1,4 +1,3 @@
-import numpy as np
 from src.data_loader_preprocessor import load_credit_data
 from src.baseline_model import train_baseline_model
 from src.bias_mitigator import postprocess_equalized_odds
