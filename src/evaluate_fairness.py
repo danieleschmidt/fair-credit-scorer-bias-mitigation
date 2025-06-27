@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from fair_credit_scorer_bias_mitigation import __version__
 
@@ -14,6 +15,7 @@ from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 import json
 
+logger = logging.getLogger(__name__)
 
 def _serialize_metrics(results):
     """Convert metrics dictionary with pandas objects to JSON-friendly types."""
@@ -139,9 +141,9 @@ def run_pipeline(
         y_scores=probs,
     )
     accuracy = overall["accuracy"]
-    print(f"Accuracy: {accuracy:.3f}")
-    print("Overall fairness metrics:\n", overall)
-    print("Metrics by group:\n", by_group)
+    logger.info("Accuracy: %.3f", accuracy)
+    logger.info("Overall fairness metrics:\n%s", overall)
+    logger.info("Metrics by group:\n%s", by_group)
 
     results = {"accuracy": accuracy, "overall": overall, "by_group": by_group}
     if output_path is not None:
@@ -242,10 +244,13 @@ def run_cross_validation(
     mean_by_group = by_group_concat.groupby(level=0).mean()
     std_by_group = by_group_concat.groupby(level=0).std()
     accuracy = float(mean_overall["accuracy"])
-    print("Average overall metrics:\n", mean_overall)
-    print("Standard deviation of metrics across folds:\n", std_overall)
-    print("Average metrics by group:\n", mean_by_group)
-    print("Standard deviation by group:\n", std_by_group)
+    logger.info("Average overall metrics:\n%s", mean_overall)
+    logger.info(
+        "Standard deviation of metrics across folds:\n%s",
+        std_overall,
+    )
+    logger.info("Average metrics by group:\n%s", mean_by_group)
+    logger.info("Standard deviation by group:\n%s", std_by_group)
     results = {
         "accuracy": accuracy,
         "overall": mean_overall,
@@ -304,7 +309,14 @@ def main():
         default=42,
         help="Random seed for the train/test split",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Increase logging verbosity",
+    )
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     if args.cv > 1:
         run_cross_validation(

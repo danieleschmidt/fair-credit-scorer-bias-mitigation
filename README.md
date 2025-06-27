@@ -51,12 +51,16 @@ Create a virtual environment and install dependencies:
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt  # for development tools
+pre-commit install  # set up git hooks for linting
+# The hook runs Ruff and Bandit automatically before each commit
 ```
 
 ## Usage
-The dataset is generated automatically the first time you run the pipeline. Execute the evaluation script to train the model and print fairness metrics:
+The dataset is generated automatically the first time you run the pipeline.
+Run the packaged CLI to train the model and print fairness metrics:
 ```bash
-python -m src.evaluate_fairness  # add --help for options
+fairness-eval  # add --help for options
 ```
 Choose a training method with `--method`. Options are `baseline`,
 `reweight`, `postprocess`, or `expgrad`. Use `--test-size` to adjust the train/test
@@ -68,6 +72,7 @@ easily parsed.
 Use `--cv N` to evaluate with `N`-fold cross-validation instead of a single split.
 Provide `--threshold T` to apply a custom probability threshold `T` when
 converting model scores to predicted labels.
+Use `--verbose` to enable debug-level logging for more detailed output.
 When cross-validation is enabled, the script prints the average metrics across all folds and
 also computes their standard deviation. `--output-json` will write these aggregated results,
 including the per-fold metrics and fold-level statistics, to the specified path.

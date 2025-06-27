@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import pandas as pd
 import numpy as np
 from fairlearn.metrics import (
@@ -30,7 +32,12 @@ from sklearn.metrics import (
 )
 
 
-def compute_fairness_metrics(y_true, y_pred, protected, y_scores=None):
+def compute_fairness_metrics(
+    y_true: pd.Series | np.ndarray,
+    y_pred: pd.Series | np.ndarray,
+    protected: pd.Series | np.ndarray,
+    y_scores: pd.Series | np.ndarray | None = None,
+) -> Tuple[pd.Series, pd.DataFrame]:
     """Compute basic fairness metrics using fairlearn.
 
     Parameters
@@ -61,18 +68,24 @@ def compute_fairness_metrics(y_true, y_pred, protected, y_scores=None):
         "precision": precision_score,
         "recall": recall_score,
         "f1": f1_score,
-        "log_loss": lambda y_true, y_pred: log_loss(y_true, y_pred),
         "true_positive_rate": true_positive_rate,
         "true_negative_rate": true_negative_rate,
         "false_positive_rate": false_positive_rate,
         "false_negative_rate": false_negative_rate,
     }
-    # If scores are provided, compute ROC AUC using them
+    # If scores are provided, compute ROC AUC and log loss using them
     roc_input = y_scores if y_scores is not None else y_pred
     roc_auc_frame = MetricFrame(
         metrics={"roc_auc": roc_auc_score},
         y_true=y_true,
         y_pred=roc_input,
+        sensitive_features=protected,
+    )
+    log_input = y_scores if y_scores is not None else y_pred
+    logloss_frame = MetricFrame(
+        metrics={"log_loss": lambda y_true, y_pred: log_loss(y_true, y_pred)},
+        y_true=y_true,
+        y_pred=log_input,
         sensitive_features=protected,
     )
     frame = MetricFrame(
@@ -126,8 +139,8 @@ def compute_fairness_metrics(y_true, y_pred, protected, y_scores=None):
     overall["precision_difference"] = diffs["precision"]
     overall["recall_difference"] = diffs["recall"]
     overall["f1_difference"] = diffs["f1"]
-    overall["log_loss"] = frame.overall["log_loss"]
-    overall["log_loss_difference"] = diffs["log_loss"]
+    overall["log_loss"] = logloss_frame.overall["log_loss"]
+    overall["log_loss_difference"] = logloss_frame.difference()["log_loss"]
     overall["false_discovery_rate"] = 1 - overall["precision"]
     overall["false_discovery_rate_difference"] = -diffs["precision"]
     overall["roc_auc"] = roc_auc_frame.overall["roc_auc"]
@@ -135,7 +148,7 @@ def compute_fairness_metrics(y_true, y_pred, protected, y_scores=None):
     overall["true_positive_rate_difference"] = diffs["true_positive_rate"]
     overall["true_negative_rate_difference"] = diffs["true_negative_rate"]
     by_group = frame.by_group
-    by_group["log_loss"] = frame.by_group["log_loss"]
+    by_group["log_loss"] = logloss_frame.by_group["log_loss"]
     by_group["roc_auc"] = roc_auc_frame.by_group["roc_auc"]
     by_group["false_discovery_rate"] = 1 - by_group["precision"]
 
