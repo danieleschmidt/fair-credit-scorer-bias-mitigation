@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2025-07-19
+
+### Added
+- Impact-ranked backlog with WSJF-based prioritization (BACKLOG.md)
+- Autonomous development framework for continuous iteration
+
+### Fixed
+- Eliminated all 93 scikit-learn deprecation warnings by specifying liblinear solver
+- Ensures compatibility with future scipy versions (1.18.0+)
+
+### Changed
+- Updated bias mitigation to use explicit solver configuration
+- Improved code quality and future-proofing
+
 ## [0.1.1] - 2025-06-27
 ### Changed
 - Compute log-loss using probability scores for accuracy
