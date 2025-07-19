@@ -24,7 +24,7 @@ def expgrad_demographic_parity(X, y, protected):
     """
     from fairlearn.reductions import ExponentiatedGradient, DemographicParity
 
-    base_est = LogisticRegression(max_iter=1000)
+    base_est = LogisticRegression(max_iter=1000, solver="liblinear")
     mitigator = ExponentiatedGradient(base_est, DemographicParity())
     mitigator.fit(X, y, sensitive_features=protected)
     return mitigator
