@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2025-07-20
+
+### Added
+- Comprehensive module docstrings for all core modules with usage examples and detailed feature descriptions
+- Test-driven development approach for docstring quality assurance (tests/test_module_docstrings.py)
+- Configuration reset functionality (reset_config()) for improved test isolation
+- Pytest configuration fixture for automatic configuration cleanup between tests
+
+### Fixed
+- Test isolation issues with configuration singleton pattern
+- Test coverage improved to 87% with all 95 tests passing
+
+### Changed
+- Enhanced documentation quality across fairness_metrics.py, bias_mitigator.py, baseline_model.py, data_loader_preprocessor.py, evaluate_fairness.py, architecture_review.py, and run_tests.py
+- Added tests/conftest.py for better test configuration management
+
 ## [0.1.4] - 2025-07-20
 
 ### Added
