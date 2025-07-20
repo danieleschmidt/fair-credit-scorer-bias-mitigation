@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-07-20
+
+### Added
+- Centralized configuration management system with YAML support
+- Environment variable override support (FAIRNESS_* prefix)
+- Configurable model parameters (max_iter, solver)
+- Configurable data processing parameters (column names, synthetic data generation)
+- Configuration validation with specific error messages
+- Hot-reload functionality and custom configuration file support
+
+### Changed
+- baseline_model.py now uses configuration defaults for LogisticRegression parameters
+- data_loader_preprocessor.py uses configurable paths, column names, and data generation settings
+- Added PyYAML>=6.0 dependency for configuration management
+
+### Fixed
+- Backward-compatible imports for package and module usage
+- Maintained function signature compatibility while adding configuration support
+
 ## [0.1.3] - 2025-07-20
 
 ### Added

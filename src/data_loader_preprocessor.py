@@ -6,20 +6,25 @@ import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
+try:
+    from .config import get_config
+except ImportError:
+    from config import get_config
+
 logger = logging.getLogger(__name__)
 
 
 def load_credit_dataset(
-    path: str = "data/credit_data.csv", random_state: int = 42
+    path: str | None = None, random_state: int | None = None
 ) -> Tuple[pd.DataFrame, pd.Series]:
     """Return the entire credit dataset as features and labels.
     
     Parameters
     ----------
-    path : str
-        Path to the CSV file. Must be a valid string.
-    random_state : int
-        Random seed for reproducibility. Must be a non-negative integer.
+    path : str, optional
+        Path to the CSV file. If None, uses configuration default.
+    random_state : int, optional
+        Random seed for reproducibility. If None, uses configuration default.
         
     Returns
     -------
@@ -37,6 +42,14 @@ def load_credit_dataset(
     PermissionError
         If lacking permissions to read/write files
     """
+    config = get_config()
+    
+    # Use configuration defaults if not provided
+    if path is None:
+        path = config.data.default_dataset_path
+    if random_state is None:
+        random_state = config.general.default_random_state
+    
     # Input validation
     if not isinstance(path, str):
         raise TypeError(f"path must be a string, got {type(path).__name__}")
@@ -57,8 +70,8 @@ def load_credit_dataset(
                 df = pd.read_csv(path)
                 if df.empty:
                     raise ValueError(f"Dataset file {path} is empty")
-                if "label" not in df.columns:
-                    raise ValueError(f"Dataset file {path} missing required 'label' column")
+                if config.data.label_column_name not in df.columns:
+                    raise ValueError(f"Dataset file {path} missing required '{config.data.label_column_name}' column")
                 logger.info(f"Successfully loaded {len(df)} rows from {path}")
             except pd.errors.EmptyDataError:
                 raise ValueError(f"Dataset file {path} contains no data")
@@ -67,23 +80,23 @@ def load_credit_dataset(
         else:
             logger.info(f"Generating synthetic dataset and saving to {path}")
             X, y = make_classification(
-                n_samples=1000,
-                n_features=10,
-                n_informative=5,
-                n_redundant=2,
+                n_samples=config.data.synthetic.n_samples,
+                n_features=config.data.synthetic.n_features,
+                n_informative=config.data.synthetic.n_informative,
+                n_redundant=config.data.synthetic.n_redundant,
                 random_state=random_state,
             )
             protected = (X[:, 0] > X[:, 0].mean()).astype(int)
-            df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(X.shape[1])])
-            df["protected"] = protected
-            df["label"] = y
+            df = pd.DataFrame(X, columns=[f"{config.data.feature_column_prefix}{i}" for i in range(X.shape[1])])
+            df[config.data.protected_column_name] = protected
+            df[config.data.label_column_name] = y
             
             # Create directory with proper error handling
             try:
                 dir_path = os.path.dirname(path)
                 if dir_path:  # Only create if there's actually a directory path
                     os.makedirs(dir_path, exist_ok=True)
-                df.to_csv(path, index=False)
+                df.to_csv(path, index=config.data.csv_include_index)
                 logger.info(f"Successfully saved {len(df)} rows to {path}")
             except PermissionError:
                 raise PermissionError(f"Permission denied when creating directory or writing to {path}")
@@ -100,11 +113,11 @@ def load_credit_dataset(
 
     # Extract features and labels with validation
     try:
-        if "label" not in df.columns:
-            raise ValueError(f"Dataset missing required 'label' column. Available columns: {list(df.columns)}")
+        if config.data.label_column_name not in df.columns:
+            raise ValueError(f"Dataset missing required '{config.data.label_column_name}' column. Available columns: {list(df.columns)}")
         
-        X = df.drop("label", axis=1)
-        y = df["label"]
+        X = df.drop(config.data.label_column_name, axis=1)
+        y = df[config.data.label_column_name]
         
         if X.empty:
             raise ValueError("No features found after removing label column")

@@ -1,0 +1,70 @@
+# Default configuration for fair credit scorer bias mitigation system
+# This file contains all configurable parameters with their default values
+
+# Model configuration
+model:
+  # Logistic regression parameters
+  logistic_regression:
+    max_iter: 1000
+    solver: "liblinear"
+  
+  # Bias mitigation parameters
+  bias_mitigation:
+    max_iter: 1000
+    solver: "liblinear"
+  
+  # Default method for evaluation
+  default_method: "baseline"
+
+# Data configuration
+data:
+  # File paths
+  default_dataset_path: "data/credit_data.csv"
+  
+  # Column names
+  protected_column_name: "protected"
+  label_column_name: "label"
+  feature_column_prefix: "feature_"
+  
+  # Data splitting parameters
+  default_test_size: 0.3
+  min_test_samples: 1
+  stratify_split: true
+  
+  # CSV output settings
+  csv_include_index: false
+  
+  # Synthetic data generation parameters
+  synthetic:
+    n_samples: 1000
+    n_features: 10
+    n_informative: 5
+    n_redundant: 2
+    protected_threshold_method: "mean"
+
+# Evaluation configuration
+evaluation:
+  # Cross-validation settings
+  default_cv_folds: 5
+  cv_shuffle: true
+
+# General configuration
+general:
+  # Random state for reproducibility
+  default_random_state: 42
+
+# Fairness configuration
+fairness:
+  # Post-processing constraint
+  postprocess_constraint: "equalized_odds"
+  # Prediction method
+  predict_method: "predict_proba"
+
+# Output configuration
+output:
+  # JSON formatting
+  json_indent: 2
+
+# Logging configuration
+logging:
+  default_level: "INFO"

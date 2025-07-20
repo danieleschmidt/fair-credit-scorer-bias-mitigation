@@ -5,12 +5,18 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
+try:
+    from .config import get_config
+except ImportError:
+    from config import get_config
+
 
 def train_baseline_model(
     X_train: pd.DataFrame | np.ndarray,
     y_train: pd.Series | np.ndarray,
     sample_weight: Iterable[float] | None = None,
-    solver: str = "liblinear",
+    solver: str | None = None,
+    max_iter: int | None = None,
 ) -> LogisticRegression:
     """Train a simple logistic regression model.
 
@@ -23,10 +29,19 @@ def train_baseline_model(
     sample_weight : array-like or None, optional
         Sample weights passed to ``fit``.
     solver : str, optional
-        Solver to use in ``LogisticRegression``. Defaults to ``"liblinear"`` so
-        tests can assert the configured solver.
+        Solver to use in ``LogisticRegression``. If None, uses configuration default.
+    max_iter : int, optional
+        Maximum iterations for solver. If None, uses configuration default.
     """
-    model = LogisticRegression(max_iter=1000, solver=solver)
+    config = get_config()
+    
+    # Use provided values or fall back to configuration defaults
+    if solver is None:
+        solver = config.model.logistic_regression.solver
+    if max_iter is None:
+        max_iter = config.model.logistic_regression.max_iter
+    
+    model = LogisticRegression(max_iter=max_iter, solver=solver)
     model.fit(X_train, y_train, sample_weight=sample_weight)
     return model
 
