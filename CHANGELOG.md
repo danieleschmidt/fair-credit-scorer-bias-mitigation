@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-07-20
+
+### Added
+- Comprehensive error handling improvements with specific exception types
+- New train_test_split_validated function with input validation
+- Enhanced test suite for error handling scenarios (10 new test cases)
+
+### Fixed
+- Replaced generic RuntimeError with specific exceptions (ValueError, TypeError, etc.)
+- Improved error messages for better debugging and user experience
+- Enhanced pandas parsing error handling (EmptyDataError, ParserError)
+
+### Changed
+- Error handling in data_loader_preprocessor.py and evaluate_fairness.py now provides specific error types
+- Updated BACKLOG.md with WSJF-prioritized tasks for autonomous development
+
 ## [0.1.2] - 2025-07-19
 
 ### Added
