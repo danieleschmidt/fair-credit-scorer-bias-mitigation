@@ -52,9 +52,46 @@ def _serialize_metrics(results):
 
 
 def _save_metrics_json(results, path):
-    """Write metrics dictionary to ``path`` as JSON."""
-    with open(path, "w") as f:
-        json.dump(_serialize_metrics(results), f)
+    """Write metrics dictionary to ``path`` as JSON.
+    
+    Parameters
+    ----------
+    results : dict
+        Metrics dictionary to serialize
+    path : str
+        Output file path
+        
+    Raises
+    ------
+    ValueError
+        If path is empty or results is invalid
+    PermissionError
+        If lacking write permissions
+    OSError
+        If file cannot be created
+    """
+    if not isinstance(path, str) or not path.strip():
+        raise ValueError("path must be a non-empty string")
+    if not isinstance(results, dict):
+        raise ValueError("results must be a dictionary")
+        
+    try:
+        # Create directory if needed
+        import os
+        dir_path = os.path.dirname(path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+            
+        with open(path, "w") as f:
+            json.dump(_serialize_metrics(results), f, indent=2)
+        logger.info(f"Successfully saved metrics to {path}")
+    except PermissionError:
+        raise PermissionError(f"Permission denied writing to {path}")
+    except OSError as e:
+        raise OSError(f"Could not write to {path}: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error saving metrics: {e}")
+        raise RuntimeError(f"Failed to save metrics to {path}: {e}")
 
 
 def run_pipeline(
@@ -86,7 +123,34 @@ def run_pipeline(
     -------
     dict
         Dictionary containing ``accuracy``, ``overall``, and ``by_group`` metrics.
+        
+    Raises
+    ------
+    ValueError
+        If method is not supported or threshold is invalid
+    TypeError
+        If parameters have wrong types
     """
+    # Input validation
+    valid_methods = {"baseline", "reweight", "postprocess", "expgrad"}
+    if not isinstance(method, str):
+        raise TypeError(f"method must be a string, got {type(method).__name__}")
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
+    
+    if threshold is not None:
+        if not isinstance(threshold, (int, float)):
+            raise TypeError(f"threshold must be a number or None, got {type(threshold).__name__}")
+        if not 0.0 <= threshold <= 1.0:
+            raise ValueError(f"threshold must be between 0.0 and 1.0, got {threshold}")
+    
+    if output_path is not None:
+        if not isinstance(output_path, str):
+            raise TypeError(f"output_path must be a string or None, got {type(output_path).__name__}")
+        if not output_path.strip():
+            raise ValueError("output_path cannot be empty or whitespace")
+            
+    logger.info(f"Running pipeline with method={method}, test_size={test_size}, threshold={threshold}")
 
     X_train, X_test, y_train, y_test = load_credit_data(
         path=data_path, test_size=test_size, random_state=random_state
@@ -167,7 +231,7 @@ def run_cross_validation(
     method : str, optional
         Training approach used in each fold.
     cv : int, optional
-        Number of cross-validation splits.
+        Number of cross-validation splits. Must be at least 2.
     random_state : int, optional
         Seed controlling the cross-validation shuffle.
     output_path : str or None, optional
@@ -175,7 +239,39 @@ def run_cross_validation(
     threshold : float or None, optional
         Custom probability threshold applied in every fold. ``None`` uses the
         estimator's default ``predict`` behaviour.
+        
+    Raises
+    ------
+    ValueError
+        If cv is less than 2 or method is invalid
+    TypeError
+        If parameters have wrong types
     """
+    # Input validation
+    valid_methods = {"baseline", "reweight", "postprocess", "expgrad"}
+    if not isinstance(method, str):
+        raise TypeError(f"method must be a string, got {type(method).__name__}")
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
+    
+    if not isinstance(cv, int):
+        raise TypeError(f"cv must be an integer, got {type(cv).__name__}")
+    if cv < 2:
+        raise ValueError(f"cv must be at least 2, got {cv}")
+    
+    if threshold is not None:
+        if not isinstance(threshold, (int, float)):
+            raise TypeError(f"threshold must be a number or None, got {type(threshold).__name__}")
+        if not 0.0 <= threshold <= 1.0:
+            raise ValueError(f"threshold must be between 0.0 and 1.0, got {threshold}")
+    
+    if output_path is not None:
+        if not isinstance(output_path, str):
+            raise TypeError(f"output_path must be a string or None, got {type(output_path).__name__}")
+        if not output_path.strip():
+            raise ValueError("output_path cannot be empty or whitespace")
+            
+    logger.info(f"Running {cv}-fold cross-validation with method={method}, threshold={threshold}")
     X, y = load_credit_dataset(path=data_path, random_state=random_state)
     skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
     overall_metrics = []
