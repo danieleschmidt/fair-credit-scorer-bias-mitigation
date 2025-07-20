@@ -90,13 +90,13 @@ def load_credit_dataset(
             except OSError as e:
                 raise FileNotFoundError(f"Could not create directory or write file {path}: {e}")
     
+    except pd.errors.EmptyDataError:
+        raise ValueError(f"Invalid CSV format: File {path} is empty or contains no data")
+    except pd.errors.ParserError as e:
+        raise ValueError(f"Invalid CSV format: Unable to parse {path} - {e}")
     except (PermissionError, FileNotFoundError, OSError):
         # Re-raise file system errors as-is
         raise
-    except Exception as e:
-        # Catch any other unexpected errors
-        logger.error(f"Unexpected error loading dataset: {e}")
-        raise RuntimeError(f"Failed to load dataset from {path}: {e}")
 
     # Extract features and labels with validation
     try:
@@ -116,8 +116,8 @@ def load_credit_dataset(
         return X, y
     except KeyError as e:
         raise ValueError(f"Error extracting features and labels: {e}")
-    except Exception as e:
-        raise RuntimeError(f"Unexpected error processing dataset: {e}")
+    except (TypeError, AttributeError) as e:
+        raise ValueError(f"Invalid dataset format: {e}")
 
 
 def load_credit_data(
@@ -175,6 +175,41 @@ def load_credit_data(
     except ValueError:
         # Re-raise validation errors as-is
         raise
-    except Exception as e:
-        logger.error(f"Error splitting dataset: {e}")
-        raise RuntimeError(f"Failed to split dataset: {e}")
+    except (TypeError, AttributeError) as e:
+        raise ValueError(f"Invalid data format for train/test split: {e}")
+
+
+
+def train_test_split_validated(X, y, test_size=0.3, random_state=None):
+    """Validate inputs and perform train/test split with specific error handling.
+    
+    Args:
+        X: Features array/list
+        y: Labels array/list
+        test_size: Fraction for test set (0.0 < test_size < 1.0)
+        random_state: Random seed for reproducibility
+    
+    Returns:
+        X_train, X_test, y_train, y_test
+        
+    Raises:
+        ValueError: For validation errors (empty data, invalid sizes, etc.)
+        TypeError: For invalid data types
+    """
+    # Validate inputs
+    if len(X) == 0 or len(y) == 0:
+        raise ValueError("Dataset cannot be empty")
+    
+    if len(X) != len(y):
+        raise ValueError(f"Features and labels must have the same length, got {len(X)} and {len(y)}")
+    
+    if not isinstance(test_size, (int, float)):
+        raise TypeError(f"test_size must be a number, got {type(test_size).__name__}")
+    
+    if not 0.0 < test_size < 1.0:
+        raise ValueError(f"test_size must be between 0 and 1, got {test_size}")
+    
+    try:
+        return train_test_split(X, y, test_size=test_size, random_state=random_state)
+    except (TypeError, AttributeError) as e:
+        raise ValueError(f"Invalid data format for train/test split: {e}")

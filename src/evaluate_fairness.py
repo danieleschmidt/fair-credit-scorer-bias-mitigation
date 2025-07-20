@@ -89,9 +89,8 @@ def _save_metrics_json(results, path):
         raise PermissionError(f"Permission denied writing to {path}")
     except OSError as e:
         raise OSError(f"Could not write to {path}: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error saving metrics: {e}")
-        raise RuntimeError(f"Failed to save metrics to {path}: {e}")
+    except (TypeError, ValueError) as e:
+        raise TypeError(f"Cannot serialize metrics to JSON: {e}")
 
 
 def run_pipeline(
