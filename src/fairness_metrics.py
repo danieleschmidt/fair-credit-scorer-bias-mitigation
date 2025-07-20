@@ -1,3 +1,30 @@
+"""Fairness metrics computation for machine learning models.
+
+This module provides comprehensive fairness metrics using the fairlearn library,
+including demographic parity, equalized odds, and various performance metrics
+across different protected groups.
+
+Key metrics computed:
+- Demographic parity difference/ratio: Measures selection rate equality
+- Equalized odds difference/ratio: Measures equal TPR and FPR across groups
+- False positive/negative rate differences: Detailed error rate analysis
+- Performance metrics by protected group (accuracy, precision, recall, F1)
+- ROC AUC and log loss with fairness considerations
+
+Functions:
+    compute_fairness_metrics: Main function to compute all fairness metrics
+
+Example:
+    >>> from fairness_metrics import compute_fairness_metrics
+    >>> overall, by_group = compute_fairness_metrics(y_true, y_pred, protected)
+    >>> print(f"Demographic parity difference: {overall['demographic_parity_difference']}")
+    >>> print(f"Accuracy by group: {by_group['accuracy']}")
+
+The module integrates with the fairlearn library to provide standardized fairness
+assessments and supports both binary and probability predictions for comprehensive
+bias evaluation in machine learning systems.
+"""
+
 from typing import Tuple
 
 import pandas as pd

@@ -1,3 +1,43 @@
+"""Main evaluation pipeline for fairness-aware credit scoring models.
+
+This module provides the primary entry point for training and evaluating
+credit scoring models with various bias mitigation techniques. It supports
+both single train/test splits and cross-validation evaluation workflows.
+
+Evaluation methods supported:
+- baseline: Standard logistic regression without bias mitigation
+- reweight: Sample reweighting for demographic parity
+- postprocess: Post-processing with equalized odds optimization  
+- expgrad: Exponentiated gradient optimization for demographic parity
+
+The module can be used both programmatically and via command-line interface,
+providing comprehensive fairness metrics and JSON output for automated pipelines.
+
+Functions:
+    run_pipeline: Execute single evaluation with train/test split
+    run_cross_validation: Execute k-fold cross-validation evaluation
+
+Command-line interface:
+    python -m evaluate_fairness --method baseline --cv 5 --output-json results.json
+
+Programmatic usage:
+    >>> from evaluate_fairness import run_pipeline, run_cross_validation
+    >>> # Single evaluation
+    >>> results = run_pipeline(method="reweight", test_size=0.3)
+    >>> 
+    >>> # Cross-validation evaluation
+    >>> cv_results = run_cross_validation(method="expgrad", cv=5)
+
+Configuration:
+    Evaluation parameters can be configured through:
+    - Command-line arguments (highest priority)
+    - Environment variables (FAIRNESS_* prefix)
+    - Configuration file (config/default.yaml)
+
+The module automatically handles data loading, model training, bias mitigation
+application, and comprehensive fairness evaluation with detailed reporting.
+"""
+
 import argparse
 import logging
 

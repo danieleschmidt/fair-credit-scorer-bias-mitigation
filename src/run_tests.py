@@ -1,3 +1,39 @@
+"""Test runner with comprehensive development environment setup.
+
+This module provides a complete test execution pipeline that automatically
+sets up the development environment, installs dependencies, runs linting and
+security checks, and executes the test suite with coverage reporting.
+
+Features:
+- Automatic dependency installation from requirements.txt
+- Environment setup for local module imports without package installation
+- Code quality checks using ruff linter
+- Security scanning with bandit
+- Test execution with pytest and coverage reporting
+- Subprocess security hardening with shell=False
+
+The runner ensures a clean testing environment by:
+1. Installing project dependencies in editable mode
+2. Installing development tools (ruff, bandit)
+3. Running static analysis and security checks
+4. Executing tests with coverage measurement
+
+Usage:
+    python -m src.run_tests
+    
+Environment Variables:
+    PYTHONPATH: Automatically configured to include src directory
+    
+Exit Codes:
+    0: All checks and tests passed
+    Non-zero: Linting, security, or test failures occurred
+
+The module follows security best practices by using subprocess.check_call
+with shell=False and explicit command arrays to prevent shell injection attacks.
+All external tool invocations are properly secured with nosec comments where
+subprocess usage is intentional and validated.
+"""
+
 import os
 import sys
 import subprocess  # nosec B404
