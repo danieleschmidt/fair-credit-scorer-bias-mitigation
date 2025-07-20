@@ -1,3 +1,33 @@
+"""Baseline logistic regression model for credit scoring.
+
+This module provides functionality to train and evaluate a baseline
+logistic regression model for credit scoring. It serves as the foundation
+for comparing bias mitigation techniques and establishes performance benchmarks.
+
+Functions:
+    train_baseline_model: Train a logistic regression classifier with configurable parameters
+    evaluate_model: Evaluate model performance with optional threshold adjustment
+
+Configuration:
+    Model parameters are loaded from the centralized configuration system, supporting
+    environment variable overrides for solver and max_iter parameters. Default values
+    can be customized through config/default.yaml or FAIRNESS_* environment variables.
+
+Example:
+    >>> from baseline_model import train_baseline_model, evaluate_model
+    >>> # Train with default configuration
+    >>> model = train_baseline_model(X_train, y_train)
+    >>> # Evaluate with custom threshold
+    >>> accuracy, predictions = evaluate_model(model, X_test, y_test, threshold=0.6)
+    >>> 
+    >>> # Train with custom parameters
+    >>> model = train_baseline_model(X_train, y_train, solver='lbfgs', max_iter=200)
+
+The module supports both probability predictions and hard classifications,
+making it suitable for fairness-aware evaluation pipelines that require
+threshold optimization across different protected groups.
+"""
+
 from typing import Iterable, Tuple
 
 import numpy as np

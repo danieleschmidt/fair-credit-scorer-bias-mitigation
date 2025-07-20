@@ -1,3 +1,34 @@
+"""Architecture analysis and documentation generation tool.
+
+This module analyzes the repository structure, builds dependency graphs,
+and generates architecture documentation. It helps visualize module
+dependencies and understand the codebase structure for maintenance and review.
+
+Features:
+- Parse Python module dependencies using AST analysis
+- Build directed dependency graphs with NetworkX
+- Generate architecture diagrams in SVG format
+- Create markdown documentation of module relationships
+- Analyze external dependencies from requirements files
+
+Classes:
+    ArchitectureReview: Main class for performing architecture analysis
+
+Usage:
+    python -m src.architecture_review
+    
+Example:
+    >>> from architecture_review import ArchitectureReview
+    >>> review = ArchitectureReview()
+    >>> review.analyze()
+    >>> review.save_diagram("architecture/diagram.svg")
+    >>> review.save_summary("architecture/summary.md")
+
+The tool automatically discovers Python files, analyzes import relationships,
+and generates comprehensive documentation suitable for technical reviews
+and onboarding documentation.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

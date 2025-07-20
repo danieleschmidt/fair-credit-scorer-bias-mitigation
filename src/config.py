@@ -352,3 +352,11 @@ def reload_config(config_path: Optional[str] = None) -> None:
     """
     global config
     config.reload(config_path)
+
+
+def reset_config() -> None:
+    """Reset the configuration singleton for testing purposes."""
+    global config
+    Config._instance = None
+    Config._initialized = False
+    config = Config()

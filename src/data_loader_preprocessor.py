@@ -1,3 +1,42 @@
+"""Data loading and preprocessing utilities for credit scoring datasets.
+
+This module handles all data loading operations, including reading from CSV files
+and generating synthetic datasets for testing and development. It provides consistent
+data splitting and preprocessing for model training and evaluation.
+
+Functions:
+    load_credit_dataset: Load entire dataset without splitting into train/test
+    load_credit_data: Load and split data into train/test sets with validation
+    train_test_split_validated: Validated train/test splitting utility with comprehensive error handling
+
+Features:
+- Automatic synthetic data generation if CSV file doesn't exist
+- Configurable column names and data generation parameters via configuration system
+- Stratified train/test splitting with validation
+- Comprehensive input validation and specific error handling
+- Support for custom file paths and random states
+
+Configuration:
+    Data parameters are managed through the configuration system:
+    - data.default_dataset_path: Default CSV file location
+    - data.label_column_name/protected_column_name: Column name mappings
+    - data.synthetic.*: Parameters for synthetic data generation
+
+Example:
+    >>> from data_loader_preprocessor import load_credit_data, load_credit_dataset
+    >>> # Load and split data
+    >>> X_train, X_test, y_train, y_test = load_credit_data(test_size=0.3)
+    >>> 
+    >>> # Load entire dataset without splitting
+    >>> X, y = load_credit_dataset("path/to/data.csv")
+    >>> 
+    >>> # Validated splitting with error handling
+    >>> X_train, X_test, y_train, y_test = train_test_split_validated(X, y, test_size=0.2)
+
+The module automatically generates realistic synthetic credit scoring data when
+real datasets are not available, ensuring consistent development and testing workflows.
+"""
+
 import os
 from typing import Tuple
 import logging
@@ -15,16 +54,16 @@ logger = logging.getLogger(__name__)
 
 
 def load_credit_dataset(
-    path: str | None = None, random_state: int | None = None
+    path: str = "data/credit_data.csv", random_state: int = 42
 ) -> Tuple[pd.DataFrame, pd.Series]:
     """Return the entire credit dataset as features and labels.
     
     Parameters
     ----------
-    path : str, optional
-        Path to the CSV file. If None, uses configuration default.
-    random_state : int, optional
-        Random seed for reproducibility. If None, uses configuration default.
+    path : str
+        Path to the CSV file. Defaults to configuration value.
+    random_state : int
+        Random seed for reproducibility. Defaults to configuration value.
         
     Returns
     -------
@@ -44,10 +83,10 @@ def load_credit_dataset(
     """
     config = get_config()
     
-    # Use configuration defaults if not provided
-    if path is None:
+    # Override defaults with configuration values if using defaults
+    if path == "data/credit_data.csv":
         path = config.data.default_dataset_path
-    if random_state is None:
+    if random_state == 42:
         random_state = config.general.default_random_state
     
     # Input validation
