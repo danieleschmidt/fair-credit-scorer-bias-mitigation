@@ -89,13 +89,37 @@ Tasks are scored using WSJF (Weighted Shortest Job First):
 3. ✅ Robust input validation preventing runtime errors
 4. ✅ Improved user experience with clear error messages
 
-**Next Priority**: Add performance benchmarking (Score: 7)
+**Next Priority**: Add centralized configuration management (Score: 6)
+
+### 7. ✅ Improve error handling and reduce generic exceptions (Score: 8) - COMPLETED
+- **Impact**: High - Improves debugging and system reliability
+- **Effort**: Medium (3 hours)
+- **Business Value**: 7/10 - Better error diagnosis and user experience
+- **Risk Reduction**: 8/10 - Prevents masked errors and improves troubleshooting
+- **Time Criticality**: 6/10 - Important for production stability
+- **Completed**: Replaced generic RuntimeError with specific exceptions, added comprehensive test suite
+
+### 8. Add centralized configuration management (Score: 6) 
+- **Impact**: Medium - Reduces hardcoded values and improves flexibility
+- **Effort**: Medium (4 hours)
+- **Business Value**: 6/10 - Makes system more maintainable
+- **Risk Reduction**: 5/10 - Reduces configuration errors
+- **Time Criticality**: 4/10 - Quality of life improvement
+
+### 9. Add comprehensive module docstrings (Score: 5)
+- **Impact**: Low - Improves code documentation
+- **Effort**: Low (2 hours)
+- **Business Value**: 5/10 - Helps with code maintenance
+- **Risk Reduction**: 3/10 - Documentation improvements
+- **Time Criticality**: 3/10 - Nice to have
 
 ## Technical Debt Log
 - ✅ Deprecation warnings from scikit-learn L-BFGS-B solver - FIXED
 - ✅ Missing input validation in data_loader_preprocessor.py - FIXED
 - ✅ Incomplete test coverage in architecture_review.py (24%) - FIXED (98%)
-- Hardcoded parameters in baseline_model.py
+- ✅ Generic exception handling masking specific errors in data_loader_preprocessor.py and evaluate_fairness.py - FIXED
+- Hardcoded parameters in baseline_model.py and bias_mitigator.py (max_iter=1000)
+- Code duplication in validation logic across run_pipeline and run_cross_validation
 - ✅ Missing error handling for file I/O operations - FIXED
 
 ## Architectural Debt
@@ -103,8 +127,11 @@ Tasks are scored using WSJF (Weighted Shortest Job First):
 - Limited logging and monitoring capabilities
 - No data pipeline versioning or lineage tracking
 - Missing integration tests for end-to-end workflows
+- Inconsistent logging patterns across modules
+- Missing structured configuration system for model parameters
 
 ---
 
 *Last Updated: 2025-07-20*
 *Next Review: Weekly during sprint planning*
+*Autonomous Development Framework Active: Priority-driven continuous improvement*
