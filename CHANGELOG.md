@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2025-07-21
+
+### Added
+- Centralized validation helper function `_validate_common_parameters()` in evaluate_fairness.py
+- Comprehensive test suite for validation helper function (10 new test cases)
+
+### Fixed  
+- Code duplication in validation logic between run_pipeline and run_cross_validation functions
+- Technical debt: eliminated 16 lines of duplicated parameter validation code
+
+### Changed
+- Refactored evaluate_fairness.py to use shared validation logic, improving maintainability
+- Test suite expanded to 105 tests (up from 95) with maintained 87% coverage
+- Improved code quality and reduced potential for validation inconsistencies
+
 ## [0.1.5] - 2025-07-20
 
 ### Added
