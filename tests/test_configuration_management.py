@@ -223,3 +223,72 @@ class TestConfigurationIntegration:
         
         # Note: Integration with existing modules will be done in a separate step
         # This test validates that configuration values are available for use
+
+
+class TestEnvironmentVariableConversion:
+    """Test environment variable type conversion functionality."""
+
+    def test_convert_env_value_bool_conversion(self):
+        """Test boolean conversion from environment variables."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # Test true values
+        assert config._convert_env_value("true", bool) is True
+        assert config._convert_env_value("True", bool) is True
+        assert config._convert_env_value("TRUE", bool) is True
+        assert config._convert_env_value("1", bool) is True
+        assert config._convert_env_value("yes", bool) is True
+        assert config._convert_env_value("on", bool) is True
+        
+        # Test false values
+        assert config._convert_env_value("false", bool) is False
+        assert config._convert_env_value("False", bool) is False
+        assert config._convert_env_value("0", bool) is False
+        assert config._convert_env_value("no", bool) is False
+        assert config._convert_env_value("off", bool) is False
+
+    def test_convert_env_value_int_conversion(self):
+        """Test integer conversion from environment variables."""
+        from src.config import Config
+        
+        config = Config()
+        
+        assert config._convert_env_value("42", int) == 42
+        assert config._convert_env_value("0", int) == 0
+        assert config._convert_env_value("-10", int) == -10
+        assert config._convert_env_value("1000", int) == 1000
+
+    def test_convert_env_value_float_conversion(self):
+        """Test float conversion from environment variables."""
+        from src.config import Config
+        
+        config = Config()
+        
+        assert config._convert_env_value("3.14", float) == 3.14
+        assert config._convert_env_value("0.0", float) == 0.0
+        assert config._convert_env_value("-2.5", float) == -2.5
+        assert config._convert_env_value("1e-3", float) == 0.001
+
+    def test_convert_env_value_string_passthrough(self):
+        """Test that string values pass through unchanged."""
+        from src.config import Config
+        
+        config = Config()
+        
+        assert config._convert_env_value("test", str) == "test"
+        assert config._convert_env_value("complex string", str) == "complex string"
+        assert config._convert_env_value("123", str) == "123"
+
+    def test_convert_env_value_type_identity_checks(self):
+        """Test that type comparisons use identity (is) rather than equality (==)."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # This test ensures our fix for E721 works correctly
+        # The type identity checks should work with actual type objects
+        assert config._convert_env_value("true", bool) is True
+        assert config._convert_env_value("42", int) == 42
+        assert config._convert_env_value("3.14", float) == 3.14

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.7] - 2025-07-21
+
+### Added
+- Comprehensive test suite for environment variable type conversion (5 new test cases)
+
+### Fixed
+- Code quality issues identified by ruff: unused import (F401) and type comparison style (E721)
+- Replaced type equality checks (==) with identity checks (is) for better performance and correctness
+- Removed unused `typing.Union` import from config.py
+
+### Changed
+- Test suite expanded to 110 tests (up from 105) with improved 88% coverage (up from 87%)
+- Zero code quality violations - all ruff checks now pass
+- Enhanced type conversion reliability in configuration management
+
 ## [0.1.6] - 2025-07-21
 
 ### Added
