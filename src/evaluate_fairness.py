@@ -133,6 +133,47 @@ def _save_metrics_json(results, path):
         raise TypeError(f"Cannot serialize metrics to JSON: {e}")
 
 
+def _validate_common_parameters(method, threshold=None, output_path=None):
+    """Validate common parameters used by both run_pipeline and run_cross_validation.
+    
+    Parameters
+    ----------
+    method : str
+        Training approach name to validate
+    threshold : float or None, optional  
+        Custom decision threshold to validate
+    output_path : str or None, optional
+        Output file path to validate
+        
+    Raises
+    ------
+    ValueError
+        If method is not supported or threshold is invalid
+    TypeError
+        If parameters have wrong types
+    """
+    # Method validation
+    valid_methods = {"baseline", "reweight", "postprocess", "expgrad"}
+    if not isinstance(method, str):
+        raise TypeError(f"method must be a string, got {type(method).__name__}")
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
+    
+    # Threshold validation
+    if threshold is not None:
+        if not isinstance(threshold, (int, float)):
+            raise TypeError(f"threshold must be a number or None, got {type(threshold).__name__}")
+        if not 0.0 <= threshold <= 1.0:
+            raise ValueError(f"threshold must be between 0.0 and 1.0, got {threshold}")
+    
+    # Output path validation
+    if output_path is not None:
+        if not isinstance(output_path, str):
+            raise TypeError(f"output_path must be a string or None, got {type(output_path).__name__}")
+        if not output_path.strip():
+            raise ValueError("output_path cannot be empty or whitespace")
+
+
 def run_pipeline(
     method="baseline",
     test_size=0.3,
@@ -171,23 +212,7 @@ def run_pipeline(
         If parameters have wrong types
     """
     # Input validation
-    valid_methods = {"baseline", "reweight", "postprocess", "expgrad"}
-    if not isinstance(method, str):
-        raise TypeError(f"method must be a string, got {type(method).__name__}")
-    if method not in valid_methods:
-        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
-    
-    if threshold is not None:
-        if not isinstance(threshold, (int, float)):
-            raise TypeError(f"threshold must be a number or None, got {type(threshold).__name__}")
-        if not 0.0 <= threshold <= 1.0:
-            raise ValueError(f"threshold must be between 0.0 and 1.0, got {threshold}")
-    
-    if output_path is not None:
-        if not isinstance(output_path, str):
-            raise TypeError(f"output_path must be a string or None, got {type(output_path).__name__}")
-        if not output_path.strip():
-            raise ValueError("output_path cannot be empty or whitespace")
+    _validate_common_parameters(method, threshold, output_path)
             
     logger.info(f"Running pipeline with method={method}, test_size={test_size}, threshold={threshold}")
 
@@ -287,28 +312,13 @@ def run_cross_validation(
         If parameters have wrong types
     """
     # Input validation
-    valid_methods = {"baseline", "reweight", "postprocess", "expgrad"}
-    if not isinstance(method, str):
-        raise TypeError(f"method must be a string, got {type(method).__name__}")
-    if method not in valid_methods:
-        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
+    _validate_common_parameters(method, threshold, output_path)
     
+    # CV-specific validation
     if not isinstance(cv, int):
         raise TypeError(f"cv must be an integer, got {type(cv).__name__}")
     if cv < 2:
         raise ValueError(f"cv must be at least 2, got {cv}")
-    
-    if threshold is not None:
-        if not isinstance(threshold, (int, float)):
-            raise TypeError(f"threshold must be a number or None, got {type(threshold).__name__}")
-        if not 0.0 <= threshold <= 1.0:
-            raise ValueError(f"threshold must be between 0.0 and 1.0, got {threshold}")
-    
-    if output_path is not None:
-        if not isinstance(output_path, str):
-            raise TypeError(f"output_path must be a string or None, got {type(output_path).__name__}")
-        if not output_path.strip():
-            raise ValueError("output_path cannot be empty or whitespace")
             
     logger.info(f"Running {cv}-fold cross-validation with method={method}, threshold={threshold}")
     X, y = load_credit_dataset(path=data_path, random_state=random_state)

@@ -121,7 +121,7 @@ Tasks are scored using WSJF (Weighted Shortest Job First):
 - ✅ Incomplete test coverage in architecture_review.py (24%) - FIXED (98%)
 - ✅ Generic exception handling masking specific errors in data_loader_preprocessor.py and evaluate_fairness.py - FIXED
 - ✅ Hardcoded parameters in baseline_model.py and bias_mitigator.py (max_iter=1000) - FIXED
-- Code duplication in validation logic across run_pipeline and run_cross_validation
+- ✅ Code duplication in validation logic across run_pipeline and run_cross_validation - FIXED
 - ✅ Missing error handling for file I/O operations - FIXED
 
 ## Architectural Debt

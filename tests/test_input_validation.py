@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 
 from src.data_loader_preprocessor import load_credit_data, load_credit_dataset
-from src.evaluate_fairness import run_pipeline, run_cross_validation, _save_metrics_json
+from src.evaluate_fairness import run_pipeline, run_cross_validation, _save_metrics_json, _validate_common_parameters
 
 
 class TestDataLoaderValidation:
@@ -254,3 +254,89 @@ class TestEdgeCases:
         for method in valid_methods:
             run_pipeline(method=method, test_size=0.3, threshold=0.5)
             run_cross_validation(method=method, cv=2, threshold=0.5)
+
+
+class TestValidationHelperFunction:
+    """Test the centralized _validate_common_parameters helper function."""
+
+    def test_valid_method_validation(self):
+        """Test that valid methods pass validation."""
+        valid_methods = ["baseline", "reweight", "postprocess", "expgrad"]
+        for method in valid_methods:
+            # Should not raise any exceptions
+            _validate_common_parameters(method)
+
+    def test_invalid_method_type(self):
+        """Test that non-string methods are rejected."""
+        with pytest.raises(TypeError, match="method must be a string"):
+            _validate_common_parameters(123)
+        
+        with pytest.raises(TypeError, match="method must be a string"):
+            _validate_common_parameters(None)
+
+    def test_invalid_method_value(self):
+        """Test that unsupported method names are rejected."""
+        with pytest.raises(ValueError, match="method must be one of"):
+            _validate_common_parameters("invalid_method")
+        
+        with pytest.raises(ValueError, match="method must be one of"):
+            _validate_common_parameters("random_forest")
+
+    def test_valid_threshold_validation(self):
+        """Test that valid threshold values pass validation."""
+        # Should not raise exceptions
+        _validate_common_parameters("baseline", threshold=0.0)
+        _validate_common_parameters("baseline", threshold=0.5)
+        _validate_common_parameters("baseline", threshold=1.0)
+        _validate_common_parameters("baseline", threshold=None)
+
+    def test_invalid_threshold_type(self):
+        """Test that non-numeric thresholds are rejected."""
+        with pytest.raises(TypeError, match="threshold must be a number or None"):
+            _validate_common_parameters("baseline", threshold="0.5")
+        
+        with pytest.raises(TypeError, match="threshold must be a number or None"):
+            _validate_common_parameters("baseline", threshold=[0.5])
+
+    def test_invalid_threshold_range(self):
+        """Test that out-of-range thresholds are rejected."""
+        with pytest.raises(ValueError, match="threshold must be between 0.0 and 1.0"):
+            _validate_common_parameters("baseline", threshold=-0.1)
+        
+        with pytest.raises(ValueError, match="threshold must be between 0.0 and 1.0"):
+            _validate_common_parameters("baseline", threshold=1.1)
+
+    def test_valid_output_path_validation(self):
+        """Test that valid output paths pass validation."""
+        # Should not raise exceptions
+        _validate_common_parameters("baseline", output_path=None)
+        _validate_common_parameters("baseline", output_path="metrics.json")
+        _validate_common_parameters("baseline", output_path="/path/to/file.json")
+
+    def test_invalid_output_path_type(self):
+        """Test that non-string output paths are rejected."""
+        with pytest.raises(TypeError, match="output_path must be a string or None"):
+            _validate_common_parameters("baseline", output_path=123)
+        
+        with pytest.raises(TypeError, match="output_path must be a string or None"):
+            _validate_common_parameters("baseline", output_path=["path.json"])
+
+    def test_invalid_output_path_empty(self):
+        """Test that empty output paths are rejected."""
+        with pytest.raises(ValueError, match="output_path cannot be empty"):
+            _validate_common_parameters("baseline", output_path="")
+        
+        with pytest.raises(ValueError, match="output_path cannot be empty"):
+            _validate_common_parameters("baseline", output_path="   ")
+
+    def test_combined_parameter_validation(self):
+        """Test validation with multiple parameters simultaneously."""
+        # All valid parameters
+        _validate_common_parameters("reweight", threshold=0.7, output_path="results.json")
+        
+        # Mix of valid and invalid should still fail
+        with pytest.raises(ValueError, match="method must be one of"):
+            _validate_common_parameters("invalid", threshold=0.5, output_path="valid.json")
+        
+        with pytest.raises(ValueError, match="threshold must be between"):
+            _validate_common_parameters("baseline", threshold=2.0, output_path="valid.json")
