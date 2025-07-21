@@ -10,7 +10,7 @@ This module provides a flexible configuration system that supports:
 
 import os
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from pathlib import Path
 
 try:
@@ -228,11 +228,11 @@ class Config:
         Returns:
             Converted value
         """
-        if target_type == bool:
+        if target_type is bool:
             return value.lower() in ('true', '1', 'yes', 'on')
-        elif target_type == int:
+        elif target_type is int:
             return int(value)
-        elif target_type == float:
+        elif target_type is float:
             return float(value)
         else:
             return value

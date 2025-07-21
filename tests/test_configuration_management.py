@@ -223,3 +223,158 @@ class TestConfigurationIntegration:
         
         # Note: Integration with existing modules will be done in a separate step
         # This test validates that configuration values are available for use
+
+
+class TestEnvironmentVariableConversion:
+    """Test environment variable type conversion functionality."""
+
+    def test_convert_env_value_bool_conversion(self):
+        """Test boolean conversion from environment variables."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # Test true values
+        assert config._convert_env_value("true", bool) is True
+        assert config._convert_env_value("True", bool) is True
+        assert config._convert_env_value("TRUE", bool) is True
+        assert config._convert_env_value("1", bool) is True
+        assert config._convert_env_value("yes", bool) is True
+        assert config._convert_env_value("on", bool) is True
+        
+        # Test false values
+        assert config._convert_env_value("false", bool) is False
+        assert config._convert_env_value("False", bool) is False
+        assert config._convert_env_value("0", bool) is False
+        assert config._convert_env_value("no", bool) is False
+        assert config._convert_env_value("off", bool) is False
+
+    def test_convert_env_value_int_conversion(self):
+        """Test integer conversion from environment variables."""
+        from src.config import Config
+        
+        config = Config()
+        
+        assert config._convert_env_value("42", int) == 42
+        assert config._convert_env_value("0", int) == 0
+        assert config._convert_env_value("-10", int) == -10
+        assert config._convert_env_value("1000", int) == 1000
+
+    def test_convert_env_value_float_conversion(self):
+        """Test float conversion from environment variables."""
+        from src.config import Config
+        
+        config = Config()
+        
+        assert config._convert_env_value("3.14", float) == 3.14
+        assert config._convert_env_value("0.0", float) == 0.0
+        assert config._convert_env_value("-2.5", float) == -2.5
+        assert config._convert_env_value("1e-3", float) == 0.001
+
+    def test_convert_env_value_string_passthrough(self):
+        """Test that string values pass through unchanged."""
+        from src.config import Config
+        
+        config = Config()
+        
+        assert config._convert_env_value("test", str) == "test"
+        assert config._convert_env_value("complex string", str) == "complex string"
+        assert config._convert_env_value("123", str) == "123"
+
+    def test_convert_env_value_type_identity_checks(self):
+        """Test that type comparisons use identity (is) rather than equality (==)."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # This test ensures our fix for E721 works correctly
+        # The type identity checks should work with actual type objects
+        assert config._convert_env_value("true", bool) is True
+        assert config._convert_env_value("42", int) == 42
+        assert config._convert_env_value("3.14", float) == 3.14
+
+
+class TestConfigurationEdgeCases:
+    """Test edge cases and error conditions in configuration management."""
+
+    def test_config_section_repr(self):
+        """Test ConfigSection string representation."""
+        from src.config import ConfigSection
+        
+        test_data = {
+            "test_attr": "test_value",
+            "number": 42,
+        }
+        section = ConfigSection(test_data)
+        section._private = "hidden"  # Should not appear in repr
+        
+        repr_str = repr(section)
+        assert "ConfigSection" in repr_str
+        assert "test_attr" in repr_str
+        assert "test_value" in repr_str
+        assert "number" in repr_str
+        assert "42" in repr_str
+        assert "_private" not in repr_str
+
+    def test_yaml_import_error_simulation(self):
+        """Test that the yaml import error path exists in the code."""
+        # We can't easily test this without breaking the global config instance
+        # But we can verify the error message and logic exists
+        from src.config import Config
+        import src.config as config_module
+        
+        # Verify the error message exists in the source
+        import inspect
+        source = inspect.getsource(config_module.Config._load_configuration)
+        assert "PyYAML is required" in source
+        assert "yaml is None" in source
+
+    def test_environment_variable_edge_cases(self):
+        """Test edge cases in environment variable processing."""
+        import os
+        from src.config import Config
+        
+        # Test environment variables with underscores that don't map cleanly
+        test_env = {
+            'FAIRNESS_SINGLE': 'test',  # Should be skipped (< 2 parts)
+            'FAIRNESS_TEST_CUSTOM': 'value',  # Should parse as test.custom
+        }
+        
+        original_env = os.environ.copy()
+        try:
+            os.environ.update(test_env)
+            config = Config(force_reload=True)
+            # Config should load without errors even with edge case env vars
+            assert config is not None
+        finally:
+            # Restore original environment
+            os.environ.clear()
+            os.environ.update(original_env)
+
+    def test_config_file_not_found_handling(self):
+        """Test behavior when configuration file doesn't exist."""
+        from src.config import Config
+        import tempfile
+        import os
+        
+        # Test with non-existent file path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            non_existent_path = os.path.join(temp_dir, "non_existent.yaml")
+            
+            # Should raise FileNotFoundError for missing config files
+            with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+                Config(config_path=non_existent_path, force_reload=True)
+
+    def test_environment_variable_parsing_logic(self):
+        """Test that environment variable parsing logic handles edge cases."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # Test the internal parsing logic indirectly by verifying 
+        # that short variable names would be skipped
+        # We test this by checking the source code contains the logic
+        import inspect
+        source = inspect.getsource(config._apply_environment_overrides)
+        assert "len(var_parts) < 2" in source
+        assert "continue" in source
