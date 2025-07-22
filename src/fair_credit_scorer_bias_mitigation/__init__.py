@@ -1,6 +1,6 @@
 """Public API for the Fair Credit Scorer package."""
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 from baseline_model import evaluate_model, train_baseline_model
 from bias_mitigator import (

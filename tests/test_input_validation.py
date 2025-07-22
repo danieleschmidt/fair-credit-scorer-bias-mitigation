@@ -220,9 +220,15 @@ class TestEdgeCases:
 
     def test_valid_threshold_boundaries(self):
         """Test that boundary threshold values are accepted."""
-        # These should not raise exceptions
-        run_pipeline(threshold=0.0, test_size=0.1)
-        run_pipeline(threshold=1.0, test_size=0.1)
+        import warnings
+        from sklearn.exceptions import UndefinedMetricWarning
+        
+        # These should not raise exceptions, but may generate warnings
+        # when threshold values cause extreme predictions
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
+            run_pipeline(threshold=0.0, test_size=0.1)
+            run_pipeline(threshold=1.0, test_size=0.1)
 
     def test_valid_test_size_boundaries(self, tmp_path):
         """Test that boundary test_size values work correctly."""

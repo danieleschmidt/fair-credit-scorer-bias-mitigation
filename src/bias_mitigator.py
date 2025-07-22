@@ -29,6 +29,13 @@ bias mitigation capabilities suitable for production ML systems.
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
+try:
+    from .logging_config import get_logger
+except ImportError:
+    from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 def expgrad_demographic_parity(X, y, protected):
     """Train a classifier using the Exponentiated Gradient algorithm.
@@ -51,28 +58,61 @@ def expgrad_demographic_parity(X, y, protected):
         Fitted model enforcing demographic parity.
     """
     from fairlearn.reductions import ExponentiatedGradient, DemographicParity
-
-    base_est = LogisticRegression(max_iter=1000, solver="liblinear")
-    mitigator = ExponentiatedGradient(base_est, DemographicParity())
-    mitigator.fit(X, y, sensitive_features=protected)
-    return mitigator
+    
+    logger.info(f"Starting Exponentiated Gradient training with demographic parity constraint")
+    logger.debug(f"Training data shape: {X.shape}, protected groups: {len(set(protected))}")
+    
+    try:
+        base_est = LogisticRegression(max_iter=1000, solver="liblinear")
+        logger.debug("Created base LogisticRegression estimator with max_iter=1000, solver=liblinear")
+        
+        mitigator = ExponentiatedGradient(base_est, DemographicParity())
+        logger.debug("Initialized ExponentiatedGradient with DemographicParity constraint")
+        
+        mitigator.fit(X, y, sensitive_features=protected)
+        logger.info("Successfully completed Exponentiated Gradient training")
+        
+        return mitigator
+        
+    except Exception as e:
+        logger.error(f"Failed to train Exponentiated Gradient model: {e}")
+        raise
 
 
 def reweight_samples(y, protected):
     """Return sample weights that balance label distribution across protected groups."""
-    if not isinstance(protected, pd.Series):
-        protected = pd.Series(protected, name="protected")
-
-    df = pd.DataFrame({"y": y, "protected": protected})
-    # compute weights per label/protected combination
-    counts = df.value_counts().rename("count").reset_index()
-    total = len(df)
-    weights = {}
-    for _, row in counts.iterrows():
-        group = (row["y"], row["protected"])
-        weights[group] = total / (len(counts) * row["count"])
-
-    return [weights[(yi, pi)] for yi, pi in zip(df["y"], df["protected"])]
+    logger.info("Computing sample weights for demographic parity reweighting")
+    
+    try:
+        if not isinstance(protected, pd.Series):
+            protected = pd.Series(protected, name="protected")
+        
+        df = pd.DataFrame({"y": y, "protected": protected})
+        logger.debug(f"Created DataFrame with {len(df)} samples for weight computation")
+        
+        # compute weights per label/protected combination
+        counts = df.value_counts().rename("count").reset_index()
+        total = len(df)
+        weights = {}
+        
+        logger.debug(f"Found {len(counts)} unique label/protected combinations")
+        
+        for _, row in counts.iterrows():
+            group = (row["y"], row["protected"])
+            weight = total / (len(counts) * row["count"])
+            weights[group] = weight
+            logger.debug(f"Group {group}: count={row['count']}, weight={weight:.4f}")
+        
+        sample_weights = [weights[(yi, pi)] for yi, pi in zip(df["y"], df["protected"])]
+        
+        logger.info(f"Successfully computed {len(sample_weights)} sample weights")
+        logger.debug(f"Weight range: [{min(sample_weights):.4f}, {max(sample_weights):.4f}]")
+        
+        return sample_weights
+        
+    except Exception as e:
+        logger.error(f"Failed to compute sample weights: {e}")
+        raise
 
 
 def postprocess_equalized_odds(model, X, y, protected):
@@ -95,12 +135,28 @@ def postprocess_equalized_odds(model, X, y, protected):
         A post-processed classifier enforcing the equalized odds constraint.
     """
     from fairlearn.postprocessing import ThresholdOptimizer
-
-    optimizer = ThresholdOptimizer(
-        estimator=model,
-        constraints="equalized_odds",
-        predict_method="predict_proba",
-        prefit=True,
-    )
-    optimizer.fit(X, y, sensitive_features=protected)
-    return optimizer
+    
+    logger.info("Starting post-processing with equalized odds constraint")
+    logger.debug(f"Input data shape: {X.shape}, protected groups: {len(set(protected))}")
+    
+    try:
+        # Verify model has required methods
+        if not hasattr(model, 'predict_proba'):
+            logger.warning("Model does not have predict_proba method, post-processing may fail")
+        
+        optimizer = ThresholdOptimizer(
+            estimator=model,
+            constraints="equalized_odds",
+            predict_method="predict_proba",
+            prefit=True,
+        )
+        logger.debug("Created ThresholdOptimizer with equalized_odds constraint")
+        
+        optimizer.fit(X, y, sensitive_features=protected)
+        logger.info("Successfully completed threshold optimization for equalized odds")
+        
+        return optimizer
+        
+    except Exception as e:
+        logger.error(f"Failed to optimize thresholds for equalized odds: {e}")
+        raise
