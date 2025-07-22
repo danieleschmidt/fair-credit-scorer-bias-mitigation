@@ -2,12 +2,15 @@
 
 This module handles all data loading operations, including reading from CSV files
 and generating synthetic datasets for testing and development. It provides consistent
-data splitting and preprocessing for model training and evaluation.
+data splitting and preprocessing for model training and evaluation with integrated
+data versioning capabilities.
 
 Functions:
     load_credit_dataset: Load entire dataset without splitting into train/test
     load_credit_data: Load and split data into train/test sets with validation
     train_test_split_validated: Validated train/test splitting utility with comprehensive error handling
+    generate_synthetic_credit_data: Generate synthetic credit data for testing
+    load_versioned_credit_data: Load data with automatic versioning support
 
 Features:
 - Automatic synthetic data generation if CSV file doesn't exist
@@ -15,17 +18,20 @@ Features:
 - Stratified train/test splitting with validation
 - Comprehensive input validation and specific error handling
 - Support for custom file paths and random states
+- Integrated data versioning and lineage tracking
+- Automatic version creation for data transformations
 
 Configuration:
     Data parameters are managed through the configuration system:
     - data.default_dataset_path: Default CSV file location
     - data.label_column_name/protected_column_name: Column name mappings
     - data.synthetic.*: Parameters for synthetic data generation
+    - data.versioning.*: Data versioning configuration
 
 Example:
-    >>> from data_loader_preprocessor import load_credit_data, load_credit_dataset
-    >>> # Load and split data
-    >>> X_train, X_test, y_train, y_test = load_credit_data(test_size=0.3)
+    >>> from data_loader_preprocessor import load_credit_data, load_versioned_credit_data
+    >>> # Load and split data with versioning
+    >>> X_train, X_test, y_train, y_test = load_versioned_credit_data(test_size=0.3, enable_versioning=True)
     >>> 
     >>> # Load entire dataset without splitting
     >>> X, y = load_credit_dataset("path/to/data.csv")
@@ -35,6 +41,7 @@ Example:
 
 The module automatically generates realistic synthetic credit scoring data when
 real datasets are not available, ensuring consistent development and testing workflows.
+Data versioning integration provides complete audit trails for reproducible ML pipelines.
 """
 
 import os
@@ -51,6 +58,73 @@ except ImportError:
     from config import get_config
 
 logger = logging.getLogger(__name__)
+
+# Optional import for data versioning (graceful fallback if not available)
+try:
+    from data_versioning import DataVersionManager, create_data_version, track_data_transformation
+    VERSIONING_AVAILABLE = True
+except ImportError:
+    logger.debug("Data versioning module not available")
+    VERSIONING_AVAILABLE = False
+
+
+def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative=5, 
+                                  n_redundant=2, random_state=42):
+    """Generate synthetic credit scoring data for benchmarking and testing.
+    
+    Parameters
+    ----------
+    n_samples : int, optional
+        Number of samples to generate, by default 10000
+    n_features : int, optional
+        Total number of features, by default 10
+    n_informative : int, optional
+        Number of informative features, by default 5
+    n_redundant : int, optional
+        Number of redundant features, by default 2
+    random_state : int, optional
+        Random seed for reproducibility, by default 42
+        
+    Returns
+    -------
+    tuple
+        (X, y, sensitive_features) where:
+        - X is the feature matrix (without protected attribute)
+        - y is the target vector
+        - sensitive_features is the protected attribute vector
+        
+    Raises
+    ------
+    ValueError
+        If n_informative > n_features or other invalid parameters
+    """
+    if n_informative > n_features:
+        raise ValueError(f"n_informative ({n_informative}) cannot exceed n_features ({n_features})")
+    if n_samples <= 0:
+        raise ValueError(f"n_samples must be positive, got {n_samples}")
+    if n_features <= 0:
+        raise ValueError(f"n_features must be positive, got {n_features}")
+        
+    logger.debug(f"Generating {n_samples} synthetic credit samples with {n_features} features")
+    
+    # Generate base features and target
+    X_full, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_informative,
+        n_redundant=n_redundant,
+        n_clusters_per_class=1,
+        random_state=random_state
+    )
+    
+    # Create protected attribute based on first feature
+    # This creates a realistic correlation pattern
+    sensitive_features = (X_full[:, 0] > X_full[:, 0].mean()).astype(int)
+    
+    # Return features without the protected attribute embedded
+    X = X_full[:, 1:]  # Remove first feature used for protected attribute
+    
+    return X, y, sensitive_features
 
 
 def load_credit_dataset(
@@ -265,3 +339,144 @@ def train_test_split_validated(X, y, test_size=0.3, random_state=None):
         return train_test_split(X, y, test_size=test_size, random_state=random_state)
     except (TypeError, AttributeError) as e:
         raise ValueError(f"Invalid data format for train/test split: {e}")
+
+
+def load_versioned_credit_data(
+    path: str = "data/credit_data.csv",
+    test_size: float = 0.3,
+    random_state: int = 42,
+    enable_versioning: bool = True,
+    version_storage_path: str = "./data_versions",
+    version_description: str = None
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+    """Load credit data with automatic versioning and lineage tracking.
+    
+    This function extends load_credit_data with integrated data versioning
+    capabilities, automatically tracking data lineage and creating versions
+    for the loaded dataset and train/test splits.
+    
+    Parameters
+    ----------
+    path : str, optional
+        Path to the CSV file, by default "data/credit_data.csv"
+    test_size : float, optional
+        Proportion of data for testing, by default 0.3
+    random_state : int, optional
+        Random seed for reproducibility, by default 42
+    enable_versioning : bool, optional
+        Whether to enable data versioning, by default True
+    version_storage_path : str, optional
+        Directory for version storage, by default "./data_versions"
+    version_description : str, optional
+        Description for the created versions
+        
+    Returns
+    -------
+    Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]
+        X_train, X_test, y_train, y_test splits
+        
+    Raises
+    ------
+    ImportError
+        If versioning is enabled but data_versioning module is not available
+    ValueError
+        If path is empty, test_size is invalid, or random_state is negative
+    TypeError
+        If parameters have wrong types
+    FileNotFoundError
+        If path directory cannot be created
+    PermissionError
+        If lacking permissions to read/write files
+    """
+    if enable_versioning and not VERSIONING_AVAILABLE:
+        raise ImportError(
+            "Data versioning is enabled but data_versioning module is not available. "
+            "Either disable versioning (enable_versioning=False) or ensure the module is installed."
+        )
+    
+    logger.info(f"Loading credit data with versioning={'enabled' if enable_versioning else 'disabled'}")
+    
+    # Load data using standard function
+    X_train, X_test, y_train, y_test = load_credit_data(
+        path=path,
+        test_size=test_size,
+        random_state=random_state
+    )
+    
+    if enable_versioning:
+        try:
+            # Initialize version manager
+            manager = DataVersionManager(version_storage_path)
+            
+            # Create combined dataset for versioning
+            X_combined = pd.concat([X_train, X_test], ignore_index=True)
+            y_combined = pd.concat([y_train, y_test], ignore_index=True)
+            
+            # Create version for original dataset
+            original_version = manager.create_version(
+                data=pd.concat([X_combined, y_combined], axis=1),
+                source_path=path,
+                version_id=f"original_{manager._generate_version_id()}",
+                description=version_description or f"Original dataset loaded from {path}",
+                tags=["original", "credit_data"]
+            )
+            manager.save_version(original_version, pd.concat([X_combined, y_combined], axis=1))
+            
+            # Create versions for train and test splits
+            train_data = pd.concat([X_train, y_train], axis=1)
+            test_data = pd.concat([X_test, y_test], axis=1)
+            
+            train_version = manager.create_version(
+                data=train_data,
+                source_path=f"{path}_train_split",
+                version_id=f"train_{manager._generate_version_id()}",
+                description=f"Training split (test_size={test_size}, random_state={random_state})",
+                tags=["train", "split"]
+            )
+            manager.save_version(train_version, train_data)
+            
+            test_version = manager.create_version(
+                data=test_data,
+                source_path=f"{path}_test_split",
+                version_id=f"test_{manager._generate_version_id()}",
+                description=f"Test split (test_size={test_size}, random_state={random_state})",
+                tags=["test", "split"]
+            )
+            manager.save_version(test_version, test_data)
+            
+            # Track lineage for train/test split transformation
+            manager.track_transformation(
+                transformation_id=f"train_test_split_{random_state}_{int(test_size*100)}",
+                input_versions=[original_version.version_id],
+                output_version=train_version.version_id,
+                transformation_type="train_test_split",
+                parameters={
+                    "test_size": test_size,
+                    "random_state": random_state,
+                    "stratify": True,
+                    "split_type": "train"
+                }
+            )
+            
+            manager.track_transformation(
+                transformation_id=f"train_test_split_{random_state}_{int(test_size*100)}_test",
+                input_versions=[original_version.version_id],
+                output_version=test_version.version_id,
+                transformation_type="train_test_split",
+                parameters={
+                    "test_size": test_size,
+                    "random_state": random_state,
+                    "stratify": True,
+                    "split_type": "test"
+                }
+            )
+            
+            logger.info(f"Created data versions: {original_version.version_id}, "
+                       f"{train_version.version_id}, {test_version.version_id}")
+            
+        except Exception as e:
+            logger.warning(f"Data versioning failed: {e}")
+            if enable_versioning:
+                logger.warning("Continuing without versioning")
+    
+    return X_train, X_test, y_train, y_test

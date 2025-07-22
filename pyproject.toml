@@ -40,3 +40,8 @@ dev = [
 
 [project.scripts]
 fairness-eval = "fair_credit_scorer_bias_mitigation.cli:main"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]

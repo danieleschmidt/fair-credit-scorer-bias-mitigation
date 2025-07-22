@@ -67,4 +67,48 @@ output:
 
 # Logging configuration
 logging:
+  # Default logging level
   default_level: "INFO"
+  
+  # Log format for different handlers
+  format:
+    # Standard format for most use cases
+    standard: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    # Detailed format for debugging
+    detailed: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+    # Simple format for console output
+    simple: "%(levelname)s - %(name)s - %(message)s"
+  
+  # Date format
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # Handler configuration
+  handlers:
+    # Console handler settings
+    console:
+      enabled: true
+      level: "INFO"
+      format: "simple"
+    
+    # File handler settings
+    file:
+      enabled: false  # Disabled by default
+      level: "DEBUG"
+      format: "detailed"
+      filename: "logs/fair_credit_scorer.log"
+      max_bytes: 10485760  # 10MB
+      backup_count: 5
+  
+  # Module-specific log levels
+  modules:
+    "src.data_versioning": "INFO"
+    "src.performance_benchmarking": "INFO"
+    "src.evaluate_fairness": "INFO"
+    "src.bias_mitigator": "INFO"
+    "src.baseline_model": "INFO"
+    "src.fairness_metrics": "INFO"
+  
+  # Disable specific loggers (useful for third-party libraries)
+  disable:
+    - "urllib3.connectionpool"
+    - "matplotlib.font_manager"

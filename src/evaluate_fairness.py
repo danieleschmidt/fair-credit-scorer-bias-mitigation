@@ -41,7 +41,8 @@ application, and comprehensive fairness evaluation with detailed reporting.
 import argparse
 import logging
 
-from fair_credit_scorer_bias_mitigation import __version__
+# Import version directly to avoid circular import
+__version__ = "0.2.0"
 
 from data_loader_preprocessor import load_credit_data, load_credit_dataset
 from baseline_model import train_baseline_model, evaluate_model
@@ -181,6 +182,10 @@ def run_pipeline(
     random_state=42,
     data_path="data/credit_data.csv",
     threshold=None,
+    X=None,
+    y=None,
+    sensitive_features=None,
+    verbose=True,
 ):
     """Train the model and return accuracy and fairness metrics.
 
@@ -198,6 +203,16 @@ def run_pipeline(
         ``None`` uses the model's built-in ``predict`` method.
     random_state : int, optional
         Random seed used when splitting the data, by default 42.
+    data_path : str, optional
+        Path to load data from, by default "data/credit_data.csv".
+    X : array-like, optional
+        Pre-loaded feature matrix. If provided, data_path is ignored.
+    y : array-like, optional  
+        Pre-loaded target vector. Required if X is provided.
+    sensitive_features : array-like, optional
+        Pre-loaded sensitive feature vector. Required if X is provided.
+    verbose : bool, optional
+        Whether to log detailed information, by default True.
 
     Returns
     -------
@@ -213,12 +228,36 @@ def run_pipeline(
     """
     # Input validation
     _validate_common_parameters(method, threshold, output_path)
+    
+    # Validate in-memory data parameters
+    if X is not None:
+        if y is None or sensitive_features is None:
+            raise ValueError("When X is provided, y and sensitive_features must also be provided")
+        if len(X) != len(y) or len(X) != len(sensitive_features):
+            raise ValueError("X, y, and sensitive_features must have the same length")
             
-    logger.info(f"Running pipeline with method={method}, test_size={test_size}, threshold={threshold}")
+    if verbose:
+        logger.info(f"Running pipeline with method={method}, test_size={test_size}, threshold={threshold}")
 
-    X_train, X_test, y_train, y_test = load_credit_data(
-        path=data_path, test_size=test_size, random_state=random_state
-    )
+    # Load or use provided data
+    if X is not None:
+        # Use in-memory data for benchmarking
+        from sklearn.model_selection import train_test_split
+        import pandas as pd
+        
+        # Convert to DataFrame format expected by the pipeline
+        X_df = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
+        if 'protected' not in X_df.columns:
+            X_df['protected'] = sensitive_features
+        
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_df, y, test_size=test_size, random_state=random_state, stratify=y
+        )
+    else:
+        # Load from file
+        X_train, X_test, y_train, y_test = load_credit_data(
+            path=data_path, test_size=test_size, random_state=random_state
+        )
 
     features_train = X_train.drop("protected", axis=1)
     features_test = X_test.drop("protected", axis=1)
@@ -269,9 +308,10 @@ def run_pipeline(
         y_scores=probs,
     )
     accuracy = overall["accuracy"]
-    logger.info("Accuracy: %.3f", accuracy)
-    logger.info("Overall fairness metrics:\n%s", overall)
-    logger.info("Metrics by group:\n%s", by_group)
+    if verbose:
+        logger.info("Accuracy: %.3f", accuracy)
+        logger.info("Overall fairness metrics:\n%s", overall)
+        logger.info("Metrics by group:\n%s", by_group)
 
     results = {"accuracy": accuracy, "overall": overall, "by_group": by_group}
     if output_path is not None:
