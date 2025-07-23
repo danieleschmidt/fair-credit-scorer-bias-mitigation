@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 
 # Optional import for data versioning (graceful fallback if not available)
 try:
-    from data_versioning import DataVersionManager, create_data_version, track_data_transformation
+    from data_versioning import DataVersionManager
     VERSIONING_AVAILABLE = True
 except ImportError:
     logger.debug("Data versioning module not available")
