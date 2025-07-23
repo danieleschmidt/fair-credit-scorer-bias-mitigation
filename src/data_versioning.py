@@ -47,7 +47,7 @@ import hashlib
 import logging
 from datetime import datetime
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 import pandas as pd
 import numpy as np
 
@@ -580,7 +580,7 @@ class DataVersionManager:
                     self.logger.warning(f"Failed to load lineage {filename}: {e}")
         
         # Sort by timestamp
-        lineage_history.sort(key=lambda l: l.timestamp or datetime.min)
+        lineage_history.sort(key=lambda item: item.timestamp or datetime.min)
         return lineage_history
     
     def verify_data_integrity(self, version_id: str) -> bool:

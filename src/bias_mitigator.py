@@ -59,7 +59,7 @@ def expgrad_demographic_parity(X, y, protected):
     """
     from fairlearn.reductions import ExponentiatedGradient, DemographicParity
     
-    logger.info(f"Starting Exponentiated Gradient training with demographic parity constraint")
+    logger.info("Starting Exponentiated Gradient training with demographic parity constraint")
     logger.debug(f"Training data shape: {X.shape}, protected groups: {len(set(protected))}")
     
     try:
