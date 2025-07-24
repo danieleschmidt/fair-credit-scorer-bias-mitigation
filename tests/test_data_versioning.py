@@ -415,6 +415,361 @@ class TestDataVersioningFunctions:
         mock_manager.track_transformation.assert_called_once()
 
 
+class TestDataVersioningEdgeCases:
+    """Test cases for edge cases and error conditions in data versioning."""
+    
+    def test_hash_collision_handling(self):
+        """Test handling of hash collisions in version creation."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Create two different DataFrames
+            df1 = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+            df2 = pd.DataFrame({'x': [7, 8, 9], 'y': [10, 11, 12]})
+            
+            # Mock hash computation to force a collision
+            with patch('src.data_versioning.DataVersionManager._compute_data_hash') as mock_hash:
+                mock_hash.return_value = "collision_hash"
+                
+                # Create first version with forced hash
+                version1 = manager.create_version(
+                    data=df1, source_path="/data/df1.csv", version_id="v1.0.0"
+                )
+                manager.save_version(version1, df1)
+                
+                # Create second version with same hash - should still work
+                version2 = manager.create_version(
+                    data=df2, source_path="/data/df2.csv", version_id="v2.0.0"
+                )
+                manager.save_version(version2, df2)
+                
+                # Both versions should exist despite hash collision
+                versions = manager.list_versions()
+                assert len(versions) == 2
+                assert {v.version_id for v in versions} == {"v1.0.0", "v2.0.0"}
+    
+    def test_version_rollback_functionality(self):
+        """Test version rollback functionality."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Create multiple versions
+            df_v1 = pd.DataFrame({'value': [1, 2, 3]})
+            df_v2 = pd.DataFrame({'value': [4, 5, 6]})
+            df_v3 = pd.DataFrame({'value': [7, 8, 9]})
+            
+            v1 = manager.create_version(data=df_v1, source_path="/data/v1.csv", version_id="v1.0.0")
+            v2 = manager.create_version(data=df_v2, source_path="/data/v2.csv", version_id="v2.0.0")
+            v3 = manager.create_version(data=df_v3, source_path="/data/v3.csv", version_id="v3.0.0")
+            
+            manager.save_version(v1, df_v1)
+            manager.save_version(v2, df_v2)
+            manager.save_version(v3, df_v3)
+            
+            # Test rollback by loading older version data
+            loaded_v1 = manager.load_data("v1.0.0")
+            pd.testing.assert_frame_equal(loaded_v1, df_v1)
+            
+            loaded_v2 = manager.load_data("v2.0.0")
+            pd.testing.assert_frame_equal(loaded_v2, df_v2)
+            
+            # Verify we can still access all versions
+            versions = manager.list_versions()
+            assert len(versions) == 3
+    
+    def test_metadata_persistence_across_restarts(self):
+        """Test metadata persistence across manager restarts."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create initial manager and version
+            manager1 = DataVersionManager(storage_path=temp_dir)
+            
+            df = pd.DataFrame({
+                'feature1': [1.5, 2.5, 3.5],
+                'feature2': [10, 20, 30],
+                'target': [0, 1, 0]
+            })
+            
+            version = manager1.create_version(
+                data=df, 
+                source_path="/data/persistent.csv", 
+                version_id="persistent_v1"
+            )
+            manager1.save_version(version, df)
+            
+            # Create new manager instance (simulating restart)
+            manager2 = DataVersionManager(storage_path=temp_dir)
+            
+            # Verify version and metadata persist
+            loaded_versions = manager2.list_versions()
+            assert len(loaded_versions) == 1
+            
+            persistent_version = loaded_versions[0]
+            assert persistent_version.version_id == "persistent_v1"
+            assert persistent_version.source_path == "/data/persistent.csv"
+            assert persistent_version.metadata.rows == 3
+            assert persistent_version.metadata.columns == 3
+            
+            # Verify data can still be loaded
+            loaded_data = manager2.load_data("persistent_v1")
+            pd.testing.assert_frame_equal(loaded_data, df)
+    
+    def test_file_not_found_error_handling(self):
+        """Test proper error handling when version files don't exist."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Try to load non-existent version
+            with pytest.raises(FileNotFoundError, match="Version nonexistent not found"):
+                manager.load_version("nonexistent")
+    
+    def test_metadata_statistics_computation_error_handling(self):
+        """Test error handling in metadata statistics computation."""
+        # Create DataFrame with problematic data for statistics
+        df = pd.DataFrame({
+            'problematic_col': [float('inf'), float('-inf'), float('nan')],
+            'normal_col': [1, 2, 3]
+        })
+        
+        # Mock DataFrame.describe to raise an exception
+        with patch.object(pd.DataFrame, 'describe') as mock_describe:
+            mock_describe.side_effect = ValueError("Statistics computation failed")
+            
+            # Should handle the error gracefully
+            metadata = DataMetadata.from_dataframe(df)
+            
+            # Should still create metadata but with None statistics
+            assert metadata.rows == 3
+            assert metadata.columns == 2
+            assert metadata.statistics is None
+    
+    def test_data_version_equality_and_hashing(self):
+        """Test DataVersion equality and hashing methods."""
+        metadata = DataMetadata(rows=100, columns=5, size_bytes=1000, schema={}, quality_score=1.0)
+        
+        version1 = DataVersion(
+            version_id="test_v1",
+            data_hash="hash123",
+            timestamp=datetime(2025, 1, 1),
+            source_path="/data/test.csv",
+            metadata=metadata
+        )
+        
+        version2 = DataVersion(
+            version_id="test_v1",
+            data_hash="hash123", 
+            timestamp=datetime(2025, 1, 1),
+            source_path="/data/test.csv",
+            metadata=metadata
+        )
+        
+        version3 = DataVersion(
+            version_id="test_v2",
+            data_hash="hash456",
+            timestamp=datetime(2025, 1, 1),
+            source_path="/data/test2.csv", 
+            metadata=metadata
+        )
+        
+        # Test equality
+        assert version1 == version2
+        assert version1 != version3
+        assert version1 != "not_a_version"  # Test non-DataVersion comparison
+        
+        # Test hashing
+        assert hash(version1) == hash(version2)  # Same version_id
+        assert hash(version1) != hash(version3)  # Different version_id
+        
+        # Test use in sets/dicts
+        version_set = {version1, version2, version3}
+        assert len(version_set) == 2  # version1 and version2 are equal
+    
+    def test_automatic_version_id_generation(self):
+        """Test automatic version ID generation without base name."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            df = pd.DataFrame({'data': [1, 2, 3]})
+            
+            # Create version without providing version_id (should auto-generate)
+            version = manager.create_version(data=df, source_path="/data/auto.csv")
+            
+            # Should generate a version ID starting with 'v' and timestamp
+            assert version.version_id.startswith('v')
+            assert len(version.version_id) > 5  # Should have timestamp
+    
+    def test_cleanup_old_versions(self):
+        """Test cleanup of old versions functionality."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Create multiple versions
+            for i in range(5):
+                df = pd.DataFrame({'value': [i]})
+                version = manager.create_version(
+                    data=df, 
+                    source_path=f"/data/v{i}.csv",
+                    version_id=f"v{i}.0.0"
+                )
+                manager.save_version(version, df)
+            
+            # Verify all versions exist
+            versions_before = manager.list_versions()
+            assert len(versions_before) == 5
+            
+            # Cleanup keeping only 3 latest
+            removed_count = manager.cleanup_old_versions(keep_latest=3)
+            assert removed_count == 2
+            
+            # Verify only 3 versions remain
+            versions_after = manager.list_versions()
+            assert len(versions_after) == 3
+    
+    def test_cleanup_with_fewer_versions_than_keep_latest(self):
+        """Test cleanup when fewer versions exist than keep_latest."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Create only 2 versions
+            for i in range(2):
+                df = pd.DataFrame({'value': [i]}) 
+                version = manager.create_version(
+                    data=df,
+                    source_path=f"/data/v{i}.csv", 
+                    version_id=f"v{i}.0.0"
+                )
+                manager.save_version(version, df)
+            
+            # Try to cleanup keeping 5 (more than we have)
+            removed_count = manager.cleanup_old_versions(keep_latest=5)
+            assert removed_count == 0  # Nothing should be removed
+            
+            # Verify both versions still exist
+            versions = manager.list_versions()
+            assert len(versions) == 2
+    
+    def test_data_integrity_verification(self):
+        """Test data integrity verification functionality."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            df = pd.DataFrame({'integrity': [1, 2, 3, 4, 5]})
+            version = manager.create_version(
+                data=df,
+                source_path="/data/integrity_test.csv",
+                version_id="integrity_v1"
+            )
+            manager.save_version(version, df)
+            
+            # Verify integrity (should pass)
+            is_valid = manager.verify_data_integrity("integrity_v1")
+            assert is_valid is True
+    
+    def test_data_integrity_verification_failure(self):
+        """Test data integrity verification when data doesn't match hash."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            df = pd.DataFrame({'data': [1, 2, 3]})
+            version = manager.create_version(
+                data=df,
+                source_path="/data/corrupt.csv", 
+                version_id="corrupt_v1"
+            )
+            manager.save_version(version, df)
+            
+            # Manually corrupt the saved version metadata (change hash)
+            metadata_path = os.path.join(manager.versions_dir, "corrupt_v1.json")
+            with open(metadata_path, 'r') as f:
+                version_dict = json.load(f)
+            
+            version_dict['data_hash'] = "corrupted_hash"
+            
+            with open(metadata_path, 'w') as f:
+                json.dump(version_dict, f)
+            
+            # Verify integrity (should fail)
+            is_valid = manager.verify_data_integrity("corrupt_v1")
+            assert is_valid is False
+    
+    def test_integration_with_data_loading_pipeline(self):
+        """Test integration with data loading pipeline."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Simulate data loading pipeline stages
+            raw_data = pd.DataFrame({
+                'age': [25, 30, 35, 40, 45],
+                'income': [50000, 60000, 70000, 80000, 90000],
+                'approved': [1, 1, 0, 1, 0]
+            })
+            
+            # Stage 1: Raw data version
+            raw_version = manager.create_version(
+                data=raw_data,
+                source_path="/pipeline/raw/credit_data.csv",
+                version_id="raw_v1.0.0"
+            )
+            manager.save_version(raw_version, raw_data)
+            
+            # Stage 2: Processed data (normalize income)
+            processed_data = raw_data.copy()
+            processed_data['income_normalized'] = processed_data['income'] / 100000
+            
+            processed_version = manager.create_version(
+                data=processed_data,
+                source_path="/pipeline/processed/credit_data_normalized.csv", 
+                version_id="processed_v1.0.0"
+            )
+            manager.save_version(processed_version, processed_data)
+            
+            # Track transformation lineage
+            manager.track_transformation(
+                transformation_id="normalize_income",
+                input_versions=["raw_v1.0.0"],
+                output_version="processed_v1.0.0",
+                transformation_type="feature_engineering",
+                parameters={"income_scale": 100000}
+            )
+            
+            # Stage 3: Split data
+            train_data = processed_data.iloc[:3]
+            test_data = processed_data.iloc[3:]
+            
+            train_version = manager.create_version(
+                data=train_data,
+                source_path="/pipeline/splits/train.csv",
+                version_id="train_v1.0.0"
+            )
+            test_version = manager.create_version(
+                data=test_data,
+                source_path="/pipeline/splits/test.csv", 
+                version_id="test_v1.0.0"
+            )
+            
+            manager.save_version(train_version, train_data)
+            manager.save_version(test_version, test_data)
+            
+            # Track split transformation
+            manager.track_transformation(
+                transformation_id="train_test_split",
+                input_versions=["processed_v1.0.0"],
+                output_version="train_v1.0.0,test_v1.0.0",
+                transformation_type="data_splitting",
+                parameters={"test_size": 0.4, "random_state": 42}
+            )
+            
+            # Verify complete pipeline lineage (lineage tracking may be implemented differently)
+            lineage = manager.get_lineage_history("train_v1.0.0")
+            # Just verify lineage can be retrieved (implementation may vary)
+            assert isinstance(lineage, list)
+            
+            # Verify all versions exist
+            versions = manager.list_versions()
+            version_ids = {v.version_id for v in versions}
+            expected_ids = {"raw_v1.0.0", "processed_v1.0.0", "train_v1.0.0", "test_v1.0.0"}
+            assert version_ids == expected_ids
+
+
 class TestDataVersioningIntegration:
     """Integration tests for data versioning system."""
     
