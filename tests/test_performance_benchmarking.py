@@ -983,3 +983,156 @@ print("CLI test completed successfully")
             # Clean up
             if os.path.exists(temp_script):
                 os.unlink(temp_script)
+
+
+class TestAdditionalEdgeCases:
+    """Additional edge cases to improve test coverage to 85%+."""
+    
+    def test_memory_pressure_with_gc_collection(self):
+        """Test benchmarking under memory pressure with garbage collection."""
+        import gc
+        benchmark = PerformanceBenchmark(enable_memory_tracking=True)
+        
+        def memory_pressure_function():
+            # Create multiple large objects to trigger GC
+            data_list = []
+            for i in range(100):
+                data_list.append([0] * 10000)  
+            gc.collect()  # Force garbage collection
+            time.sleep(0.002)
+            return len(data_list)
+        
+        stats = benchmark.benchmark_function(memory_pressure_function, n_runs=2)
+        
+        assert stats["success_rate"] == 100.0
+        assert stats["peak_memory_mb"] > 0
+        assert stats["mean_time_ms"] > 0
+    
+    def test_extremely_large_dataset_edge_cases(self):
+        """Test performance with simulated extremely large datasets (edge cases)."""
+        benchmark = PerformanceBenchmark()
+        
+        def simulate_massive_dataset(size_multiplier):
+            # Simulate processing complexity that grows non-linearly
+            iterations = min(size_multiplier * 1000, 50000)  # Cap for test speed
+            total = 0
+            for i in range(iterations):
+                total += i % 100  # Simple computation
+            time.sleep(0.001)  # Small delay
+            return total
+        
+        # Test with different complexity levels
+        multipliers = [1, 10, 100]
+        results = []
+        
+        for mult in multipliers:
+            stats = benchmark.benchmark_function(
+                simulate_massive_dataset, mult, n_runs=1
+            )
+            results.append((mult, stats["mean_time_ms"]))
+        
+        # Should complete all benchmarks successfully
+        assert len(results) == 3
+        assert all(result[1] > 0 for result in results)
+        
+        # Later multipliers may take longer (but not required for correctness)
+        assert results[0][1] <= results[-1][1] * 10  # Reasonable bounds
+    
+    def test_benchmark_failure_with_different_error_types(self):
+        """Test comprehensive error handling for different failure types."""
+        benchmark = PerformanceBenchmark()
+        
+        # Test specific error scenarios that might not be fully covered
+        error_scenarios = [
+            (KeyError, "Key not found"),
+            (AttributeError, "Attribute missing"),
+            (TypeError, "Type mismatch"),
+            (ImportError, "Module not found"),
+            (OSError, "System error"),
+        ]
+        
+        for error_type, message in error_scenarios:
+            def error_function():
+                raise error_type(message)
+            
+            # Test that all error types are handled uniformly
+            with pytest.raises(RuntimeError, match="All .* benchmark runs failed"):
+                benchmark.benchmark_function(error_function, n_runs=1)
+    
+    def test_statistical_significance_edge_cases(self):
+        """Test statistical analysis with edge cases and boundary conditions."""
+        # Test very small standard deviation (near zero)
+        near_zero_std = BenchmarkResults(
+            method_name="precise_method",
+            training_time_ms=100.0,
+            inference_time_ms=10.0,
+            memory_peak_mb=50.0,
+            n_samples=1000,
+            n_runs=30,
+            training_time_std=0.001  # Very small but non-zero
+        )
+        
+        ci = near_zero_std.training_confidence_interval(confidence=0.95)
+        width = ci[1] - ci[0]
+        
+        assert width > 0
+        assert width < 1.0  # Should be very narrow
+        assert ci[0] < 100.0 < ci[1]
+        
+        # Test different confidence levels for edge coverage
+        for confidence_level in [0.90, 0.95, 0.99, 0.999]:
+            ci_level = near_zero_std.training_confidence_interval(confidence=confidence_level)
+            assert ci_level[0] < ci_level[1]
+            assert ci_level[0] <= 100.0 <= ci_level[1]
+    
+    def test_benchmark_suite_comprehensive_failure_recovery(self):
+        """Test BenchmarkSuite recovery from various failure scenarios."""
+        with patch('src.performance_benchmarking.benchmark_method') as mock_benchmark:
+            # Complex failure scenario: different failures for different configurations
+            failure_count = 0
+            
+            def complex_side_effect(method_name, n_samples, **kwargs):
+                nonlocal failure_count
+                failure_count += 1
+                
+                # Fail first few calls, then succeed
+                if failure_count <= 3:
+                    if failure_count == 1:
+                        raise RuntimeError("Initialization failed")
+                    elif failure_count == 2:
+                        raise MemoryError("Out of memory")
+                    else:
+                        raise TimeoutError("Operation timed out")
+                else:
+                    return BenchmarkResults(method_name, 100.0, 10.0, 50.0, n_samples, 2)
+            
+            mock_benchmark.side_effect = complex_side_effect
+            
+            suite = BenchmarkSuite(methods=["baseline", "reweight"])
+            results = suite.run_comprehensive_benchmark(
+                sample_sizes=[1000, 2000], 
+                n_runs=1
+            )
+            
+            # Should have some successful results despite initial failures
+            assert isinstance(results, dict)
+            
+            # At least some methods should have succeeded
+            total_results = sum(len(method_results) for method_results in results.values())
+            assert total_results > 0
+    
+    def test_performance_analysis_with_zero_variance_methods(self):
+        """Test performance analysis when methods have identical performance."""
+        # Create results where all methods perform identically
+        identical_results = {
+            "method_a": [BenchmarkResults("method_a", 100.0, 10.0, 50.0, 1000, 3)],
+            "method_b": [BenchmarkResults("method_b", 100.0, 10.0, 50.0, 1000, 3)],
+            "method_c": [BenchmarkResults("method_c", 100.0, 10.0, 50.0, 1000, 3)]
+        }
+        
+        analysis = analyze_performance_trends(identical_results)
+        
+        # Should still provide analysis even with identical performance
+        assert analysis["fastest_method"] in ["method_a", "method_b", "method_c"]
+        assert analysis["most_memory_efficient"] in ["method_a", "method_b", "method_c"]
+        assert len(analysis["recommendations"]) > 0
