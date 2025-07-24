@@ -378,3 +378,379 @@ class TestConfigurationEdgeCases:
         source = inspect.getsource(config._apply_environment_overrides)
         assert "len(var_parts) < 2" in source
         assert "continue" in source
+
+
+class TestConfigurationEdgeCasesEnhanced:
+    """Enhanced edge case tests to improve coverage from 81% to 90%+."""
+    
+    def test_invalid_yaml_handling(self):
+        """Test handling of invalid YAML content in configuration files."""
+        from src.config import Config, ConfigValidationError
+        
+        # Test with malformed YAML
+        invalid_yaml_content = """
+        model:
+          logistic_regression:
+            max_iter: [invalid: yaml: content
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            f.write(invalid_yaml_content)
+            temp_path = f.name
+        
+        try:
+            with pytest.raises(ConfigValidationError, match="Invalid YAML"):
+                Config(config_path=temp_path, force_reload=True)
+        finally:
+            os.unlink(temp_path)
+    
+    def test_empty_yaml_file_handling(self):
+        """Test handling of empty YAML configuration files."""
+        from src.config import Config, ConfigValidationError
+        
+        # Test with empty file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            f.write("")
+            temp_path = f.name
+        
+        try:
+            with pytest.raises(ConfigValidationError, match="Empty configuration file"):
+                Config(config_path=temp_path, force_reload=True)
+        finally:
+            os.unlink(temp_path)
+    
+    def test_missing_configuration_files_comprehensive(self):
+        """Test comprehensive missing configuration file scenarios."""
+        from src.config import Config
+        import tempfile
+        import os
+        
+        # Test 1: Non-existent file with absolute path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            non_existent_path = os.path.join(temp_dir, "missing.yaml")
+            
+            with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+                Config(config_path=non_existent_path, force_reload=True)
+        
+        # Test 2: Non-existent file with relative path
+        with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+            Config(config_path="definitely_missing_file.yaml", force_reload=True)
+        
+        # Test 3: Directory instead of file
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises((FileNotFoundError, IsADirectoryError, PermissionError)):
+                Config(config_path=temp_dir, force_reload=True)
+    
+    def test_environment_variable_overrides_comprehensive(self):
+        """Test comprehensive environment variable override scenarios."""
+        from src.config import Config
+        
+        # Test extensive environment variable scenarios
+        comprehensive_env = {
+            'FAIRNESS_MODEL_MAX_ITER': '750',
+            'FAIRNESS_MODEL_SOLVER': 'newton-cg',
+            'FAIRNESS_DATA_TEST_SIZE': '0.15',
+            'FAIRNESS_GENERAL_RANDOM_STATE': '999',
+            'FAIRNESS_EVALUATION_CV_FOLDS': '10',
+            'FAIRNESS_UNKNOWN_PARAM': 'should_be_skipped',  # Should be ignored
+            'OTHER_PREFIX_VAR': 'not_fairness',  # Should be ignored
+        }
+        
+        original_env = os.environ.copy()
+        try:
+            os.environ.update(comprehensive_env)
+            
+            config = Config(force_reload=True)
+            
+            # Test successful overrides
+            assert config.model.logistic_regression.max_iter == 750
+            assert config.model.logistic_regression.solver == "newton-cg"
+            assert config.data.default_test_size == 0.15
+            assert config.general.default_random_state == 999
+            assert config.evaluation.default_cv_folds == 10
+            
+        finally:
+            # Restore original environment
+            os.environ.clear()
+            os.environ.update(original_env)
+    
+    def test_hot_reload_functionality(self):
+        """Test hot-reload functionality for configuration changes."""
+        from src.config import Config
+        
+        # Create initial config file
+        initial_config = {
+            'model': {
+                'logistic_regression': {
+                    'max_iter': 1000,
+                    'solver': 'liblinear'
+                }
+            },
+            'data': {
+                'default_test_size': 0.3
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(initial_config, f)
+            temp_path = f.name
+        
+        try:
+            # Load initial config
+            config = Config(config_path=temp_path, force_reload=True)
+            assert config.model.logistic_regression.max_iter == 1000
+            assert config.data.default_test_size == 0.3
+            
+            # Modify config file (simulating external change)
+            updated_config = {
+                'model': {
+                    'logistic_regression': {
+                        'max_iter': 2000,
+                        'solver': 'lbfgs'
+                    }
+                },
+                'data': {
+                    'default_test_size': 0.25
+                }
+            }
+            
+            with open(temp_path, 'w') as f:
+                yaml.dump(updated_config, f)
+            
+            # Hot reload configuration
+            config.reload(config_path=temp_path)
+            
+            # Verify changes were applied
+            assert config.model.logistic_regression.max_iter == 2000
+            assert config.model.logistic_regression.solver == "lbfgs"
+            assert config.data.default_test_size == 0.25
+            
+        finally:
+            os.unlink(temp_path)
+    
+    def test_nested_value_operations_edge_cases(self):
+        """Test edge cases in nested value operations."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # Test getting nested values that don't exist
+        assert config.get_nested_value("nonexistent.path", "default") == "default"
+        assert config.get_nested_value("model.nonexistent.param", None) is None
+        assert config.get_nested_value("completely.wrong.path", 42) == 42
+        
+        # Test getting existing nested values
+        max_iter = config.get_nested_value("model.logistic_regression.max_iter")
+        assert max_iter == 1000
+        
+        # Test single-level access
+        assert config.get_nested_value("data") is not None
+    
+    def test_configuration_validation_edge_cases(self):
+        """Test comprehensive configuration validation edge cases."""
+        from src.config import Config, ConfigValidationError
+        
+        # Test 1: Negative max_iter
+        invalid_config1 = {
+            'model': {
+                'logistic_regression': {
+                    'max_iter': -100
+                }
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(invalid_config1, f)
+            temp_path1 = f.name
+        
+        try:
+            with pytest.raises(ConfigValidationError, match="max_iter must be positive"):
+                Config(config_path=temp_path1, force_reload=True)
+        finally:
+            os.unlink(temp_path1)
+        
+        # Test 2: Invalid CV folds
+        invalid_config2 = {
+            'evaluation': {
+                'default_cv_folds': 1
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(invalid_config2, f)
+            temp_path2 = f.name
+        
+        try:
+            with pytest.raises(ConfigValidationError, match="cv_folds must be >= 2"):
+                Config(config_path=temp_path2, force_reload=True)
+        finally:
+            os.unlink(temp_path2)
+        
+        # Test 3: Invalid synthetic data parameters
+        invalid_config3 = {
+            'data': {
+                'synthetic': {
+                    'n_samples': -10,
+                    'n_features': 0,
+                    'n_informative': 15,
+                    'n_redundant': 2
+                }
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(invalid_config3, f)
+            temp_path3 = f.name
+        
+        try:
+            with pytest.raises(ConfigValidationError):
+                Config(config_path=temp_path3, force_reload=True)
+        finally:
+            os.unlink(temp_path3)
+    
+    def test_environment_override_error_handling(self):
+        """Test error handling in environment variable overrides."""
+        from src.config import Config
+        
+        # Test with invalid dot paths
+        problem_env = {
+            'FAIRNESS_INVALID_PATH': 'test',  # Path doesn't exist in config
+            'FAIRNESS_MODEL_NONEXISTENT': 'value',  # Nested path doesn't exist
+        }
+        
+        original_env = os.environ.copy()
+        try:
+            os.environ.update(problem_env)
+            
+            # Should not raise error, but should log warnings
+            config = Config(force_reload=True)
+            assert config is not None
+            
+        finally:
+            os.environ.clear() 
+            os.environ.update(original_env)
+    
+    def test_configuration_to_dict_conversion(self):
+        """Test comprehensive configuration to dictionary conversion."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # Convert to dictionary
+        config_dict = config.to_dict()
+        
+        # Verify structure
+        assert isinstance(config_dict, dict)
+        assert 'model' in config_dict
+        assert 'data' in config_dict
+        assert 'evaluation' in config_dict
+        assert 'general' in config_dict
+        assert 'fairness' in config_dict
+        assert 'output' in config_dict
+        assert 'logging' in config_dict
+        
+        # Verify nested structure
+        assert isinstance(config_dict['model'], dict)
+        assert 'logistic_regression' in config_dict['model']
+        assert isinstance(config_dict['model']['logistic_regression'], dict)
+        assert 'max_iter' in config_dict['model']['logistic_regression']
+        
+        # Verify values match original config
+        assert config_dict['model']['logistic_regression']['max_iter'] == config.model.logistic_regression.max_iter
+        assert config_dict['data']['default_test_size'] == config.data.default_test_size
+    
+    def test_config_section_nested_instantiation(self):
+        """Test ConfigSection handling of nested dictionaries."""
+        from src.config import ConfigSection
+        
+        # Test deeply nested configuration
+        nested_data = {
+            'level1': {
+                'level2': {
+                    'level3': {
+                        'value': 'deep_value'
+                    },
+                    'other_value': 42
+                },
+                'simple_value': 'test'
+            },
+            'top_level': 'surface'
+        }
+        
+        section = ConfigSection(nested_data)
+        
+        # Test access at different levels
+        assert section.top_level == 'surface'
+        assert section.level1.simple_value == 'test'
+        assert section.level1.level2.other_value == 42
+        assert section.level1.level2.level3.value == 'deep_value'
+        
+        # Test that nested sections are also ConfigSection instances
+        assert isinstance(section.level1, ConfigSection)
+        assert isinstance(section.level1.level2, ConfigSection)
+        assert isinstance(section.level1.level2.level3, ConfigSection)
+    
+    def test_global_config_functions(self):
+        """Test global configuration helper functions."""
+        from src.config import get_config, reload_config, reset_config
+        
+        # Test get_config
+        config1 = get_config()
+        config2 = get_config()
+        assert config1 is config2  # Should be same instance
+        
+        # Test reload_config
+        original_max_iter = config1.model.logistic_regression.max_iter
+        
+        # Create temporary config with different values
+        new_config = {
+            'model': {
+                'logistic_regression': {
+                    'max_iter': original_max_iter + 100
+                }
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(new_config, f)
+            temp_path = f.name
+        
+        try:
+            reload_config(temp_path)
+            reloaded_config = get_config()
+            assert reloaded_config.model.logistic_regression.max_iter == original_max_iter + 100
+        finally:
+            os.unlink(temp_path)
+        
+        # Test reset_config
+        reset_config()
+        reset_config_instance = get_config()
+        
+        # Should have default values after reset
+        assert reset_config_instance.model.logistic_regression.max_iter == 1000
+    
+    def test_environment_variable_type_conversion_edge_cases(self):
+        """Test edge cases in environment variable type conversion."""
+        from src.config import Config
+        
+        config = Config()
+        
+        # Test boolean conversion edge cases
+        assert config._convert_env_value("YES", bool) is True
+        assert config._convert_env_value("On", bool) is True
+        assert config._convert_env_value("OFF", bool) is False
+        assert config._convert_env_value("random_string", bool) is False
+        
+        # Test numeric conversion edge cases
+        assert config._convert_env_value("0", int) == 0
+        assert config._convert_env_value("-999", int) == -999
+        assert config._convert_env_value("1.0", float) == 1.0
+        assert config._convert_env_value("-3.14159", float) == -3.14159
+        
+        # Test string conversion (should pass through unchanged)
+        assert config._convert_env_value("", str) == ""
+        assert config._convert_env_value("multi word string", str) == "multi word string"
+        
+        # Test with unknown type (should return string)
+        result = config._convert_env_value("test", list)  # list is not handled
+        assert result == "test"
