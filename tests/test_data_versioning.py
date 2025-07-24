@@ -887,3 +887,476 @@ def temp_storage_dir():
     """Fixture providing temporary directory for version storage."""
     with tempfile.TemporaryDirectory() as temp_dir:
         yield temp_dir
+
+
+class TestEnhancedDataVersioningCoverage:
+    """Enhanced test cases to improve data versioning coverage from 76% to 85%+."""
+    
+    def test_hash_collision_edge_cases(self):
+        """Test hash collision handling with edge cases."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Test with empty DataFrame
+            empty_df = pd.DataFrame()
+            empty_version = manager.create_version(
+                data=empty_df, 
+                source_path="/data/empty.csv", 
+                version_id="empty_v1"
+            )
+            manager.save_version(empty_version, empty_df)
+            
+            # Test with single value DataFrame
+            single_df = pd.DataFrame({'value': [42]})
+            single_version = manager.create_version(
+                data=single_df,
+                source_path="/data/single.csv",
+                version_id="single_v1"
+            )
+            manager.save_version(single_version, single_df)
+            
+            # Test with identical content but different column order
+            df1 = pd.DataFrame({'a': [1, 2], 'b': [3, 4]})
+            df2 = pd.DataFrame({'b': [3, 4], 'a': [1, 2]})  # Different column order
+            
+            # Should produce same hash due to sorting in _compute_data_hash
+            hash1 = manager._compute_data_hash(df1)
+            hash2 = manager._compute_data_hash(df2)
+            assert hash1 == hash2
+            
+            # Test hash computation with special characters and unicode
+            special_df = pd.DataFrame({
+                'unicode_col': ['café', 'naïve', '北京'],
+                'special_chars': ['!@#$%', '<>&"\'', 'line\nbreak']
+            })
+            special_hash = manager._compute_data_hash(special_df)
+            assert len(special_hash) == 64  # SHA256 hex length
+    
+    def test_version_rollback_comprehensive(self):
+        """Test comprehensive version rollback functionality."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Create chain of versions simulating data evolution
+            data_versions = []
+            for i in range(5):
+                df = pd.DataFrame({
+                    'id': list(range(i*10, (i+1)*10)),
+                    'value': [j * (i+1) for j in range(10)],
+                    'category': [f'cat_{j % 3}' for j in range(10)]
+                })
+                
+                version = manager.create_version(
+                    data=df,
+                    source_path=f"/data/evolution_v{i}.csv",
+                    version_id=f"evolution_v{i}.0.0",
+                    description=f"Data evolution step {i}"
+                )
+                manager.save_version(version, df)
+                data_versions.append((version, df))
+            
+            # Test rollback to any previous version
+            for i, (original_version, original_df) in enumerate(data_versions):
+                # Load version and verify data integrity
+                loaded_version = manager.load_version(original_version.version_id)
+                loaded_df = manager.load_data(original_version.version_id)
+                
+                # Verify metadata matches
+                assert loaded_version.version_id == original_version.version_id
+                assert loaded_version.data_hash == original_version.data_hash
+                assert loaded_version.description == f"Data evolution step {i}"
+                
+                # Verify data is identical
+                pd.testing.assert_frame_equal(loaded_df, original_df)
+                
+                # Verify integrity check passes
+                assert manager.verify_data_integrity(original_version.version_id) is True
+    
+    def test_integration_with_data_loading_pipeline_advanced(self):
+        """Test advanced integration with data loading pipeline."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Simulate complex pipeline: Raw -> Clean -> Feature -> Split -> Augment
+            
+            # Stage 1: Raw data with various issues
+            raw_data = pd.DataFrame({
+                'age': [25, None, 35, 40, 45, 30],
+                'income': [50000, 60000, None, 80000, 90000, 55000],
+                'city': ['NYC', 'LA', 'Chicago', None, 'Boston', 'Seattle'],
+                'approved': [1, 1, 0, 1, 0, 1]
+            })
+            
+            raw_version = manager.create_version(
+                data=raw_data,
+                source_path="/pipeline/raw/messy_data.csv",
+                version_id="raw_v1.0.0",
+                tags=["raw", "pipeline"],
+                description="Raw data with missing values and inconsistencies"
+            )
+            manager.save_version(raw_version, raw_data)
+            
+            # Stage 2: Cleaned data
+            cleaned_data = raw_data.dropna()
+            cleaned_version = manager.create_version(
+                data=cleaned_data,
+                source_path="/pipeline/clean/cleaned_data.csv",
+                version_id="clean_v1.0.0",
+                tags=["cleaned", "pipeline"],
+                description="Data after removing missing values"
+            )
+            manager.save_version(cleaned_version, cleaned_data)
+            
+            # Track cleaning transformation
+            manager.track_transformation(
+                transformation_id="data_cleaning_v1",
+                input_versions=["raw_v1.0.0"],
+                output_version="clean_v1.0.0",
+                transformation_type="data_cleaning",
+                parameters={"method": "dropna", "axis": 0},
+                environment={"python_version": "3.8", "pandas_version": "1.3.0"}
+            )
+            
+            # Stage 3: Feature engineering
+            feature_data = cleaned_data.copy()
+            feature_data['age_group'] = pd.cut(feature_data['age'], bins=[0, 30, 40, 100], labels=['young', 'middle', 'senior'])
+            feature_data['income_level'] = pd.cut(feature_data['income'], bins=[0, 60000, 80000, 100000], labels=['low', 'medium', 'high'])
+            feature_data['city_tier'] = feature_data['city'].map({'NYC': 'tier1', 'LA': 'tier1', 'Chicago': 'tier2', 'Boston': 'tier2', 'Seattle': 'tier2'})
+            
+            feature_version = manager.create_version(
+                data=feature_data,
+                source_path="/pipeline/features/feature_engineered.csv",
+                version_id="features_v1.0.0",
+                tags=["features", "pipeline"],
+                description="Data with engineered categorical features"
+            )
+            manager.save_version(feature_version, feature_data)
+            
+            # Track feature engineering
+            manager.track_transformation(
+                transformation_id="feature_engineering_v1",
+                input_versions=["clean_v1.0.0"],
+                output_version="features_v1.0.0",
+                transformation_type="feature_engineering",
+                parameters={
+                    "age_bins": [0, 30, 40, 100],
+                    "income_bins": [0, 60000, 80000, 100000],
+                    "city_mapping": "tier_based"
+                },
+                code_hash="abc123def456"  # Mock code hash
+            )
+            
+            # Stage 4: Multiple output splits
+            train_data = feature_data.iloc[:2]
+            val_data = feature_data.iloc[2:3] 
+            test_data = feature_data.iloc[3:]
+            
+            for split_name, split_data in [("train", train_data), ("val", val_data), ("test", test_data)]:
+                split_version = manager.create_version(
+                    data=split_data,
+                    source_path=f"/pipeline/splits/{split_name}.csv",
+                    version_id=f"{split_name}_v1.0.0",
+                    tags=[split_name, "split", "pipeline"],
+                    description=f"Data split for {split_name} set"
+                )
+                manager.save_version(split_version, split_data)
+                
+                # Track split transformation
+                manager.track_transformation(
+                    transformation_id=f"data_split_{split_name}_v1",
+                    input_versions=["features_v1.0.0"],
+                    output_version=f"{split_name}_v1.0.0",
+                    transformation_type="data_split",
+                    parameters={"split_type": split_name, "split_strategy": "sequential"}
+                )
+            
+            # Verify complete pipeline
+            versions = manager.list_versions()
+            assert len(versions) == 6  # raw, clean, features, train, val, test
+            
+            # Test lineage tracking across multiple transformations
+            train_lineage = manager.get_lineage_history("train_v1.0.0")
+            assert len(train_lineage) >= 1
+            
+            # Verify data quality throughout pipeline
+            for version in versions:
+                assert manager.verify_data_integrity(version.version_id) is True
+                
+            # Test metadata quality scores
+            assert raw_version.metadata.quality_score < 1.0  # Has missing values
+            assert cleaned_version.metadata.quality_score == 1.0  # No missing values
+    
+    def test_metadata_persistence_across_complex_operations(self):
+        """Test metadata persistence across complex operations and restarts."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Phase 1: Create complex data with rich metadata
+            manager1 = DataVersionManager(storage_path=temp_dir)
+            
+            complex_data = pd.DataFrame({
+                'float_col': [1.1, 2.2, 3.3, 4.4, 5.5],
+                'int_col': [10, 20, 30, 40, 50],
+                'str_col': ['a', 'b', 'c', 'd', 'e'],
+                'bool_col': [True, False, True, False, True],
+                'datetime_col': pd.date_range('2025-01-01', periods=5)
+            })
+            
+            version_with_rich_metadata = manager1.create_version(
+                data=complex_data,
+                source_path="/data/complex/rich_metadata.csv",
+                version_id="complex_v1.0.0",
+                tags=["complex", "rich_metadata", "multi_type"],
+                description="Complex data with multiple data types and rich metadata"
+            )
+            manager1.save_version(version_with_rich_metadata, complex_data)
+            
+            # Verify metadata is comprehensive
+            metadata = version_with_rich_metadata.metadata
+            assert len(metadata.schema) == 5
+            assert 'float_col' in metadata.schema
+            assert 'datetime_col' in metadata.schema
+            assert metadata.statistics is not None
+            assert 'float_col' in metadata.statistics  # Should have stats for numeric columns
+            assert 'int_col' in metadata.statistics
+            
+            # Phase 2: Simulate system restart
+            del manager1
+            manager2 = DataVersionManager(storage_path=temp_dir)
+            
+            # Phase 3: Load and verify all metadata persisted
+            loaded_version = manager2.load_version("complex_v1.0.0")
+            loaded_data = manager2.load_data("complex_v1.0.0")
+            
+            # Verify all metadata fields persisted correctly
+            assert loaded_version.version_id == "complex_v1.0.0"
+            assert loaded_version.tags == ["complex", "rich_metadata", "multi_type"]
+            assert loaded_version.description == "Complex data with multiple data types and rich metadata"
+            
+            # Verify metadata structure
+            loaded_metadata = loaded_version.metadata
+            assert loaded_metadata.rows == 5
+            assert loaded_metadata.columns == 5
+            assert loaded_metadata.quality_score == 1.0  # No missing values
+            assert len(loaded_metadata.schema) == 5
+            assert loaded_metadata.statistics is not None
+            
+            # Verify data integrity
+            pd.testing.assert_frame_equal(loaded_data, complex_data)
+            assert manager2.verify_data_integrity("complex_v1.0.0") is True
+            
+            # Phase 4: Create derived version and verify lineage persistence
+            derived_data = complex_data[['float_col', 'int_col']].copy()  # Select subset
+            derived_data['computed_col'] = derived_data['float_col'] * derived_data['int_col']
+            
+            derived_version = manager2.create_version(
+                data=derived_data,
+                source_path="/data/complex/derived.csv",
+                version_id="derived_v1.0.0",
+                tags=["derived", "computed"],
+                description="Derived data with computed column"
+            )
+            manager2.save_version(derived_version, derived_data)
+            
+            # Track transformation
+            manager2.track_transformation(
+                transformation_id="derive_and_compute",
+                input_versions=["complex_v1.0.0"],
+                output_version="derived_v1.0.0",
+                transformation_type="column_selection_and_computation",
+                parameters={"selected_cols": ["float_col", "int_col"], "computed_col": "float_col * int_col"}
+            )
+            
+            # Phase 5: Another restart and verify lineage
+            del manager2
+            manager3 = DataVersionManager(storage_path=temp_dir)
+            
+            # Verify lineage persisted
+            lineage_history = manager3.get_lineage_history("derived_v1.0.0")
+            assert len(lineage_history) >= 1
+            
+            transformation = lineage_history[0]
+            assert transformation.transformation_id == "derive_and_compute"
+            assert transformation.input_versions == ["complex_v1.0.0"]
+            assert transformation.output_version == "derived_v1.0.0"
+            assert transformation.transformation_type == "column_selection_and_computation"
+    
+    def test_edge_case_error_handling(self):
+        """Test comprehensive error handling for edge cases."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Test 1: Handle corrupted version files
+            df = pd.DataFrame({'data': [1, 2, 3]})
+            version = manager.create_version(data=df, source_path="/test.csv", version_id="test_v1")
+            manager.save_version(version, df)
+            
+            # Corrupt the version file
+            version_file = os.path.join(manager.versions_dir, "test_v1.json")
+            with open(version_file, 'w') as f:
+                f.write("invalid json content {")
+            
+            # Should handle corrupted files gracefully in list_versions
+            versions = manager.list_versions()
+            # Corrupted version should be skipped, not crash the operation
+            assert len(versions) == 0
+            
+            # Test 2: Handle missing data files
+            df2 = pd.DataFrame({'data': [4, 5, 6]})
+            version2 = manager.create_version(data=df2, source_path="/test2.csv", version_id="test_v2")
+            manager.save_version(version2, df2)
+            
+            # Remove data file but keep metadata
+            data_file = os.path.join(manager.data_dir, "test_v2.parquet")
+            os.remove(data_file)
+            
+            # Should raise FileNotFoundError when trying to load data
+            with pytest.raises(FileNotFoundError):
+                manager.load_data("test_v2")
+            
+            # But verify_data_integrity should handle it gracefully
+            integrity_result = manager.verify_data_integrity("test_v2")
+            assert integrity_result is False
+            
+            # Test 3: Handle version ID with special characters
+            special_df = pd.DataFrame({'special': [1, 2, 3]})
+            special_version_id = "special-v1.0.0_with@symbols"
+            
+            special_version = manager.create_version(
+                data=special_df,
+                source_path="/special.csv",
+                version_id=special_version_id
+            )
+            manager.save_version(special_version, special_df)
+            
+            # Should handle special characters in version IDs
+            loaded_special = manager.load_version(special_version_id)
+            assert loaded_special.version_id == special_version_id
+            
+            # Test 4: Handle extremely large version metadata
+            large_schema = {f'col_{i}': 'float64' for i in range(1000)}
+            large_metadata = DataMetadata(
+                rows=1000000,
+                columns=1000,
+                size_bytes=8000000000,  # 8GB simulated
+                schema=large_schema,
+                quality_score=0.99,
+                missing_values={f'col_{i}': i % 10 for i in range(1000)},
+                statistics={f'col_{i}': {'mean': i, 'std': i*0.1} for i in range(100)}  # Partial stats
+            )
+            
+            # Should handle large metadata structures
+            large_dict = large_metadata.to_dict()
+            assert len(large_dict['schema']) == 1000
+            assert large_dict['size_bytes'] == 8000000000
+            
+            # Should be able to recreate from dict
+            recreated_metadata = DataMetadata.from_dict(large_dict)
+            assert recreated_metadata.rows == 1000000
+            assert len(recreated_metadata.schema) == 1000
+    
+    def test_advanced_lineage_tracking(self):
+        """Test advanced lineage tracking scenarios."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manager = DataVersionManager(storage_path=temp_dir)
+            
+            # Create complex transformation graph: A -> B, A -> C, B+C -> D
+            
+            # Base dataset A
+            data_a = pd.DataFrame({'value': [1, 2, 3, 4, 5], 'category': ['x', 'y', 'x', 'y', 'x']})
+            version_a = manager.create_version(data=data_a, source_path="/base/a.csv", version_id="v_a")
+            manager.save_version(version_a, data_a)
+            
+            # Transform A -> B (filter)
+            data_b = data_a[data_a['category'] == 'x']
+            version_b = manager.create_version(data=data_b, source_path="/transforms/b.csv", version_id="v_b")
+            manager.save_version(version_b, data_b)
+            
+            # Transform A -> C (aggregate)
+            data_c = data_a.groupby('category')['value'].sum().reset_index()
+            version_c = manager.create_version(data=data_c, source_path="/transforms/c.csv", version_id="v_c")
+            manager.save_version(version_c, data_c)
+            
+            # Transform B+C -> D (merge)
+            data_d = pd.merge(data_b, data_c, on='category', suffixes=('_individual', '_total'))
+            version_d = manager.create_version(data=data_d, source_path="/final/d.csv", version_id="v_d")
+            manager.save_version(version_d, data_d)
+            
+            # Track all transformations
+            manager.track_transformation("filter_x", ["v_a"], "v_b", "filter", {"condition": "category == 'x'"})
+            manager.track_transformation("aggregate_by_cat", ["v_a"], "v_c", "aggregate", {"groupby": "category", "agg": "sum"})
+            manager.track_transformation("merge_b_c", ["v_b", "v_c"], "v_d", "merge", {"on": "category", "how": "inner"})
+            
+            # Test lineage for complex node
+            lineage_d = manager.get_lineage_history("v_d")
+            assert len(lineage_d) >= 1
+            
+            # Should find transformation that produced v_d
+            merge_transform = next((l for l in lineage_d if l.output_version == "v_d"), None)
+            assert merge_transform is not None
+            assert merge_transform.transformation_id == "merge_b_c"
+            assert set(merge_transform.input_versions) == {"v_b", "v_c"}
+            
+            # Test lineage for intermediate nodes
+            lineage_b = manager.get_lineage_history("v_b")
+            assert len(lineage_b) >= 1
+            
+            lineage_c = manager.get_lineage_history("v_c")
+            assert len(lineage_c) >= 1
+            
+            # Test lineage for root node (should have minimal lineage)
+            lineage_a = manager.get_lineage_history("v_a")
+            # Root node might have no lineage or only be referenced as input
+            assert isinstance(lineage_a, list)
+    
+    def test_data_metadata_advanced_statistics(self):
+        """Test advanced statistics computation in DataMetadata."""
+        # Test with mixed data types including problematic values
+        complex_df = pd.DataFrame({
+            'normal_numeric': [1.0, 2.0, 3.0, 4.0, 5.0],
+            'with_nan': [1.0, float('nan'), 3.0, 4.0, 5.0],
+            'with_inf': [1.0, 2.0, float('inf'), 4.0, 5.0],
+            'with_neg_inf': [1.0, 2.0, 3.0, float('-inf'), 5.0],
+            'integer_col': [10, 20, 30, 40, 50],
+            'string_col': ['a', 'b', 'c', 'd', 'e'],
+            'bool_col': [True, False, True, False, True],
+            'mixed_with_none': [1, 2, None, 4, 5]
+        })
+        
+        # Test normal metadata creation
+        metadata = DataMetadata.from_dataframe(complex_df, include_statistics=True)
+        
+        # Should handle all column types
+        assert metadata.rows == 5
+        assert metadata.columns == 8
+        assert metadata.quality_score < 1.0  # Due to missing values
+        
+        # Should compute statistics for numeric columns only
+        assert metadata.statistics is not None
+        numeric_columns = ['normal_numeric', 'with_nan', 'with_inf', 'with_neg_inf', 'integer_col']
+        
+        for col in numeric_columns:
+            if col in metadata.statistics:
+                stats = metadata.statistics[col]
+                # Stats should exist but might be None for problematic columns
+                assert isinstance(stats, dict)
+                assert 'mean' in stats
+                assert 'std' in stats
+                assert 'min' in stats
+                assert 'max' in stats
+        
+        # Test with statistics disabled
+        metadata_no_stats = DataMetadata.from_dataframe(complex_df, include_statistics=False)
+        assert metadata_no_stats.statistics is None
+        
+        # Test with quality assessment disabled
+        metadata_no_quality = DataMetadata.from_dataframe(complex_df, include_quality_assessment=False)
+        assert metadata_no_quality.quality_score == 1.0  # Default value
+        
+        # Test quality score calculation precision
+        df_with_known_missing = pd.DataFrame({
+            'col1': [1, 2, None, 4, 5],  # 1 missing out of 5
+            'col2': [1, None, None, 4, 5]  # 2 missing out of 5
+        })
+        # Total cells: 10, Missing cells: 3, Quality: (10-3)/10 = 0.7
+        metadata_quality = DataMetadata.from_dataframe(df_with_known_missing)
+        expected_quality = (10 - 3) / 10
+        assert abs(metadata_quality.quality_score - expected_quality) < 0.001
