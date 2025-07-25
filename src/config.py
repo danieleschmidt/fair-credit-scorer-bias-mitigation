@@ -146,6 +146,7 @@ class Config:
         self.general = ConfigSection(config_data.get('general', {}))
         self.fairness = ConfigSection(config_data.get('fairness', {}))
         self.output = ConfigSection(config_data.get('output', {}))
+        self.explainability = ConfigSection(config_data.get('explainability', {}))
         self.logging = ConfigSection(config_data.get('logging', {}))
     
     def _apply_environment_overrides(self) -> None:

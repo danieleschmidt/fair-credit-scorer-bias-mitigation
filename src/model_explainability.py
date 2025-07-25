@@ -11,6 +11,11 @@ import pandas as pd
 import shap
 from typing import Dict, List, Any
 
+try:
+    from .config import get_config
+except ImportError:
+    from config import get_config
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -50,8 +55,10 @@ class ModelExplainer:
                 logger.info("Using SHAP TreeExplainer")
             else:
                 # For other models, use KernelExplainer which is more stable
+                config = get_config()
+                random_state = getattr(config.explainability, 'random_state', 42)
                 background_sample = self.background_data.sample(
-                    min(50, len(self.background_data)), random_state=42
+                    min(50, len(self.background_data)), random_state=random_state
                 )
                 self.shap_explainer = shap.KernelExplainer(
                     self.model.predict_proba, 

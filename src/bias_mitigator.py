@@ -31,8 +31,10 @@ from sklearn.linear_model import LogisticRegression
 
 try:
     from .logging_config import get_logger
+    from .config import get_config
 except ImportError:
     from logging_config import get_logger
+    from config import get_config
 
 logger = get_logger(__name__)
 
@@ -63,8 +65,13 @@ def expgrad_demographic_parity(X, y, protected):
     logger.debug(f"Training data shape: {X.shape}, protected groups: {len(set(protected))}")
     
     try:
-        base_est = LogisticRegression(max_iter=1000, solver="liblinear")
-        logger.debug("Created base LogisticRegression estimator with max_iter=1000, solver=liblinear")
+        # Get configuration values
+        config = get_config()
+        max_iter = config.model.bias_mitigation.max_iter
+        solver = config.model.bias_mitigation.solver
+        
+        base_est = LogisticRegression(max_iter=max_iter, solver=solver)
+        logger.debug(f"Created base LogisticRegression estimator with max_iter={max_iter}, solver={solver}")
         
         mitigator = ExponentiatedGradient(base_est, DemographicParity())
         logger.debug("Initialized ExponentiatedGradient with DemographicParity constraint")
