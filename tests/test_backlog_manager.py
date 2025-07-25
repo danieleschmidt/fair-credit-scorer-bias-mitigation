@@ -54,13 +54,16 @@ class TestBacklogItem:
             description="Old task",
             task_type=TaskType.BUG,
             business_value=5,
+            time_criticality=1,
+            risk_reduction=1,
             effort=5,
             created_date=old_date
         )
         
         # Should be capped at 2x after 30+ days
         assert item.aging_multiplier == 2.0
-        assert item.final_score == 2.0  # 1.0 * 2.0
+        # cost_of_delay = 5+1+1 = 7, wsjf = 7/5 = 1.4, final = 1.4 * 2.0 = 2.8
+        assert item.final_score == 2.8
     
     def test_zero_effort_handling(self):
         """Test handling of zero effort to avoid division by zero"""
@@ -70,10 +73,13 @@ class TestBacklogItem:
             description="Test",
             task_type=TaskType.DOC,
             business_value=5,
+            time_criticality=1,
+            risk_reduction=1,
             effort=0  # This should be handled gracefully
         )
         
-        assert item.wsjf_score == 5.0  # Should use max(effort, 1)
+        # cost_of_delay = 5+1+1 = 7, wsjf = 7/max(0,1) = 7.0
+        assert item.wsjf_score == 7.0
     
     def test_is_ready_validation(self):
         """Test ready state validation"""
