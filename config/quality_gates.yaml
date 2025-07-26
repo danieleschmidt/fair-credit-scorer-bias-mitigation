@@ -1,0 +1,160 @@
+# Quality Gates Configuration
+# 
+# This configuration defines the quality gates for the autonomous backlog management system.
+# Gates can be enabled/disabled, marked as required/optional, and weighted for overall scoring.
+
+gates:
+  security:
+    enabled: true
+    required: true
+    weight: 0.30
+    description: "Security vulnerability scanning and secure coding practices"
+    
+  testing:
+    enabled: true
+    required: true
+    weight: 0.25
+    description: "Test coverage and quality metrics"
+    
+  performance:
+    enabled: true
+    required: false
+    weight: 0.15
+    description: "Performance regression and optimization checks"
+    
+  documentation:
+    enabled: true
+    required: false
+    weight: 0.15
+    description: "Code documentation coverage and quality"
+    
+  dependencies:
+    enabled: true
+    required: true
+    weight: 0.15
+    description: "Dependency security and vulnerability scanning"
+
+# Quality thresholds that must be met
+thresholds:
+  # Overall combined score (0-100)
+  overall_score: 75.0
+  
+  # Security-specific thresholds
+  security_score: 85.0
+  critical_findings_max: 0
+  high_findings_max: 2
+  
+  # Testing thresholds
+  test_coverage_min: 80.0
+  
+  # Documentation thresholds
+  documentation_coverage_min: 70.0
+  
+  # Performance thresholds
+  performance_regression_max: 20.0  # Max % degradation allowed
+
+# Security scanning configuration
+security:
+  # Patterns to detect in code that indicate security issues
+  sensitive_patterns:
+    - 'password\s*=\s*["\'][^"\']+["\']'
+    - 'api[_-]?key\s*=\s*["\'][^"\']+["\']'
+    - 'secret\s*=\s*["\'][^"\']+["\']'
+    - 'token\s*=\s*["\'][^"\']+["\']'
+    - 'private[_-]?key\s*=\s*["\'][^"\']+["\']'
+    - '-----BEGIN.*PRIVATE KEY-----'
+  
+  # Insecure code patterns to detect
+  insecure_patterns:
+    - pattern: 'eval\s*\('
+      message: 'Use of eval() can execute arbitrary code'
+      severity: 'HIGH'
+    - pattern: 'exec\s*\('
+      message: 'Use of exec() can execute arbitrary code' 
+      severity: 'HIGH'
+    - pattern: 'shell\s*=\s*True'
+      message: 'subprocess with shell=True is dangerous'
+      severity: 'MEDIUM'
+    - pattern: 'pickle\.loads?\s*\('
+      message: 'Pickle deserialization can execute code'
+      severity: 'HIGH'
+    - pattern: 'yaml\.load\s*\('
+      message: 'Use yaml.safe_load() instead of yaml.load()'
+      severity: 'MEDIUM'
+    - pattern: 'input\s*\('
+      message: 'Use of input() can be dangerous in Python 2'
+      severity: 'LOW'
+
+# Quality metrics configuration
+quality:
+  # Code complexity thresholds
+  complexity:
+    max_function_complexity: 10
+    max_file_complexity: 50
+    
+  # Documentation requirements
+  documentation:
+    require_docstrings: true
+    require_type_hints: false
+    min_docstring_length: 20
+    
+  # Testing requirements  
+  testing:
+    require_tests_for_new_code: true
+    min_coverage_increase: 0.0  # Don't require coverage increase, just maintain
+    max_test_duration: 300  # Max 5 minutes for test suite
+
+# Reporting configuration
+reporting:
+  # Generate detailed reports for these findings
+  detailed_reports:
+    - security
+    - testing
+    - performance
+    
+  # Alert thresholds
+  alerts:
+    critical_security_findings: 0
+    high_security_findings: 1
+    coverage_drop_percent: 5.0
+    
+  # Report retention
+  retain_reports_days: 30
+  
+# Integration settings
+integration:
+  # External tools to integrate with
+  bandit:
+    enabled: true
+    timeout_seconds: 120
+    
+  safety:
+    enabled: true
+    timeout_seconds: 60
+    
+  pytest:
+    enabled: true
+    timeout_seconds: 300
+    coverage_format: 'json'
+    
+# Environment-specific overrides
+environments:
+  development:
+    thresholds:
+      overall_score: 70.0
+      security_score: 80.0
+      test_coverage_min: 75.0
+      
+  staging:
+    thresholds:
+      overall_score: 80.0
+      security_score: 90.0
+      test_coverage_min: 85.0
+      
+  production:
+    thresholds:
+      overall_score: 85.0
+      security_score: 95.0
+      test_coverage_min: 90.0
+      critical_findings_max: 0
+      high_findings_max: 0
