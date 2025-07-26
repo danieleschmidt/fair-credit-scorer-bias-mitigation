@@ -34,6 +34,9 @@ data:
   # CSV output settings
   csv_include_index: false
   
+  # Random state for data operations
+  random_state: 42
+  
   # Synthetic data generation parameters
   synthetic:
     n_samples: 1000
@@ -64,6 +67,15 @@ fairness:
 output:
   # JSON formatting
   json_indent: 2
+
+# Explainability configuration
+explainability:
+  # Random state for SHAP sampling
+  random_state: 42
+  # Background sample size for SHAP explainers
+  background_sample_size: 50
+  # Maximum evaluations for SHAP explainers
+  max_evaluations: 100
 
 # Logging configuration
 logging:

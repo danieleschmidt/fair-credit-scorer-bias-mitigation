@@ -131,3 +131,77 @@ Available endpoints:
 - `POST /explain` - Explain a prediction (JSON body with features)
 - `GET /feature-importance` - Get global feature importance
 - `POST /load-model` - Load a model from path
+
+## Configuration Management
+
+The system uses a centralized configuration management system that eliminates hardcoded values and provides consistent parameter management across all modules.
+
+### Configuration Structure
+
+Configuration is loaded from `config/default.yaml` and can be overridden via environment variables:
+
+```yaml
+# Model configuration
+model:
+  logistic_regression:
+    max_iter: 1000
+    solver: "liblinear"
+  bias_mitigation:
+    max_iter: 1000
+    solver: "liblinear"
+
+# Data configuration
+data:
+  random_state: 42
+  default_test_size: 0.3
+
+# Explainability configuration
+explainability:
+  random_state: 42
+  background_sample_size: 50
+  max_evaluations: 100
+```
+
+### Using Configuration in Code
+
+All modules automatically use the centralized configuration:
+
+```python
+from src.config import get_config
+
+# Configuration is automatically loaded
+config = get_config()
+
+# Access configuration values
+max_iter = config.model.logistic_regression.max_iter
+random_state = config.data.random_state
+```
+
+### Environment Variable Overrides
+
+Override configuration values using environment variables with the pattern `FAIRNESS_<SECTION>_<PARAMETER>`:
+
+```bash
+# Override model parameters
+export FAIRNESS_MODEL_MAX_ITER=2000
+export FAIRNESS_MODEL_SOLVER=lbfgs
+
+# Override data parameters
+export FAIRNESS_DATA_RANDOM_STATE=123
+```
+
+### Modules Using Centralized Configuration
+
+The following modules have been integrated with the centralized configuration system:
+
+- **baseline_model.py**: Uses `model.logistic_regression` settings
+- **bias_mitigator.py**: Uses `model.bias_mitigation` settings  
+- **data_loader_preprocessor.py**: Uses `data.random_state` for reproducibility
+- **model_explainability.py**: Uses `explainability.random_state` for SHAP sampling
+
+### Backward Compatibility
+
+The configuration integration maintains full backward compatibility:
+- Explicit parameters in function calls still override config defaults
+- Existing code continues to work without modifications
+- Default values match previous hardcoded values

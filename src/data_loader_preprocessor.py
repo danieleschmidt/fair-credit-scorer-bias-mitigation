@@ -69,7 +69,7 @@ except ImportError:
 
 
 def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative=5, 
-                                  n_redundant=2, random_state=42):
+                                  n_redundant=2, random_state=None):
     """Generate synthetic credit scoring data for benchmarking and testing.
     
     Parameters
@@ -104,8 +104,13 @@ def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative
         raise ValueError(f"n_samples must be positive, got {n_samples}")
     if n_features <= 0:
         raise ValueError(f"n_features must be positive, got {n_features}")
+    
+    # Use config default if random_state not provided
+    if random_state is None:
+        config = get_config()
+        random_state = config.data.random_state
         
-    logger.debug(f"Generating {n_samples} synthetic credit samples with {n_features} features")
+    logger.debug(f"Generating {n_samples} synthetic credit samples with {n_features} features, random_state={random_state}")
     
     # Generate base features and target
     X_full, y = make_classification(
