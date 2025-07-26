@@ -155,7 +155,7 @@ class TaskDiscoveryEngine:
         
         try:
             # Run pytest with --collect-only to find tests without running them
-            cmd = ["python", "-m", "pytest", "--collect-only", "-q"]
+            cmd = ["python3", "-m", "pytest", "--collect-only", "-q"]
             result = subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True, timeout=60)
             
             # Look for test files with issues
@@ -444,7 +444,7 @@ class BacklogManager:
     def _run_ci_checks(self) -> bool:
         """Run CI pipeline checks"""
         checks = [
-            (["python", "-m", "pytest", "--tb=short"], "Tests"),
+            (["python3", "-m", "pytest", "--tb=short"], "Tests"),
             (["ruff", "check", "src/"], "Linting"),  
             (["bandit", "-r", "src/"], "Security")
         ]

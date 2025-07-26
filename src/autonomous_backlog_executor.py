@@ -342,7 +342,7 @@ Examples:
     args = parser.parse_args()
     
     # Setup logging
-    setup_logging(level=getattr(logging, args.log_level))
+    setup_logging(config_override={'default_level': args.log_level})
     logger = logging.getLogger(__name__)
     
     try:

@@ -92,20 +92,31 @@ class SecurityChecker:
     
     def __init__(self, repo_path: str):
         self.repo_path = repo_path
+        
+        # Enhanced patterns for secret detection
         self.sensitive_patterns = [
             r'password\s*=\s*["\'][^"\']+["\']',
             r'api[_-]?key\s*=\s*["\'][^"\']+["\']',
             r'secret\s*=\s*["\'][^"\']+["\']',
             r'token\s*=\s*["\'][^"\']+["\']',
+            r'private[_-]?key\s*=\s*["\'][^"\']+["\']',
             r'-----BEGIN.*PRIVATE KEY-----',
+            r'access[_-]?key\s*=\s*["\'][^"\']+["\']',
+            r'auth[_-]?token\s*=\s*["\'][^"\']+["\']',
+            r'database[_-]?url\s*=\s*["\'][^"\']+["\']',
+            r'connection[_-]?string\s*=\s*["\'][^"\']+["\']',
         ]
         
+        # Enhanced patterns for insecure code detection
         self.insecure_patterns = [
             (r'eval\s*\(', 'Use of eval() can execute arbitrary code'),
             (r'exec\s*\(', 'Use of exec() can execute arbitrary code'),
             (r'shell\s*=\s*True', 'subprocess with shell=True is dangerous'),
             (r'pickle\.loads?\s*\(', 'Pickle deserialization can execute code'),
             (r'yaml\.load\s*\(', 'Use yaml.safe_load() instead of yaml.load()'),
+            (r'input\s*\(.*\)', 'Direct input() usage can be dangerous - validate input'),
+            (r'os\.system\s*\(', 'os.system() is unsafe - use subprocess instead'),
+            (r'subprocess\.call\s*\([^)]*shell\s*=\s*True', 'subprocess.call with shell=True is dangerous'),
         ]
     
     def check_secrets_exposure(self, file_paths: List[str]) -> List[SecurityFinding]:
@@ -287,7 +298,7 @@ class QualityChecker:
         """Check test coverage meets threshold"""
         try:
             cmd = [
-                "python", "-m", "pytest", "--cov=src", "--cov-report=json",
+                "python3", "-m", "pytest", "--cov=src", "--cov-report=json",
                 "--cov-report=term-missing", "--quiet"
             ]
             

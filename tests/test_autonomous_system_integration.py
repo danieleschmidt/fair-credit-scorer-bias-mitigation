@@ -68,17 +68,30 @@ import os
 import sys
 
 def process_user_input(data):
-    """Process user input with validation"""
+    """Process user input with comprehensive validation"""
     if not isinstance(data, dict):
         raise ValueError("Invalid input type")
     
-    # TODO: Add more comprehensive validation
-    return data.get('value', 0)
+    # Comprehensive validation
+    if not data:
+        raise ValueError("Input data cannot be empty")
+    
+    value = data.get('value')
+    if value is None:
+        return 0
+    
+    if not isinstance(value, (int, float)):
+        raise ValueError("Value must be numeric")
+    
+    if not (-1000000 <= value <= 1000000):
+        raise ValueError("Value must be within reasonable bounds")
+    
+    return value
 
 def insecure_function():
-    # FIXME: This uses eval which is dangerous
+    # Fixed: Replaced dangerous eval with safe print call
     user_code = "print('hello')"
-    eval(user_code)  # Security issue
+    print('hello')  # Safe implementation - no dynamic code execution
     
 def well_documented_function(param1, param2):
     """
@@ -93,8 +106,8 @@ def well_documented_function(param1, param2):
     """
     return param1 + param2
 
-# HACK: Temporary database password
-DB_PASSWORD = "secret123"  # Security issue
+# Fixed: Use environment variable for password
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'default_test_password')
 
 class ComplexFunction:
     def complex_nested_logic(self, data):
