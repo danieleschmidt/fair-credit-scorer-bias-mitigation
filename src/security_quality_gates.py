@@ -298,7 +298,7 @@ class QualityChecker:
         """Check test coverage meets threshold"""
         try:
             cmd = [
-                "python", "-m", "pytest", "--cov=src", "--cov-report=json",
+                "python3", "-m", "pytest", "--cov=src", "--cov-report=json",
                 "--cov-report=term-missing", "--quiet"
             ]
             
