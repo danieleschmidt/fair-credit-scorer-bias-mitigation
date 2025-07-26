@@ -1,0 +1,243 @@
+name: Repository Hygiene Bot
+
+on:
+  schedule:
+    # Run every Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no changes made)'
+        required: false
+        default: 'false'
+        type: boolean
+      single_repo:
+        description: 'Process only a single repository (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  security-events: write
+
+jobs:
+  repo-hygiene:
+    runs-on: ubuntu-latest
+    name: Apply Repository Hygiene Standards
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          pip install requests PyYAML
+          
+      - name: Validate configuration
+        run: |
+          python3 -c "
+          import yaml
+          with open('config/repo-hygiene.yaml', 'r') as f:
+              config = yaml.safe_load(f)
+          print('Configuration validated successfully')
+          "
+          
+      - name: Run Repository Hygiene Bot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USER: ${{ github.repository_owner }}
+        run: |
+          ARGS=""
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            ARGS="$ARGS --dry-run"
+            echo "🔍 Running in DRY-RUN mode - no changes will be made"
+          fi
+          if [[ -n "${{ inputs.single_repo }}" ]]; then
+            ARGS="$ARGS --single-repo ${{ inputs.single_repo }}"
+            echo "🎯 Processing single repository: ${{ inputs.single_repo }}"
+          fi
+          
+          python3 -m src.repo_hygiene_cli $ARGS --verbose
+          
+      - name: Upload metrics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hygiene-metrics-${{ github.run_number }}
+          path: |
+            metrics/profile_hygiene.json
+            repo-hygiene-bot.log
+          retention-days: 30
+          
+      - name: Generate Summary Report
+        if: always() && hashFiles('metrics/profile_hygiene.json') != ''
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          
+          try:
+              with open('metrics/profile_hygiene.json', 'r') as f:
+                  metrics = json.load(f)
+              
+              total_repos = len(metrics)
+              if total_repos == 0:
+                  print("No repositories were processed")
+                  exit(0)
+              
+              # Calculate compliance metrics
+              compliant_repos = 0
+              issues = {
+                  'missing_description': 0,
+                  'missing_license': 0,
+                  'missing_code_scanning': 0,
+                  'missing_dependabot': 0,
+                  'insufficient_topics': 0,
+                  'missing_sbom': 0
+              }
+              
+              for metric in metrics:
+                  is_compliant = all([
+                      metric.get('description_set', False),
+                      metric.get('license_exists', False),
+                      metric.get('code_scanning', False),
+                      metric.get('dependabot', False),
+                      metric.get('topics_count', 0) >= 5,
+                      metric.get('sbom_workflow', False)
+                  ])
+                  
+                  if is_compliant:
+                      compliant_repos += 1
+                  else:
+                      if not metric.get('description_set', False):
+                          issues['missing_description'] += 1
+                      if not metric.get('license_exists', False):
+                          issues['missing_license'] += 1
+                      if not metric.get('code_scanning', False):
+                          issues['missing_code_scanning'] += 1
+                      if not metric.get('dependabot', False):
+                          issues['missing_dependabot'] += 1
+                      if metric.get('topics_count', 0) < 5:
+                          issues['insufficient_topics'] += 1
+                      if not metric.get('sbom_workflow', False):
+                          issues['missing_sbom'] += 1
+              
+              compliance_rate = (compliant_repos / total_repos) * 100
+              
+              # Write to GitHub Actions summary
+              summary = f"""# 🎯 Repository Hygiene Summary
+              
+              ## 📊 Overall Statistics
+              
+              | Metric | Value |
+              |--------|-------|
+              | Total repositories processed | {total_repos} |
+              | Fully compliant repositories | {compliant_repos} |
+              | Repositories needing improvements | {total_repos - compliant_repos} |
+              | Overall compliance rate | {compliance_rate:.1f}% |
+              
+              ## 🔍 Issues Found
+              
+              | Issue Type | Count |
+              |------------|-------|
+              | Missing descriptions | {issues['missing_description']} |
+              | Missing licenses | {issues['missing_license']} |
+              | Missing CodeQL scanning | {issues['missing_code_scanning']} |
+              | Missing Dependabot | {issues['missing_dependabot']} |
+              | Insufficient topics (<5) | {issues['insufficient_topics']} |
+              | Missing SBOM workflow | {issues['missing_sbom']} |
+              
+              ## 🎯 Compliance Status
+              
+              {"✅ All repositories are compliant!" if compliant_repos == total_repos else f"⚠️  {total_repos - compliant_repos} repositories need improvements"}
+              """
+              
+              # Write to GitHub Actions summary
+              with open(os.environ.get('GITHUB_STEP_SUMMARY', '/dev/stdout'), 'a') as f:
+                  f.write(summary)
+              
+              print(f"📋 Processed {total_repos} repositories with {compliance_rate:.1f}% compliance rate")
+              
+          except FileNotFoundError:
+              print("⚠️  No metrics file found - bot may have failed to run")
+          except Exception as e:
+              print(f"❌ Error generating summary: {e}")
+          EOF
+          
+      - name: Notify on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Repository Hygiene Bot Failed - Run #${{ github.run_number }}`;
+            const body = `
+            The repository hygiene bot failed during its scheduled run.
+            
+            **Details:**
+            - Workflow: ${{ github.workflow }}
+            - Run ID: ${{ github.run_id }}
+            - Trigger: ${{ github.event_name }}
+            - Commit: ${{ github.sha }}
+            
+            **Actions:**
+            1. Check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Review any configuration changes
+            3. Verify GitHub token permissions
+            
+            This issue will be automatically closed when the bot runs successfully again.
+            `;
+            
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['repo-hygiene-bot-failure'],
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['repo-hygiene-bot-failure', 'automated-issue']
+              });
+            }
+            
+      - name: Close Success Issues
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Close any open failure issues when the bot succeeds
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['repo-hygiene-bot-failure'],
+              state: 'open'
+            });
+            
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ Repository hygiene bot is now running successfully again. Closing this issue.`
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
