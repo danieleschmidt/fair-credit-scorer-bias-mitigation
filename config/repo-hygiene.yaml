@@ -1,0 +1,123 @@
+# Repository Hygiene Bot Configuration
+# This file defines the standard practices and templates applied by the bot
+
+# Repository metadata settings
+metadata:
+  # Standard topics to apply to all repositories
+  standard_topics:
+    - "llmops"
+    - "rag" 
+    - "semantic-release"
+    - "sbom"
+    - "github-actions"
+  
+  # Minimum number of topics required
+  min_topics: 5
+  
+  # Default homepage pattern (${GITHUB_USER} will be replaced)
+  homepage_pattern: "https://${GITHUB_USER}.github.io"
+
+# Community health files configuration
+community_files:
+  # Files that should exist in every repository
+  required_files:
+    - "LICENSE"
+    - "CODE_OF_CONDUCT.md"
+    - "CONTRIBUTING.md" 
+    - "SECURITY.md"
+    - ".github/ISSUE_TEMPLATE/bug.yml"
+    - ".github/ISSUE_TEMPLATE/feature.yml"
+  
+  # License type to use when creating LICENSE files
+  license_type: "Apache-2.0"
+
+# Security and compliance workflows
+security:
+  # Required security scanning workflows
+  required_workflows:
+    - ".github/workflows/codeql.yml"
+    - ".github/workflows/scorecard.yml"
+    - ".github/workflows/sbom.yml"
+  
+  # Dependabot configuration
+  dependabot:
+    enabled: true
+    ecosystems:
+      - "pip"
+      - "npm" 
+      - "github-actions"
+    schedule: "weekly"
+    open_pull_requests_limit: 10
+
+# README standards
+readme:
+  # Required badges
+  required_badges:
+    - type: "build"
+      pattern: "[![Build](https://img.shields.io/github/actions/workflow/status/${GITHUB_USER}/${REPO_NAME}/ci.yml?branch=main)]"
+    - type: "semantic-release"
+      pattern: "[![semantic-release](https://img.shields.io/badge/semantic--release-active-e10079?logo=semantic-release)]"
+    - type: "sbom"
+      pattern: "[![SBOM](https://img.shields.io/badge/SBOM-CycloneDX-0078d6)](docs/sbom/latest.json)"
+  
+  # Required sections
+  required_sections:
+    - "## ✨ Why this exists"
+    - "## ⚡ Quick Start"
+    - "## 🔍 Key Features" 
+    - "## 🗺 Road Map"
+    - "## 🤝 Contributing"
+
+# Repository archival rules
+archival:
+  # Archive repositories with this name if they meet age criteria
+  archive_if_stale:
+    - name: "Main-Project"
+      max_age_days: 400
+
+# Pull request settings
+pull_requests:
+  # PR title template
+  title: "✨ repo‑hygiene‑bot update"
+  
+  # Labels to apply to hygiene PRs
+  labels:
+    - "automated-maintenance"
+    - "devsecops"
+  
+  # Auto-assign PRs to repository owner
+  auto_assign: true
+
+# Metrics and reporting
+metrics:
+  # Directory to save metrics
+  output_dir: "metrics"
+  
+  # Metrics file name
+  filename: "profile_hygiene.json"
+  
+  # Include detailed compliance breakdown
+  detailed_reporting: true
+
+# Bot behavior settings
+behavior:
+  # Create separate branch for each repository
+  create_branches: true
+  
+  # Branch name pattern
+  branch_name: "repo-hygiene-bot-updates"
+  
+  # Skip repositories that already have open hygiene PRs
+  skip_if_pr_exists: true
+  
+  # Maximum number of PRs to create per run (rate limiting)
+  max_prs_per_run: 10
+  
+  # Dry run mode (for testing)
+  dry_run: false
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(levelname)s - %(message)s"
+  file: "repo-hygiene-bot.log"

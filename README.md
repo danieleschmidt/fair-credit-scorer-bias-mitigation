@@ -1,8 +1,13 @@
 # fair-credit-scorer-bias-mitigation
 
-Fair Credit Scorer: Bias Mitigation in Lending Models
-**Version 0.1.0**
-This project aims to build a credit scoring model and explore techniques to identify and mitigate demographic bias. The goal is to develop a model that is not only accurate but also fair with respect to specified protected attributes.
+Fair Credit Scorer: Bias Mitigation in Lending Models + DevSecOps Automation
+**Version 0.2.0**
+
+This project serves two primary purposes:
+1. **Fair Credit Scoring**: Build a credit scoring model and explore techniques to identify and mitigate demographic bias
+2. **DevSecOps Automation**: Demonstrate autonomous repository hygiene management with the included repo-hygiene-bot
+
+The goal is to develop a model that is not only accurate but also fair with respect to specified protected attributes, while showcasing modern DevSecOps practices through automated repository management.
 
 ## Project Goals
 - Develop a baseline credit scoring model.
@@ -118,3 +123,79 @@ with accuracy dropping slightly to about 0.79. This demonstrates the trade-off
 between fairness and performance when using basic mitigation techniques.
 For a deeper discussion, see [TRADEOFFS.md](TRADEOFFS.md).
 See [CHANGELOG.md](CHANGELOG.md) for a list of recent updates.
+
+## 🤖 Repository Hygiene Bot
+
+This project includes an **autonomous DevSecOps repository hygiene bot** that applies standardized security and development practices across GitHub repositories. The bot demonstrates advanced automation capabilities for managing repository compliance at scale.
+
+### Key Features
+
+- **🔒 Automated Security**: Deploys CodeQL, Dependabot, and OpenSSF Scorecard
+- **📊 SBOM Generation**: Creates Software Bills of Materials for supply chain transparency  
+- **📝 Community Standards**: Adds LICENSE, CODE_OF_CONDUCT, CONTRIBUTING, and SECURITY files
+- **🏷️ Metadata Management**: Standardizes descriptions, topics, and homepages
+- **📋 README Enhancement**: Injects status badges and required documentation sections
+- **📈 Compliance Metrics**: Tracks hygiene status across all repositories
+
+### Quick Start
+
+```bash
+# Set up environment
+export GITHUB_TOKEN="your_token_here"
+export GITHUB_USER="your_username"
+
+# Run bot with dry-run (safe preview)
+./scripts/run-hygiene-bot.sh --dry-run --verbose
+
+# Apply changes to all repositories
+./scripts/run-hygiene-bot.sh
+
+# Process single repository
+python -m src.repo_hygiene_cli --single-repo my-repo
+```
+
+### Automated Execution
+
+The bot runs automatically via GitHub Actions every Sunday at 2 AM UTC. It can also be triggered manually through the Actions tab.
+
+### Documentation
+
+- **[Complete Bot Documentation](docs/REPO_HYGIENE_BOT.md)** - Comprehensive guide and API reference
+- **[Configuration Guide](config/repo-hygiene.yaml)** - Customization options
+- **[Architecture Overview](ARCHITECTURE.md)** - System design and components
+
+### What It Does
+
+The bot systematically applies DevSecOps best practices by:
+
+1. **Metadata Updates**: Ensures descriptions, topics, and homepages are set
+2. **Community Files**: Creates LICENSE, CODE_OF_CONDUCT, CONTRIBUTING, SECURITY files
+3. **Security Workflows**: Deploys CodeQL, Dependabot, OpenSSF Scorecard scanning
+4. **SBOM & Signing**: Generates Software Bills of Materials with Cosign signing
+5. **README Standards**: Adds badges and required documentation sections
+6. **Compliance Tracking**: Collects metrics and generates reports
+
+All changes are made via pull requests with detailed explanations, ensuring full audit trails and allowing manual review before merging.
+
+### Sample Output
+
+```
+🎯 Repository Hygiene Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Overall Statistics:
+   Total repositories processed: 25
+   Fully compliant repositories: 18
+   Repositories needing improvements: 7
+   Overall compliance rate: 72.0%
+
+🔍 Issues Found:
+   Missing descriptions: 2
+   Missing licenses: 3
+   Missing CodeQL scanning: 5
+   Missing Dependabot: 4
+   Insufficient topics (<5): 6
+   Missing SBOM workflow: 7
+```
+
+This bot serves as a reference implementation for autonomous DevSecOps practices, demonstrating how to scale security and compliance across large repository portfolios.
