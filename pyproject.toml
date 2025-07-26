@@ -14,6 +14,7 @@ dependencies = [
     "fairlearn==0.12.0",
     "networkx==3.5",
     "PyYAML>=6.0",
+    "requests>=2.28.0",
 ]
 
 [tool.setuptools]
@@ -28,6 +29,8 @@ py-modules = [
     "evaluate_fairness",
     "fairness_metrics",
     "run_tests",
+    "repo_hygiene_bot",
+    "repo_hygiene_cli",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +43,7 @@ dev = [
 
 [project.scripts]
 fairness-eval = "fair_credit_scorer_bias_mitigation.cli:main"
+repo-hygiene-bot = "repo_hygiene_cli:main"
 
 [tool.pytest.ini_options]
 markers = [
