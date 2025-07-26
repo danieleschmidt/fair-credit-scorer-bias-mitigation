@@ -1,3 +1,12 @@
+# GitHub Actions Setup for Repository Hygiene Bot
+
+Due to GitHub App permissions, the workflow file must be created manually.
+
+## Create Workflow File
+
+Create `.github/workflows/repo-hygiene-bot.yml` with the following content:
+
+```yaml
 name: Repository Hygiene Bot
 
 on:
@@ -100,3 +109,34 @@ jobs:
               Please check the logs and fix any issues.`,
               labels: ['bug', 'automated-maintenance']
             });
+```
+
+## Features
+
+This workflow provides:
+
+- **Scheduled Execution**: Runs every Sunday at 2 AM UTC
+- **Manual Triggering**: Can be run manually with optional dry-run mode
+- **Metrics Collection**: Uploads compliance metrics as artifacts
+- **Reporting**: Creates detailed reports in GitHub Actions summary
+- **Error Handling**: Creates GitHub issues when the bot fails
+
+## Setup Instructions
+
+1. Create the `.github/workflows/` directory if it doesn't exist
+2. Create the file `repo-hygiene-bot.yml` with the content above
+3. Commit and push the workflow file
+4. The bot will run automatically every Sunday
+5. You can also trigger it manually from the Actions tab
+
+## Manual Triggering
+
+To run the bot manually:
+
+1. Go to the Actions tab in your repository
+2. Select "Repository Hygiene Bot" workflow
+3. Click "Run workflow"
+4. Optionally check "Run in dry-run mode" to preview changes
+5. Click "Run workflow" to start
+
+The dry-run mode is useful for testing and seeing what changes would be made without actually applying them.

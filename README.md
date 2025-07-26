@@ -156,7 +156,7 @@ python -m src.repo_hygiene_cli --single-repo my-repo
 
 ### Automated Execution
 
-The bot runs automatically via GitHub Actions every Sunday at 2 AM UTC. It can also be triggered manually through the Actions tab.
+The bot can run automatically via GitHub Actions (workflow file needs to be created manually due to permissions). See the [complete documentation](docs/REPO_HYGIENE_BOT.md) for setup instructions.
 
 ### Documentation
 

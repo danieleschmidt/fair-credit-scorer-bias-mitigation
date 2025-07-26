@@ -197,7 +197,34 @@ The bot generates detailed compliance metrics:
 ```
 
 ### GitHub Actions Integration
-Automated weekly runs with:
+To enable automated weekly runs, manually create `.github/workflows/repo-hygiene-bot.yml`:
+
+```yaml
+name: Repository Hygiene Bot
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Sundays at 2 AM UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  hygiene-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          pip install requests PyYAML
+          python -m src.repo_hygiene_bot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USER: ${{ github.repository_owner }}
+```
+
+Features include:
 - Compliance reporting in GitHub Actions summary
 - Artifact upload for metrics history
 - Failure notifications via GitHub Issues
@@ -211,13 +238,10 @@ Automated weekly runs with:
 ```
 
 ### Scheduled GitHub Actions
-The included workflow runs weekly:
-```yaml
-on:
-  schedule:
-    - cron: '0 2 * * 0'  # Sundays at 2 AM UTC
-  workflow_dispatch:      # Manual trigger
-```
+Create the workflow file manually (see GitHub Actions Integration section above) to enable:
+- Weekly automated runs on Sundays at 2 AM UTC
+- Manual triggering via workflow_dispatch
+- Automated reporting and metrics collection
 
 ### CI/CD Integration
 ```bash
