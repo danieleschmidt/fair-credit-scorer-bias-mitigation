@@ -44,14 +44,14 @@ import logging
 # Import version directly to avoid circular import
 __version__ = "0.2.0"
 
-from data_loader_preprocessor import load_credit_data, load_credit_dataset
-from baseline_model import train_baseline_model, evaluate_model
-from bias_mitigator import (
+from src.data_loader_preprocessor import load_credit_data, load_credit_dataset
+from src.baseline_model import train_baseline_model, evaluate_model
+from src.bias_mitigator import (
     reweight_samples,
     postprocess_equalized_odds,
     expgrad_demographic_parity,
 )
-from fairness_metrics import compute_fairness_metrics
+from src.fairness_metrics import compute_fairness_metrics
 from sklearn.model_selection import StratifiedKFold
 import pandas as pd
 import json

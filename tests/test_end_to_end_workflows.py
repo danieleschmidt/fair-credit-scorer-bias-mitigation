@@ -34,7 +34,7 @@ try:
     from src.config import Config, get_config, reset_config
     from src.performance_benchmarking import PerformanceBenchmark
     from src.data_versioning import DataVersionManager
-    from src.fairness_metrics import calculate_fairness_metrics
+    from src.fairness_metrics import compute_fairness_metrics as calculate_fairness_metrics
     from src.bias_mitigator import BiasPostprocessor
 except ImportError as e:
     pytest.skip(f"Required modules not available: {e}", allow_module_level=True)
