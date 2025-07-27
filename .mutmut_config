@@ -1,0 +1,27 @@
+[mutmut]
+paths_to_mutate = src/
+backup = false
+runner = python -m pytest tests/ -x --tb=no --disable-warnings
+tests_dir = tests/
+exclude = 
+    *__pycache__*,
+    *.pyc,
+    *test_*,
+    *tests*,
+    *conftest*,
+    *setup.py,
+    *__init__.py
+
+# Mutation operators to use
+mutate_decorators = true
+mutate_annotations = false
+
+# Coverage threshold for mutation testing
+minimum_percentage = 80
+
+# Specific mutations to disable if needed
+# disabled_mutations = 
+
+# Output configuration
+output_legend = true
+show_times = true

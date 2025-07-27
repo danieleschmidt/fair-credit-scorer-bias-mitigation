@@ -1,0 +1,163 @@
+{
+  "name": "fair-credit-scorer-bias-mitigation",
+  "version": "0.2.0",
+  "description": "A comprehensive fair credit scoring system with bias mitigation capabilities and DevSecOps automation",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:python",
+    "test:python": "cd . && python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing",
+    "test:fast": "cd . && python -m pytest tests/ -m 'not slow and not integration'",
+    "test:integration": "cd . && python -m pytest tests/integration -m integration",
+    "test:e2e": "cd . && python -m pytest tests/e2e -m slow",
+    "test:performance": "cd . && python -m pytest tests/performance -m performance --benchmark-only",
+    "lint": "npm run lint:python && npm run lint:yaml && npm run lint:markdown",
+    "lint:python": "cd . && ruff check src tests",
+    "lint:python:fix": "cd . && ruff check src tests --fix",
+    "lint:yaml": "yamllint *.yml *.yaml .github/**/*.yml docs/**/*.yml || true",
+    "lint:markdown": "markdownlint *.md docs/**/*.md || true",
+    "format": "npm run format:python && npm run format:yaml",
+    "format:python": "cd . && black src tests",
+    "format:yaml": "prettier --write '**/*.{yml,yaml}' || true",
+    "format:markdown": "prettier --write '**/*.md' || true",
+    "build": "npm run build:python && npm run build:docs",
+    "build:python": "cd . && python -m build",
+    "build:docs": "cd . && mkdocs build",
+    "build:docker": "docker build -t fair-credit-scorer:latest .",
+    "dev": "npm run dev:setup && npm run dev:start",
+    "dev:setup": "cd . && pip install -e .[dev] && pre-commit install",
+    "dev:start": "docker-compose up -d",
+    "dev:stop": "docker-compose down",
+    "dev:logs": "docker-compose logs -f",
+    "dev:shell": "docker-compose exec app bash",
+    "clean": "npm run clean:python && npm run clean:docker && npm run clean:docs",
+    "clean:python": "cd . && rm -rf build/ dist/ *.egg-info/ .pytest_cache/ .coverage htmlcov/ .ruff_cache/",
+    "clean:docker": "docker system prune -f",
+    "clean:docs": "cd . && rm -rf site/",
+    "security": "npm run security:python && npm run security:deps",
+    "security:python": "cd . && bandit -r src -f json -o bandit-report.json && bandit -r src",
+    "security:deps": "cd . && safety check --json --output safety-report.json && safety check",
+    "security:docker": "docker run --rm -v \"$(pwd):/workspace\" aquasec/trivy fs --exit-code 1 --severity HIGH,CRITICAL /workspace",
+    "type-check": "cd . && mypy src --ignore-missing-imports",
+    "quality": "npm run lint && npm run format && npm run type-check && npm run security",
+    "docs": "npm run docs:build && npm run docs:serve",
+    "docs:build": "cd . && mkdocs build",
+    "docs:serve": "cd . && mkdocs serve",
+    "docs:api": "cd . && swagger-codegen generate -i docs/api/openapi.yaml -l html2 -o docs/api/generated/",
+    "release": "npm run release:check && npm run release:create",
+    "release:check": "npm run quality && npm run test",
+    "release:create": "cd . && cz bump --changelog",
+    "metrics": "npm run metrics:collect && npm run metrics:report",
+    "metrics:collect": "cd . && python -c \"from src.health_check import metrics_collector; metrics_collector.save_metrics()\"",
+    "metrics:report": "cd . && cat .github/project-metrics.json | jq .",
+    "benchmark": "cd . && python -m pytest tests/performance -m performance --benchmark-json=benchmark-results.json",
+    "coverage": "npm run test && open htmlcov/index.html || echo 'Open htmlcov/index.html in your browser'",
+    "start": "npm run dev:start",
+    "stop": "npm run dev:stop",
+    "restart": "npm run stop && npm run start",
+    "status": "docker-compose ps",
+    "logs": "npm run dev:logs",
+    "shell": "npm run dev:shell",
+    "health": "curl -f http://localhost:8080/health || echo 'Health check failed'",
+    "ready": "curl -f http://localhost:8080/ready || echo 'Readiness check failed'",
+    "install:deps": "npm install && cd . && pip install -e .[dev]",
+    "precommit": "cd . && pre-commit run --all-files",
+    "postinstall": "echo 'Run npm run dev:setup to complete development environment setup'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/fair-credit-scorer-bias-mitigation.git"
+  },
+  "keywords": [
+    "credit-scoring",
+    "bias-mitigation",
+    "fairness",
+    "machine-learning",
+    "devops",
+    "automation",
+    "security",
+    "compliance",
+    "sdlc"
+  ],
+  "author": "Fair Credit Scorer Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/username/fair-credit-scorer-bias-mitigation/issues"
+  },
+  "homepage": "https://github.com/username/fair-credit-scorer-bias-mitigation#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "markdownlint-cli": "^0.38.0",
+    "prettier": "^3.1.1",
+    "swagger-codegen": "^2.4.32",
+    "yamllint": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "*.py": [
+      "ruff check --fix",
+      "black",
+      "git add"
+    ],
+    "*.{yml,yaml}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.md": [
+      "prettier --write",
+      "markdownlint --fix",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "refactor",
+          "perf",
+          "test",
+          "build",
+          "ci",
+          "chore",
+          "revert"
+        ]
+      ]
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 80,
+    "tabWidth": 2
+  }
+}

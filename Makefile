@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format security type-check build clean dev docs serve-docs coverage benchmark all
+.PHONY: help install install-dev test lint format security type-check build clean dev docs serve-docs coverage benchmark mutation all
 .DEFAULT_GOAL := help
 
 # Variables
@@ -90,6 +90,15 @@ benchmark: ## Run performance benchmarks
 
 architecture: ## Generate architecture diagram
 	$(PYTHON) -m $(SRC_DIR).architecture_review
+
+mutation: ## Run mutation testing
+	mutmut run
+
+mutation-show: ## Show mutation testing results
+	mutmut show
+
+mutation-html: ## Generate mutation testing HTML report
+	mutmut html
 
 all: clean install-dev quality test build ## Run complete CI pipeline locally
 

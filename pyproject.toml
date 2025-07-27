@@ -64,6 +64,10 @@ docs = [
     "mkdocs-gen-files==0.5.0",
     "mkdocstrings[python]==0.24.0",
 ]
+mutation = [
+    "mutmut==2.4.3",
+    "pytest-mutagen==1.3",
+]
 
 [project.scripts]
 fairness-eval = "fair_credit_scorer_bias_mitigation.cli:main"
