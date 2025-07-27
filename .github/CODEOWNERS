@@ -1,0 +1,35 @@
+# Global code owners
+* @maintainer-team
+
+# Security-related files
+SECURITY.md @security-team
+.github/workflows/security.yml @security-team
+.bandit @security-team
+safety-policy.json @security-team
+.github/dependabot.yml @security-team
+
+# CI/CD files
+.github/workflows/ @devops-team
+Dockerfile @devops-team
+docker-compose.yml @devops-team
+.github/workflows/ci.yml @devops-team
+.github/workflows/release.yml @devops-team
+
+# Core application code
+src/ @maintainer-team @core-dev-team
+tests/ @maintainer-team @qa-team
+
+# Configuration files
+pyproject.toml @maintainer-team
+requirements*.txt @maintainer-team
+Makefile @maintainer-team
+tox.ini @maintainer-team
+
+# Documentation
+README.md @maintainer-team @docs-team
+docs/ @docs-team
+*.md @docs-team
+
+# Architecture and design
+ARCHITECTURE.md @architect-team
+architecture/ @architect-team

@@ -1,0 +1,102 @@
+site_name: Fair Credit Scorer - Bias Mitigation
+site_description: A comprehensive fair credit scoring system with bias mitigation capabilities
+site_author: Development Team
+site_url: https://github.com/username/fair-credit-scorer-bias-mitigation
+
+repo_name: fair-credit-scorer-bias-mitigation
+repo_url: https://github.com/username/fair-credit-scorer-bias-mitigation
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Basic Usage: user-guide/basic-usage.md
+    - CLI Reference: user-guide/cli-reference.md
+    - API Reference: user-guide/api-reference.md
+    - Examples: user-guide/examples.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Development Setup: development/setup.md
+    - Testing: development/testing.md
+    - Architecture: development/architecture.md
+  - DevSecOps:
+    - Repository Hygiene Bot: devsecops/repo-hygiene-bot.md
+    - CI/CD Pipeline: devsecops/cicd.md
+    - Security: devsecops/security.md
+    - Monitoring: devsecops/monitoring.md
+  - Reference:
+    - API Documentation: reference/api.md
+    - Configuration Reference: reference/configuration.md
+    - Metrics and Monitoring: reference/metrics.md
+    - Troubleshooting: reference/troubleshooting.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: false
+            docstring_style: google
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/username/fair-credit-scorer-bias-mitigation
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/fair-credit-scorer-bias-mitigation/
+
+copyright: Copyright &copy; 2024 Development Team

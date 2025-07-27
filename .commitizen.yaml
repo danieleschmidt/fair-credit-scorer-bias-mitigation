@@ -1,0 +1,91 @@
+commitizen:
+  name: cz_conventional_commits
+  tag_format: v$version
+  version_scheme: semver
+  version_provider: pep621
+  update_changelog_on_bump: true
+  major_version_zero: false
+  
+  # Conventional commit configuration
+  bump_message: "chore(release): bump version $current_version → $new_version [skip ci]"
+  changelog_file: CHANGELOG.md
+  changelog_start_rev: v0.1.0
+  
+  # Version files to update
+  version_files:
+    - pyproject.toml:version
+    - src/__init__.py:__version__
+  
+  # Template for changelog
+  change_type_order:
+    - BREAKING CHANGE
+    - feat
+    - fix
+    - refactor
+    - perf
+    - docs
+    - style
+    - test
+    - build
+    - ci
+    - chore
+  
+  # Commit types
+  commit_parser: "^(?P<change_type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\\((?P<scope>[^()\r\n]*)\\)|\\()?(?P<breaking>!)?:\\s(?P<message>.*)?"
+  changelog_pattern: "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.+\\))?(!)?"
+  
+  # Incremental versioning rules
+  version_pattern: "^v?(?P<version>([0-9]+\\.){2}[0-9]+(-([0-9A-Za-z-]+\\.)*[0-9A-Za-z-]+)?(\\+([0-9A-Za-z-]+\\.)*[0-9A-Za-z-]+)?)$"
+  
+  # Pre-commit hook
+  check_consistency: true
+  
+  # Custom questions for interactive mode
+  questions:
+    - type: list
+      name: change_type
+      message: Select the type of change you are committing
+      choices:
+        - value: feat
+          name: "feat: A new feature"
+        - value: fix
+          name: "fix: A bug fix"
+        - value: docs
+          name: "docs: Documentation only changes"
+        - value: style
+          name: "style: Changes that do not affect the meaning of the code"
+        - value: refactor
+          name: "refactor: A code change that neither fixes a bug nor adds a feature"
+        - value: perf
+          name: "perf: A code change that improves performance"
+        - value: test
+          name: "test: Adding missing tests or correcting existing tests"
+        - value: build
+          name: "build: Changes that affect the build system or external dependencies"
+        - value: ci
+          name: "ci: Changes to our CI configuration files and scripts"
+        - value: chore
+          name: "chore: Other changes that don't modify src or test files"
+        - value: revert
+          name: "revert: Reverts a previous commit"
+    
+    - type: input
+      name: scope
+      message: "Scope. Could be anything specifying place of the commit change (users, db, poll):"
+    
+    - type: input
+      name: subject
+      message: "Subject. Concise description of the changes. Imperative, lower case and no final dot:"
+    
+    - type: input
+      name: body
+      message: "Body. Motivation for the change and contrast this with previous behavior:"
+    
+    - type: confirm
+      name: is_breaking_change
+      message: "Is this a BREAKING CHANGE? Correlates with MAJOR in SemVer"
+      default: false
+    
+    - type: input
+      name: footer
+      message: "Footer. Information about Breaking Changes and reference issues that this commit closes:"

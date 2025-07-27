@@ -1,0 +1,72 @@
+# Git
+.git
+.gitignore
+README.md
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache
+nosetests.xml
+.cache
+htmlcov
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+.env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+data/
+*.csv
+metrics.json
+architecture/diagram.svg
+docs/_build/
+dist/
+build/
+*.egg-info/
+
+# Development files
+.pre-commit-config.yaml
+.editorconfig
+Makefile
+docker-compose.yml
+.devcontainer/
+
+# Documentation
+docs/
+notebooks/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile

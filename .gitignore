@@ -172,5 +172,58 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Project specific
 data/
 metrics.json
+*.json
+!package.json
+!tsconfig.json
+
+# Security reports
+bandit-report.json
+security-report.json
+trivy-report.json
+safety-report.json
+
+# Performance reports
+benchmark-results/
+profiling-results/
+
+# Documentation build
+docs/_build/
+site/
+
+# IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Container and deployment
+.docker/
+*.tar
+.env.local
+.env.production
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Logs
+logs/
+*.log
