@@ -1,0 +1,44 @@
+[bandit]
+# Bandit configuration file
+
+# Test IDs to skip
+skips = B101,B601
+
+# Test IDs to run (if you want to be explicit)
+# tests = B201,B301
+
+# Directories to exclude from scanning
+exclude_dirs = /tests,/venv,/env,/.venv,/.env,/build,/dist
+
+# Files to exclude (glob patterns)
+exclude = */test_*.py,*/conftest.py
+
+# Confidence levels: LOW, MEDIUM, HIGH
+confidence = MEDIUM
+
+# Severity levels: LOW, MEDIUM, HIGH
+severity = MEDIUM
+
+# Output formats: csv,json,txt,xml,yaml
+format = json
+
+# Output file
+output = bandit-report.json
+
+# Custom rules directory
+# rules_dir = custom_rules/
+
+# Baseline file to compare against
+# baseline = baseline.json
+
+[bandit.assert_used]
+# B101: Skip assert_used test in tests
+skips = */tests/*
+
+[bandit.hardcoded_password_string]
+# B105: Allow some hardcoded strings in tests
+word_list = test,example,dummy,fake,mock
+
+[bandit.blacklist]
+# B602: Subprocess with shell=True - allow in specific contexts
+subprocess_without_shell_equals_true = LOW

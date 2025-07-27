@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: fair-credit-scorer-dev
+    volumes:
+      - .:/app
+      - /app/.venv  # Anonymous volume for venv
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    networks:
+      - dev-network
+    command: bash
+
+  test:
+    build:
+      context: .
+      target: test
+      dockerfile: Dockerfile
+    container_name: fair-credit-scorer-test
+    volumes:
+      - .:/app
+    environment:
+      - ENVIRONMENT=test
+      - COVERAGE_THRESHOLD=80
+    networks:
+      - dev-network
+    command: make test
+
+  docs:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: fair-credit-scorer-docs
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    networks:
+      - dev-network
+    command: mkdocs serve --dev-addr 0.0.0.0:8000
+
+  jupyter:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: fair-credit-scorer-jupyter
+    volumes:
+      - .:/app
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    ports:
+      - "8888:8888"
+    networks:
+      - dev-network
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=''
+
+  lint:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: fair-credit-scorer-lint
+    volumes:
+      - .:/app
+    networks:
+      - dev-network
+    command: make quality
+
+  security-scan:
+    image: aquasec/trivy:latest
+    container_name: fair-credit-scorer-security
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    networks:
+      - dev-network
+    command: fs --exit-code 1 --severity HIGH,CRITICAL .
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  venv-volume:
