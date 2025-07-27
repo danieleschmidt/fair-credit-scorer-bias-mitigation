@@ -1,5 +1,5 @@
 # Multi-stage build for optimized production image
-FROM python:3.11-slim as base
+FROM python:3.13-slim as base
 
 # Security: Create non-root user
 RUN groupadd --gid 1000 appuser && \
