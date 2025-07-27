@@ -29,8 +29,8 @@ import matplotlib.dates as mdates
 import pandas as pd
 import yaml
 
-from backlog_manager import BacklogItem, TaskStatus, TaskType
-from security_quality_gates import GateResult, QualityGate
+from src.backlog_manager import BacklogItem, TaskStatus, TaskType
+from src.security_quality_gates import GateResult, QualityGate
 
 logger = logging.getLogger(__name__)
 

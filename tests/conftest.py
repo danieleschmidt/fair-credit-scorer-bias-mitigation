@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import reset_config
-from src.data_loader_preprocessor import generate_data
+from src.data_loader_preprocessor import generate_synthetic_credit_data as generate_data
 
 
 @pytest.fixture(autouse=True)

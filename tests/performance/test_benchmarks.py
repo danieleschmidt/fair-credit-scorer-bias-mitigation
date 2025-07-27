@@ -7,7 +7,7 @@ import tempfile
 import pytest
 
 from src.evaluate_fairness import run_pipeline
-from src.data_loader_preprocessor import generate_data
+from src.data_loader_preprocessor import generate_synthetic_credit_data as generate_data
 
 
 class TestPerformanceBenchmarks:

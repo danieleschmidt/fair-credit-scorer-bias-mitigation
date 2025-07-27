@@ -24,8 +24,8 @@ import sys
 import time
 from typing import Optional
 
-from backlog_manager import BacklogManager, BacklogItem, TaskStatus
-from logging_config import setup_logging
+from src.backlog_manager import BacklogManager, BacklogItem, TaskStatus
+from src.logging_config import setup_logging
 
 
 class AutonomousBacklogExecutor:
