@@ -91,6 +91,12 @@ benchmark: ## Run performance benchmarks
 architecture: ## Generate architecture diagram
 	$(PYTHON) -m $(SRC_DIR).architecture_review
 
+sbom: ## Generate Software Bill of Materials (SBOM)
+	$(PYTHON) sbom/generate_sbom.py
+
+sbom-setup: ## Install SBOM generation tools (Syft and Grype)
+	./scripts/setup_sbom_tools.sh
+
 all: clean install-dev quality test build ## Run complete CI pipeline locally
 
 # Docker commands
