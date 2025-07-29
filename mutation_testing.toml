@@ -1,0 +1,51 @@
+# Mutation Testing Configuration with mutmut
+# Advanced testing quality assurance for MATURING repositories
+
+[tool.mutmut]
+# Paths to mutate
+paths_to_mutate = ["src/"]
+
+# Test runner command
+runner = "python -m pytest tests/ -x -q"
+
+# Only mutate files that are tested
+only_mutate_touched_files = true
+
+# Exclude patterns
+exclude_patterns = [
+    "*/__pycache__/*",
+    "*/.*",
+    "*/test_*",
+    "*/conftest.py",
+    "*_test.py"
+]
+
+# Show progress
+show_progress = true
+
+# Use coverage data to focus mutations
+use_coverage = true
+
+# Exclude specific mutations that are noise
+exclude_mutations = [
+    "string_mutation",  # Skip string literal mutations
+    "break_continue",   # Skip break/continue mutations in simple loops
+]
+
+# Mutation score threshold (80% for maturing projects)
+mutation_score_threshold = 0.80
+
+# Parallel execution
+parallel = 4
+
+# Output format
+output_format = "json"
+
+# Cache results for faster re-runs
+cache_only = false
+
+# Backup directory for modified files
+backup_dir = ".mutmut_cache/"
+
+# Test timeout (seconds)
+test_timeout = 300
