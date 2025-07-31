@@ -122,3 +122,24 @@ release-minor: ## Create minor release
 
 release-major: ## Create major release
 	bump2version major
+
+# Advanced SDLC Automation commands
+dependency-analysis: ## Run intelligent dependency analysis
+	$(PYTHON) scripts/intelligent_dependency_manager.py --analyze
+
+security-scan: ## Run comprehensive security scan
+	$(PYTHON) scripts/security_automation_suite.py --scan
+
+code-review: ## Run AI-assisted code review
+	$(PYTHON) scripts/ai_code_reviewer.py --analyze
+
+release-readiness: ## Analyze release readiness
+	$(PYTHON) scripts/advanced_release_automation.py --analyze
+
+deployment-analysis: ## Analyze deployment readiness for staging
+	$(PYTHON) scripts/intelligent_deployment_manager.py --analyze staging
+
+observability-report: ## Generate observability report
+	$(PYTHON) scripts/observability_platform.py --report
+
+sdlc-health-check: dependency-analysis security-scan code-review release-readiness ## Run complete SDLC health check
