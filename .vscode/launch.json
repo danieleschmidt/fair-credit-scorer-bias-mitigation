@@ -1,0 +1,84 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug CLI",
+      "type": "python",
+      "request": "launch",
+      "module": "src.fair_credit_scorer_bias_mitigation.cli",
+      "args": ["--method", "baseline", "--verbose"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Debug Tests",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v", "--tb=short"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Debug Performance Profile",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/performance_profile.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Debug Tech Debt Monitor",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/tech_debt_monitor.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Debug Repo Hygiene Bot",
+      "type": "python",
+      "request": "launch",
+      "module": "src.repo_hygiene_cli",
+      "args": ["--dry-run", "--verbose"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}",
+        "GITHUB_USER": "${env:GITHUB_USER}"
+      }
+    },
+    {
+      "name": "Debug Fairness Evaluation",
+      "type": "python",
+      "request": "launch",
+      "module": "src.evaluate_fairness",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    }
+  ]
+}

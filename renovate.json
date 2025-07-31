@@ -1,0 +1,64 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard",
+    ":semanticCommitTypeAll(chore)",
+    "schedule:weekends"
+  ],
+  "enabledManagers": ["pip_requirements", "pip_setup", "dockerfile", "github-actions"],
+  "pip_requirements": {
+    "fileMatch": ["requirements.*\\.txt$", "requirements.*\\.pip$"]
+  },
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false,
+      "description": "Disable major updates for stability"
+    },
+    {
+      "matchPackageNames": ["scikit-learn", "pandas", "numpy", "matplotlib"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false,
+      "reviewers": ["@danieleschmidt"],
+      "description": "Critical ML dependencies require manual review"
+    },
+    {
+      "matchPackageNames": ["pytest", "ruff", "black", "bandit", "mypy"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "description": "Development tools can be auto-merged for minor updates"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchUpdateTypes": ["minor", "patch"],
+      "description": "Auto-merge GitHub Actions minor updates"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "assignees": ["@danieleschmidt"],
+    "labels": ["security", "vulnerability"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "labels": ["dependencies", "renovate"],
+  "assignees": ["@danieleschmidt"],
+  "reviewers": ["@danieleschmidt"],
+  "timezone": "UTC",
+  "schedule": ["before 6am on Monday"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 2,
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "commitMessageSuffix": "",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 6am on Monday"]
+  }
+}
