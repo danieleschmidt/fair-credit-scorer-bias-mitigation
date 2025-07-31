@@ -1,0 +1,140 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "pytest", "tests/", "--verbose", "--cov=src"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$python"]
+    },
+    {
+      "label": "Run Linting",
+      "type": "shell",
+      "command": "ruff",
+      "args": ["check", "src/", "tests/"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$python"]
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "black",
+      "args": ["src/", "tests/"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Security Scan",
+      "type": "shell",
+      "command": "bandit",
+      "args": ["-r", "src/", "-f", "json", "-o", "bandit-report.json"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Type Check",
+      "type": "shell",
+      "command": "mypy",
+      "args": ["src/", "--ignore-missing-imports"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$mypy"]
+    },
+    {
+      "label": "Performance Profile",
+      "type": "shell",
+      "command": "python",
+      "args": ["performance_profile.py"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Technical Debt Analysis",
+      "type": "shell",
+      "command": "python",
+      "args": ["tech_debt_monitor.py"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Container Security Scan",
+      "type": "shell",
+      "command": "python",
+      "args": ["container_security_scan.py", "fair-credit-scorer:latest"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Build Docker Image",
+      "type": "shell",
+      "command": "docker",
+      "args": ["build", "-t", "fair-credit-scorer:latest", "."],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Full Quality Check",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Format Code", "Run Linting", "Type Check", "Security Scan", "Run Tests"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    }
+  ]
+}

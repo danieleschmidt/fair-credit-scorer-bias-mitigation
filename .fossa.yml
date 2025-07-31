@@ -1,0 +1,80 @@
+version: 3
+
+project:
+  name: "fair-credit-scorer-bias-mitigation"
+  team: "terragon"
+  policy: "default"
+  link: "https://github.com/danieleschmidt/fair-credit-scorer-bias-mitigation"
+  
+targets:
+  - name: python-requirements
+    type: pip
+    target: requirements.txt
+    
+  - name: python-dev-requirements  
+    type: pip
+    target: requirements-dev.txt
+    
+  - name: python-project
+    type: pip
+    target: pyproject.toml
+
+server:
+  fetcher: custom
+  upload-timeout: 300s
+
+experimental:
+  gradle-configurations-only: false
+  
+analyze:
+  modules:
+    - name: python-main
+      type: pip
+      target: "."
+      path: "."
+
+# License policy configuration
+policies:
+  license:
+    # Allow permissive licenses
+    allow:
+      - "MIT"
+      - "Apache-2.0" 
+      - "BSD-2-Clause"
+      - "BSD-3-Clause"
+      - "ISC"
+      - "Unlicense"
+    
+    # Warn on copyleft licenses that may require review
+    warn:
+      - "GPL-2.0"
+      - "GPL-3.0"
+      - "LGPL-2.1"
+      - "LGPL-3.0"
+      - "AGPL-3.0"
+    
+    # Deny problematic licenses
+    deny:
+      - "GPL-2.0-only"
+      - "GPL-3.0-only"
+      - "AGPL-3.0-only"
+      - "CC-BY-SA-*"
+      - "SSPL-1.0"
+
+  # Security vulnerability policy
+  security:
+    # Fail build on high/critical vulnerabilities
+    fail-on-severity: "medium"
+    
+    # Maximum age for vulnerabilities before failing
+    max-age: 90
+    
+    # Ignore specific CVEs if needed (use sparingly)
+    ignore: []
+
+# Custom metadata
+custom-metadata:
+  team: "ml-engineering"
+  project-type: "machine-learning"
+  compliance-framework: "internal"
+  data-classification: "public"
