@@ -2,82 +2,106 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug CLI",
-      "type": "python",
-      "request": "launch",
-      "module": "src.fair_credit_scorer_bias_mitigation.cli",
-      "args": ["--method", "baseline", "--verbose"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src"
-      }
-    },
-    {
-      "name": "Debug Tests",
-      "type": "python",
-      "request": "launch",
-      "module": "pytest",
-      "args": ["tests/", "-v", "--tb=short"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src"
-      }
-    },
-    {
-      "name": "Debug Performance Profile",
-      "type": "python",
-      "request": "launch",
-      "program": "${workspaceFolder}/performance_profile.py",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src"
-      }
-    },
-    {
-      "name": "Debug Tech Debt Monitor",
-      "type": "python",
-      "request": "launch",
-      "program": "${workspaceFolder}/tech_debt_monitor.py",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "name": "Debug Repo Hygiene Bot",
-      "type": "python",
-      "request": "launch",
-      "module": "src.repo_hygiene_cli",
-      "args": ["--dry-run", "--verbose"],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src",
-        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}",
-        "GITHUB_USER": "${env:GITHUB_USER}"
-      }
-    },
-    {
-      "name": "Debug Fairness Evaluation",
-      "type": "python",
-      "request": "launch",
-      "module": "src.evaluate_fairness",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src"
-      }
-    },
-    {
       "name": "Python: Current File",
       "type": "python",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
+      "justMyCode": true,
       "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Fairness Evaluation",
+      "type": "python",
+      "request": "launch",
+      "module": "fair_credit_scorer_bias_mitigation.cli",
+      "args": ["--method", "baseline", "--verbose"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Pytest Current File",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-v"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Pytest All Tests",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Repository Hygiene Bot",
+      "type": "python",
+      "request": "launch",
+      "module": "repo_hygiene_cli",
+      "args": ["--dry-run", "--verbose"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Architecture Review",
+      "type": "python",
+      "request": "launch",
+      "module": "src.architecture_review",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Debug Tests with Coverage",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "--cov=src", "--cov-report=html", "-v"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
+    },
+    {
+      "name": "Python: Flask Development Server",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/health_check.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "FLASK_ENV": "development",
+        "FLASK_DEBUG": "1"
       }
     }
   ]

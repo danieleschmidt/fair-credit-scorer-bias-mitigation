@@ -1,0 +1,120 @@
+[run]
+source = src
+omit = 
+    # Test files
+    */tests/*
+    */test_*
+    */*_test.py
+    # Setup and configuration files
+    setup.py
+    conftest.py
+    # Virtual environment
+    */venv/*
+    */.venv/*
+    */env/*
+    */.env/*
+    # Build and distribution
+    */build/*
+    */dist/*
+    */site-packages/*
+    # IDE and editor files
+    */.vscode/*
+    */.idea/*
+    # Generated files
+    */migrations/*
+    */alembic/versions/*
+    # Documentation
+    */docs/*
+    # Scripts and utilities (optional coverage)
+    */scripts/setup_*
+    */scripts/install_*
+    # Third-party code
+    */site-packages/*
+    */lib/python*/site-packages/*
+
+branch = True
+parallel = True
+concurrency = 
+    multiprocessing
+    thread
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if False:
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about protocol methods
+    class .*\bProtocol\):
+    @(typing\.)?overload
+    
+    # Skip type checking blocks
+    if TYPE_CHECKING:
+    
+    # Skip platform-specific code
+    if sys\.platform
+    if platform\.system
+    
+    # Skip version-specific code  
+    if sys\.version_info
+    
+    # Skip optional import fallbacks
+    except ImportError:
+    except ModuleNotFoundError:
+    
+    # Skip command-line interface guards
+    if __name__ == "__main__":
+    
+    # Skip logging and debug statements (optional)
+    logger\.debug
+    log\.debug
+    
+    # Skip pass statements
+    pass
+
+ignore_errors = True
+show_missing = True
+skip_covered = False
+skip_empty = True
+
+# Coverage percentage thresholds
+fail_under = 85
+precision = 2
+
+# Output formats
+[html]
+directory = htmlcov
+title = Fair Credit Scorer Coverage Report
+show_contexts = True
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+pretty_print = True
+show_contexts = True
+
+# Path mapping for different environments
+[paths]
+source = 
+    src/
+    /app/src/
+    /workspace/src/
+    */fair_credit_scorer_bias_mitigation/src/

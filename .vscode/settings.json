@@ -3,68 +3,97 @@
   "python.terminal.activateEnvironment": true,
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": false,
-  "python.linting.ruffEnabled": true,
-  "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length=88"],
-  "python.linting.banditEnabled": true,
+  "python.linting.flake8Enabled": false,
   "python.linting.mypyEnabled": true,
+  "python.linting.banditEnabled": true,
+  "python.formatting.provider": "black",
+  "python.sortImports.args": ["--profile", "black"],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": [
-    "tests",
-    "--verbose",
-    "--cov=src",
-    "--cov-report=html",
-    "--cov-report=xml"
-  ],
-  "files.exclude": {
-    "**/__pycache__": true,
-    "**/*.pyc": true,
-    "**/.*cache": true,
-    "htmlcov/": true,
-    ".coverage": true,
-    "*.egg-info/": true,
-    "build/": true,
-    "dist/": true
-  },
+  "python.testing.pytestArgs": ["tests"],
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "workspace",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true,
     "source.fixAll.ruff": true
   },
-  "files.associations": {
-    "*.yml": "yaml",
-    "*.yaml": "yaml",
-    "Dockerfile*": "dockerfile",
-    "*.toml": "toml"
-  },
-  "yaml.schemas": {
-    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml",
-    "https://json.schemastore.org/dependabot-2.0.json": ".github/dependabot.yml",
-    "https://json.schemastore.org/pre-commit-config.json": ".pre-commit-config.yaml"
-  },
-  "git.ignoreLimitWarning": true,
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.typeCheckingMode": "basic",
-  "json.schemas": [
-    {
-      "fileMatch": ["renovate.json"],
-      "url": "https://docs.renovatebot.com/renovate-schema.json"
-    },
-    {
-      "fileMatch": [".fossa.yml"],
-      "url": "https://raw.githubusercontent.com/fossas/fossa-cli/master/docs/references/files/fossa-yml.md"
-    }
-  ],
+  "editor.rulers": [88],
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 88,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
   "files.watcherExclude": {
-    "**/profiling-results/**": true,
-    "**/security-reports/**": true,
-    "**/benchmark-results/**": true
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/.pytest_cache/**": true,
+    "**/__pycache__/**": true,
+    "**/.*_cache/**": true,
+    "**/htmlcov/**": true,
+    "**/coverage.xml": true,
+    "**/.coverage": true,
+    "**/site/**": true,
+    "**/build/**": true,
+    "**/dist/**": true
   },
-  "search.exclude": {
-    "**/profiling-results": true,
-    "**/security-reports": true,
-    "**/benchmark-results": true,
-    "**/*.log": true
-  }
+  "jupyter.askForKernelRestart": false,
+  "jupyter.runStartupCommands": [
+    "%load_ext autoreload",
+    "%autoreload 2"
+  ],
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "/bin/bash",
+      "args": ["-l"]
+    }
+  },
+  "markdownlint.config": {
+    "MD013": {
+      "line_length": 100,
+      "code_blocks": false,
+      "tables": false
+    },
+    "MD033": false
+  },
+  "cSpell.words": [
+    "fairlearn",
+    "sklearn",
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "mlflow",
+    "wandb",
+    "devcontainer",
+    "devops",
+    "devsecops",
+    "pytest",
+    "bandit",
+    "mypy",
+    "ruff",
+    "pylint",
+    "terragon",
+    "equalized",
+    "demographics",
+    "mitigation",
+    "reweighting",
+    "postprocess",
+    "expgrad",
+    "sbom",
+    "slsa",
+    "cosign",
+    "trivy"
+  ],
+  "ruff.args": ["--config=pyproject.toml"],
+  "ruff.fixAll": true,
+  "ruff.organizeImports": true,
+  "black-formatter.args": ["--config=pyproject.toml"],
+  "mypy-type-checker.args": ["--config-file=pyproject.toml"],
+  "bandit.args": ["-c", "pyproject.toml"]
 }
