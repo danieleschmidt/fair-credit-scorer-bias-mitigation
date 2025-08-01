@@ -1,0 +1,63 @@
+scoring:
+  weights:
+    advanced:
+      wsjf: 0.5
+      ice: 0.1
+      technicalDebt: 0.3
+      security: 0.1
+  
+  thresholds:
+    minScore: 15
+    maxRisk: 0.7
+    securityBoost: 2.0
+    complianceBoost: 1.8
+    performanceBoost: 1.5
+
+discovery:
+  sources:
+    - gitHistory
+    - staticAnalysis
+    - issueTrackers
+    - vulnerabilityDatabases
+    - performanceMonitoring
+    - testResults
+    - codeComplexity
+  
+  tools:
+    staticAnalysis:
+      - ruff
+      - bandit
+      - mypy
+      - sonarqube
+    security:
+      - bandit
+      - trivy
+      - dependabot
+    performance:
+      - pytest-benchmark
+      - locust
+    quality:
+      - pytest-cov
+      - mutmut
+
+execution:
+  maxConcurrentTasks: 1
+  testRequirements:
+    minCoverage: 85
+    performanceRegression: 5
+    securityThreshold: 0
+  rollbackTriggers:
+    - testFailure
+    - buildFailure
+    - securityViolation
+    - coverageRegression
+
+repository:
+  maturity: advanced
+  language: python
+  framework: scikit-learn
+  primaryDomain: ml-fairness
+  complianceRequirements:
+    - security
+    - performance
+    - quality
