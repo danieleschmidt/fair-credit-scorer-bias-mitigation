@@ -2,10 +2,27 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Tests",
+      "label": "Test",
       "type": "shell",
       "command": "python",
-      "args": ["-m", "pytest", "tests/", "--verbose", "--cov=src"],
+      "args": ["-m", "pytest", "tests/", "-v"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": "$pytest"
+    },
+    {
+      "label": "Test with Coverage",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "pytest", "tests/", "--cov=src", "--cov-report=html", "--cov-report=term"],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -13,10 +30,10 @@
         "focus": false,
         "panel": "shared"
       },
-      "problemMatcher": ["$python"]
+      "problemMatcher": "$pytest"
     },
     {
-      "label": "Run Linting",
+      "label": "Lint",
       "type": "shell",
       "command": "ruff",
       "args": ["check", "src/", "tests/"],
@@ -27,26 +44,13 @@
         "focus": false,
         "panel": "shared"
       },
-      "problemMatcher": ["$python"]
+      "problemMatcher": "$ruff-lsp"
     },
     {
-      "label": "Format Code",
+      "label": "Format",
       "type": "shell",
       "command": "black",
       "args": ["src/", "tests/"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "silent",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Security Scan",
-      "type": "shell",
-      "command": "bandit",
-      "args": ["-r", "src/", "-f", "json", "-o", "bandit-report.json"],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -59,7 +63,7 @@
       "label": "Type Check",
       "type": "shell",
       "command": "mypy",
-      "args": ["src/", "--ignore-missing-imports"],
+      "args": ["src/"],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -67,13 +71,13 @@
         "focus": false,
         "panel": "shared"
       },
-      "problemMatcher": ["$mypy"]
+      "problemMatcher": "$mypy"
     },
     {
-      "label": "Performance Profile",
+      "label": "Security Check",
       "type": "shell",
-      "command": "python",
-      "args": ["performance_profile.py"],
+      "command": "bandit",
+      "args": ["-r", "src/", "-f", "json", "-o", "bandit-report.json"],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -83,52 +87,120 @@
       }
     },
     {
-      "label": "Technical Debt Analysis",
+      "label": "Quality Check (All)",
       "type": "shell",
-      "command": "python",
-      "args": ["tech_debt_monitor.py"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Container Security Scan",
-      "type": "shell",
-      "command": "python",
-      "args": ["container_security_scan.py", "fair-credit-scorer:latest"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Build Docker Image",
-      "type": "shell",
-      "command": "docker",
-      "args": ["build", "-t", "fair-credit-scorer:latest", "."],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Full Quality Check",
-      "dependsOrder": "sequence",
-      "dependsOn": ["Format Code", "Run Linting", "Type Check", "Security Scan", "Run Tests"],
+      "command": "make",
+      "args": ["quality"],
       "group": {
         "kind": "build",
         "isDefault": true
       },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Build Documentation",
+      "type": "shell",
+      "command": "mkdocs",
+      "args": ["build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Serve Documentation",
+      "type": "shell",
+      "command": "mkdocs",
+      "args": ["serve", "--dev-addr", "0.0.0.0:8000"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Run Jupyter",
+      "type": "shell",
+      "command": "jupyter",
+      "args": ["lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "pip",
+      "args": ["install", "-e", ".[dev,test,lint,docs]"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Setup Pre-commit",
+      "type": "shell",
+      "command": "pre-commit",
+      "args": ["install"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run Pre-commit on All Files",
+      "type": "shell",
+      "command": "pre-commit",
+      "args": ["run", "--all-files"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Generate Architecture Diagram",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "src.architecture_review"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run Fairness Evaluation",
+      "type": "shell",
+      "command": "fairness-eval",
+      "args": ["--method", "baseline", "--verbose"],
+      "group": "build",
       "presentation": {
         "echo": true,
         "reveal": "always",

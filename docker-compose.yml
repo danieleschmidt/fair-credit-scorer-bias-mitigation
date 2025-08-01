@@ -1,6 +1,28 @@
 version: '3.8'
 
 services:
+  dev:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: fair-credit-scorer-devcontainer
+    volumes:
+      - .:/workspace:cached
+      - vscode-server-extensions:/home/vscode/.vscode-server/extensions
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+      - "8081:8081"
+      - "8888:8888"
+    networks:
+      - dev-network
+    command: sleep infinity
+    user: vscode
+
   app:
     build:
       context: .
@@ -93,3 +115,4 @@ networks:
 
 volumes:
   venv-volume:
+  vscode-server-extensions:
