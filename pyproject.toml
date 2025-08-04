@@ -42,7 +42,7 @@ dev = [
     "mutmut==2.4.4",
     "pact-python==2.2.1",
     "pytest-html==4.1.1",
-    "locust==2.31.8",
+    "locust==2.34.0",
     "faker==30.3.0",
     "pylint==3.3.1",
     "ruff==0.12.7",
