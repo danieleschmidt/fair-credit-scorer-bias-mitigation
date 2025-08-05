@@ -37,7 +37,7 @@ py-modules = [
 dev = [
     "pytest==8.4.1",
     "pytest-cov==6.2.1",
-    "pytest-xdist==3.5.0",
+    "pytest-xdist==3.8.0",
     "pytest-mock==3.14.1",
     "mutmut==3.3.1",
     "pact-python==2.3.3",
@@ -55,7 +55,7 @@ dev = [
 test = [
     "pytest==8.4.1",
     "pytest-cov==6.2.1",
-    "pytest-xdist==3.5.0",
+    "pytest-xdist==3.8.0",
     "pytest-mock==3.14.1",
 ]
 lint = [
