@@ -39,7 +39,7 @@ dev = [
     "pytest-cov==6.2.1",
     "pytest-xdist==3.5.0",
     "pytest-mock==3.14.1",
-    "mutmut==2.4.4",
+    "mutmut==3.3.1",
     "pact-python==2.2.1",
     "pytest-html==4.1.1",
     "locust==2.34.0",
