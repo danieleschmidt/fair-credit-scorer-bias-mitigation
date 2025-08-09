@@ -40,6 +40,10 @@ application, and comprehensive fairness evaluation with detailed reporting.
 
 import argparse
 import logging
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from functools import partial
+import multiprocessing
+import time
 
 # Import version directly to avoid circular import
 __version__ = "0.2.0"
@@ -327,8 +331,10 @@ def run_cross_validation(
     output_path=None,
     data_path="data/credit_data.csv",
     threshold=None,
+    enable_parallel=True,
+    max_workers=None,
 ):
-    """Run cross-validated evaluation and return averaged metrics.
+    """Run cross-validated evaluation with optional parallel processing.
 
     Parameters
     ----------
@@ -343,6 +349,10 @@ def run_cross_validation(
     threshold : float or None, optional
         Custom probability threshold applied in every fold. ``None`` uses the
         estimator's default ``predict`` behaviour.
+    enable_parallel : bool, optional
+        Enable parallel processing of CV folds. Default is True.
+    max_workers : int or None, optional
+        Maximum number of parallel workers. If None, uses CPU count.
         
     Raises
     ------
@@ -360,19 +370,110 @@ def run_cross_validation(
     if cv < 2:
         raise ValueError(f"cv must be at least 2, got {cv}")
             
+    start_time = time.time()
+    
+    # Determine parallelization strategy
+    if max_workers is None:
+        max_workers = min(cv, multiprocessing.cpu_count())
+    
+    parallel_enabled = enable_parallel and cv > 2 and max_workers > 1
+    
     logger.info(f"Running {cv}-fold cross-validation with method={method}, threshold={threshold}")
+    logger.info(f"Parallel processing: {'enabled' if parallel_enabled else 'disabled'} (workers: {max_workers if parallel_enabled else 1})")
+    
     X, y = load_credit_dataset(path=data_path, random_state=random_state)
     skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
-    overall_metrics = []
-    by_group_metrics = []
-    fold_results = []
-    for train_idx, test_idx in skf.split(X, y):
+    
+    # Prepare fold data
+    fold_data = []
+    for fold_idx, (train_idx, test_idx) in enumerate(skf.split(X, y)):
+        fold_data.append({
+            'fold_idx': fold_idx,
+            'train_idx': train_idx,
+            'test_idx': test_idx,
+            'X': X,
+            'y': y,
+            'method': method,
+            'threshold': threshold
+        })
+    
+    # Execute folds in parallel or sequential
+    if parallel_enabled:
+        logger.info(f"Processing {cv} folds in parallel with {max_workers} workers")
+        fold_results = _run_folds_parallel(fold_data, max_workers)
+    else:
+        logger.info(f"Processing {cv} folds sequentially")
+        fold_results = _run_folds_sequential(fold_data)
+    # Extract metrics from results
+    overall_metrics = [result['overall'] for result in fold_results]
+    by_group_metrics = [result['by_group'] for result in fold_results]
+
+    metrics_concat = pd.concat(overall_metrics, axis=1)
+    mean_overall = metrics_concat.mean(axis=1)
+    std_overall = metrics_concat.std(axis=1)
+    by_group_concat = pd.concat(by_group_metrics)
+    mean_by_group = by_group_concat.groupby(level=0).mean()
+    std_by_group = by_group_concat.groupby(level=0).std()
+    accuracy = float(mean_overall["accuracy"])
+    total_time = time.time() - start_time
+    
+    logger.info(f"Cross-validation completed in {total_time:.2f}s")
+    if parallel_enabled:
+        sequential_estimate = total_time * max_workers
+        logger.info(f"Estimated speedup: {sequential_estimate/total_time:.1f}x over sequential processing")
+    
+    logger.info("Average overall metrics:\n%s", mean_overall)
+    logger.info(
+        "Standard deviation of metrics across folds:\n%s",
+        std_overall,
+    )
+    logger.info("Average metrics by group:\n%s", mean_by_group)
+    logger.info("Standard deviation by group:\n%s", std_by_group)
+    results = {
+        "accuracy": accuracy,
+        "overall": mean_overall,
+        "overall_std": std_overall,
+        "by_group": mean_by_group,
+        "by_group_std": std_by_group,
+        "folds": fold_results,
+        "cv_execution_time": total_time,
+        "parallel_processing_used": parallel_enabled,
+        "num_workers": max_workers if parallel_enabled else 1,
+    }
+    if output_path is not None:
+        _save_metrics_json(results, output_path)
+    return results
+
+
+def _process_single_fold(fold_info):
+    """Process a single cross-validation fold.
+    
+    Parameters
+    ----------
+    fold_info : dict
+        Dictionary containing fold information including indices, data, method, and threshold.
+        
+    Returns
+    -------
+    dict
+        Results for the single fold including accuracy, overall metrics, and by_group metrics.
+    """
+    fold_idx = fold_info['fold_idx']
+    train_idx = fold_info['train_idx']
+    test_idx = fold_info['test_idx']
+    X = fold_info['X']
+    y = fold_info['y']
+    method = fold_info['method']
+    threshold = fold_info['threshold']
+    
+    try:
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
         features_train = X_train.drop("protected", axis=1)
         features_test = X_test.drop("protected", axis=1)
 
+        # Model training based on method
         if method == "reweight":
             weights = reweight_samples(y_train, X_train["protected"])
             model = train_baseline_model(features_train, y_train, sample_weight=weights)
@@ -392,6 +493,7 @@ def run_cross_validation(
                     X_train["protected"],
                 )
 
+        # Model evaluation
         if method == "postprocess":
             _, preds, probs = evaluate_model(
                 model,
@@ -410,43 +512,84 @@ def run_cross_validation(
                 threshold=threshold,
             )
 
+        # Compute fairness metrics with optimization enabled
         overall, by_group = compute_fairness_metrics(
             y_true=y_test,
             y_pred=preds,
             protected=X_test["protected"],
             y_scores=probs,
+            enable_optimization=True,  # Enable optimizations for parallel processing
         )
-        overall_metrics.append(overall)
-        by_group_metrics.append(by_group)
-        fold_results.append(
-            {"accuracy": overall["accuracy"], "overall": overall, "by_group": by_group}
-        )
+        
+        return {
+            "fold_idx": fold_idx,
+            "accuracy": overall["accuracy"], 
+            "overall": overall, 
+            "by_group": by_group
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing fold {fold_idx}: {e}")
+        raise
 
-    metrics_concat = pd.concat(overall_metrics, axis=1)
-    mean_overall = metrics_concat.mean(axis=1)
-    std_overall = metrics_concat.std(axis=1)
-    by_group_concat = pd.concat(by_group_metrics)
-    mean_by_group = by_group_concat.groupby(level=0).mean()
-    std_by_group = by_group_concat.groupby(level=0).std()
-    accuracy = float(mean_overall["accuracy"])
-    logger.info("Average overall metrics:\n%s", mean_overall)
-    logger.info(
-        "Standard deviation of metrics across folds:\n%s",
-        std_overall,
-    )
-    logger.info("Average metrics by group:\n%s", mean_by_group)
-    logger.info("Standard deviation by group:\n%s", std_by_group)
-    results = {
-        "accuracy": accuracy,
-        "overall": mean_overall,
-        "overall_std": std_overall,
-        "by_group": mean_by_group,
-        "by_group_std": std_by_group,
-        "folds": fold_results,
-    }
-    if output_path is not None:
-        _save_metrics_json(results, output_path)
-    return results
+
+def _run_folds_parallel(fold_data, max_workers):
+    """Run CV folds in parallel using ProcessPoolExecutor.
+    
+    Parameters
+    ----------
+    fold_data : list
+        List of fold information dictionaries.
+    max_workers : int
+        Maximum number of parallel workers.
+        
+    Returns
+    -------
+    list
+        Results from all folds in original order.
+    """
+    fold_results = [None] * len(fold_data)
+    
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all folds
+        future_to_fold = {executor.submit(_process_single_fold, fold_info): fold_info['fold_idx'] 
+                         for fold_info in fold_data}
+        
+        # Collect results as they complete
+        for future in as_completed(future_to_fold):
+            fold_idx = future_to_fold[future]
+            try:
+                result = future.result()
+                fold_results[fold_idx] = result
+                logger.debug(f"Completed fold {fold_idx}")
+            except Exception as e:
+                logger.error(f"Fold {fold_idx} generated an exception: {e}")
+                raise
+    
+    return fold_results
+
+
+def _run_folds_sequential(fold_data):
+    """Run CV folds sequentially.
+    
+    Parameters
+    ----------
+    fold_data : list
+        List of fold information dictionaries.
+        
+    Returns
+    -------
+    list
+        Results from all folds.
+    """
+    fold_results = []
+    
+    for fold_info in fold_data:
+        result = _process_single_fold(fold_info)
+        fold_results.append(result)
+        logger.debug(f"Completed fold {fold_info['fold_idx']}")
+    
+    return fold_results
 
 
 def main():
@@ -499,6 +642,17 @@ def main():
         action="store_true",
         help="Increase logging verbosity",
     )
+    parser.add_argument(
+        "--no-parallel",
+        action="store_true",
+        help="Disable parallel processing for cross-validation",
+    )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=None,
+        help="Maximum number of parallel workers (default: CPU count)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
@@ -511,6 +665,8 @@ def main():
             output_path=args.output_json,
             data_path=args.data_path,
             threshold=args.threshold,
+            enable_parallel=not args.no_parallel,
+            max_workers=args.max_workers,
         )
     else:
         run_pipeline(
