@@ -63,15 +63,27 @@ from sklearn.metrics import (
 
 try:
     from .logging_config import get_logger
-    from .scalable.performance_optimizer import ComputationCache, CachingStrategy
 except ImportError:
     from logging_config import get_logger
-    from scalable.performance_optimizer import ComputationCache, CachingStrategy
+
+# Temporary simplified cache for standalone operation
+class SimpleCache:
+    def __init__(self):
+        self._cache = {}
+        
+    def cached_function(self, func):
+        return func
+    
+    def get_stats(self):
+        return {'hit_rate': 0.0, 'cache_size': 0}
+    
+    def clear(self):
+        self._cache.clear()
 
 logger = get_logger(__name__)
 
 # Global cache for fairness computations
-_fairness_cache = ComputationCache(strategy=CachingStrategy.ADAPTIVE, max_size=500)
+_fairness_cache = SimpleCache()
 
 # Performance tracking
 _performance_stats = {
@@ -310,6 +322,8 @@ def compute_fairness_metrics(
             
             if "log_loss" in frame.overall:
                 overall["log_loss_difference"] = diffs.get("log_loss", 0)
+            if "roc_auc" in frame.overall:
+                overall["roc_auc_difference"] = diffs.get("roc_auc", 0)
         else:
             # Use separate score frame or main frame
             score_source = score_frame if score_frame is not None else frame
