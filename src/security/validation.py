@@ -324,7 +324,7 @@ class InputValidator:
         """Check for SQL injection patterns."""
         sql_patterns = [
             r"(\b(union|select|insert|update|delete|drop|create|alter|exec|execute)\b)",
-            r"('|(\\))(|(\\\\))('|(\\\\")|$)",
+            r"('|(\\))(|(\\\\))('|(\\\")|$)",
             r"(\b(or|and)\b\s+\b\d+\s*[=<>]\s*\d+)",
             r"(--|#|/\*|\*/)",
         ]
