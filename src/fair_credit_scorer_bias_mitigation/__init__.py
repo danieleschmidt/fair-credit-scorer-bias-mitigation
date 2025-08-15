@@ -2,6 +2,7 @@
 
 __version__ = "0.2.0"
 
+from architecture_review import ArchitectureReview
 from baseline_model import evaluate_model, train_baseline_model
 from bias_mitigator import (
     expgrad_demographic_parity,
@@ -11,7 +12,6 @@ from bias_mitigator import (
 from data_loader_preprocessor import load_credit_data, load_credit_dataset
 from evaluate_fairness import run_cross_validation, run_pipeline
 from fairness_metrics import compute_fairness_metrics
-from architecture_review import ArchitectureReview
 
 __all__ = [
     "__version__",

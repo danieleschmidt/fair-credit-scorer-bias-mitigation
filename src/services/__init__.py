@@ -13,14 +13,14 @@ Services:
 
 __version__ = "0.2.0"
 
-from .feature_engineering import FeatureEngineeringService
 from .bias_detection import BiasDetectionService
+from .feature_engineering import FeatureEngineeringService
 from .model_validation import ModelValidationService
 from .remediation import RemediationService
 
 __all__ = [
     "FeatureEngineeringService",
-    "BiasDetectionService", 
+    "BiasDetectionService",
     "ModelValidationService",
     "RemediationService"
 ]

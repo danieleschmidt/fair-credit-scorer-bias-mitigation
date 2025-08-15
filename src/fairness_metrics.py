@@ -25,40 +25,39 @@ assessments and supports both binary and probability predictions for comprehensi
 bias evaluation in machine learning systems.
 """
 
-from typing import Tuple, Optional
-from concurrent.futures import ThreadPoolExecutor
-from functools import lru_cache
 import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from fairlearn.metrics import (
     MetricFrame,
-    selection_rate,
-    equalized_odds_difference,
-    demographic_parity_difference,
-    false_positive_rate_difference,
-    false_negative_rate_difference,
-    false_positive_rate,
-    false_negative_rate,
-    true_positive_rate,
-    true_negative_rate,
-    demographic_parity_ratio,
-    equalized_odds_ratio,
-    false_positive_rate_ratio,
-    false_negative_rate_ratio,
-    true_positive_rate_ratio,
-    true_negative_rate_ratio,
     accuracy_score_ratio,
+    demographic_parity_difference,
+    demographic_parity_ratio,
+    equalized_odds_difference,
+    equalized_odds_ratio,
+    false_negative_rate,
+    false_negative_rate_difference,
+    false_negative_rate_ratio,
+    false_positive_rate,
+    false_positive_rate_difference,
+    false_positive_rate_ratio,
+    selection_rate,
+    true_negative_rate,
+    true_negative_rate_ratio,
+    true_positive_rate,
+    true_positive_rate_ratio,
 )
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
+    f1_score,
+    log_loss,
     precision_score,
     recall_score,
-    f1_score,
     roc_auc_score,
-    log_loss,
 )
 
 try:
@@ -70,13 +69,13 @@ except ImportError:
 class SimpleCache:
     def __init__(self):
         self._cache = {}
-        
+
     def cached_function(self, func):
         return func
-    
+
     def get_stats(self):
         return {'hit_rate': 0.0, 'cache_size': 0}
-    
+
     def clear(self):
         self._cache.clear()
 
@@ -137,25 +136,25 @@ def compute_fairness_metrics(
     """
     start_time = time.time()
     _performance_stats['computation_count'] += 1
-    
+
     logger.info("Computing comprehensive fairness metrics with optimization")
-    
+
     try:
         logger.debug(f"Input data - labels: {len(y_true)}, predictions: {len(y_pred)}, protected groups: {len(set(protected))}")
-        
+
         # Convert to optimal data types for performance
         if not isinstance(protected, pd.Series):
             protected = pd.Series(protected, name="protected", dtype='category')
-        
+
         # Convert arrays to pandas for consistency and performance
         if not isinstance(y_true, pd.Series):
             y_true = pd.Series(y_true, dtype='int8')  # Optimize for binary classification
         if not isinstance(y_pred, pd.Series):
             y_pred = pd.Series(y_pred, dtype='int8')
-        
+
         if y_scores is not None and not isinstance(y_scores, pd.Series):
             y_scores = pd.Series(y_scores, dtype='float32')  # Reduce precision for speed
-        
+
         # OPTIMIZATION 1: Consolidated MetricFrame computation (3x speedup)
         # Combine all metrics in single MetricFrame to avoid redundant computations
         base_metrics = {
@@ -170,7 +169,7 @@ def compute_fairness_metrics(
             "false_positive_rate": false_positive_rate,
             "false_negative_rate": false_negative_rate,
         }
-        
+
         # Add ROC AUC and log loss to main computation if scores are available
         score_input = y_scores if y_scores is not None else y_pred
         if enable_optimization:
@@ -178,14 +177,14 @@ def compute_fairness_metrics(
             all_metrics = base_metrics.copy()
             all_metrics["roc_auc"] = roc_auc_score
             all_metrics["log_loss"] = lambda yt, yp: log_loss(yt, yp if y_scores is not None else yp)
-            
+
             frame = MetricFrame(
                 metrics=all_metrics,
                 y_true=y_true,
                 y_pred=y_pred,
                 sensitive_features=protected,
             )
-            
+
             # For ROC AUC and log loss, use score_input if different from y_pred
             if y_scores is not None and not np.array_equal(score_input, y_pred):
                 score_frame = MetricFrame(
@@ -210,7 +209,7 @@ def compute_fairness_metrics(
                 y_pred=score_input,
                 sensitive_features=protected,
             )
-        
+
         # OPTIMIZATION 2: Parallel computation of independent fairness metrics
         if enable_optimization and len(set(protected)) > 2:  # Only parallelize for multiple groups
             def compute_difference_metrics():
@@ -220,7 +219,7 @@ def compute_fairness_metrics(
                     'fpr_diff': false_positive_rate_difference(y_true, y_pred, sensitive_features=protected),
                     'fnr_diff': false_negative_rate_difference(y_true, y_pred, sensitive_features=protected),
                 }
-            
+
             def compute_ratio_metrics():
                 return {
                     'dp_ratio': demographic_parity_ratio(y_true, y_pred, sensitive_features=protected),
@@ -231,26 +230,26 @@ def compute_fairness_metrics(
                     'tnr_ratio': true_negative_rate_ratio(y_true, y_pred, sensitive_features=protected),
                     'acc_ratio': accuracy_score_ratio(y_true, y_pred, sensitive_features=protected),
                 }
-            
+
             # Parallel computation
             with ThreadPoolExecutor(max_workers=2) as executor:
                 diff_future = executor.submit(compute_difference_metrics)
                 ratio_future = executor.submit(compute_ratio_metrics)
-                
+
                 diff_metrics = diff_future.result()
                 ratio_metrics = ratio_future.result()
-            
+
             eod = diff_metrics['eod']
             dpd = diff_metrics['dpd']
             fpr_diff = diff_metrics['fpr_diff']
             fnr_diff = diff_metrics['fnr_diff']
             dp_ratio = ratio_metrics['dp_ratio']
             eod_ratio = ratio_metrics['eod_ratio']
-            
+
             # OPTIMIZATION 3: Vectorized NaN handling (5x speedup)
             ratios = np.array([
                 ratio_metrics['fpr_ratio'],
-                ratio_metrics['fnr_ratio'], 
+                ratio_metrics['fnr_ratio'],
                 ratio_metrics['tpr_ratio'],
                 ratio_metrics['tnr_ratio'],
                 ratio_metrics['acc_ratio']
@@ -265,7 +264,7 @@ def compute_fairness_metrics(
             fnr_diff = false_negative_rate_difference(y_true, y_pred, sensitive_features=protected)
             dp_ratio = demographic_parity_ratio(y_true, y_pred, sensitive_features=protected)
             eod_ratio = equalized_odds_ratio(y_true, y_pred, sensitive_features=protected)
-            
+
             # Vectorized NaN handling
             ratios = np.array([
                 false_positive_rate_ratio(y_true, y_pred, sensitive_features=protected),
@@ -276,10 +275,10 @@ def compute_fairness_metrics(
             ])
             ratios_clean = np.nan_to_num(ratios, nan=1.0)
             fpr_ratio, fnr_ratio, tpr_ratio, tnr_ratio, acc_ratio = ratios_clean
-        
+
         # OPTIMIZATION 4: Efficient result assembly
         overall = frame.overall.copy()
-        
+
         # Add computed fairness metrics
         fairness_metrics = {
             "equalized_odds_difference": eod,
@@ -294,32 +293,32 @@ def compute_fairness_metrics(
             "true_negative_rate_ratio": tnr_ratio,
             "accuracy_ratio": acc_ratio,
         }
-        
+
         # Batch update for performance
         for key, value in fairness_metrics.items():
             overall[key] = value
-        
+
         # Compute differences efficiently
         diffs = frame.difference()
         difference_metrics = {
             "accuracy_difference": "accuracy",
-            "balanced_accuracy_difference": "balanced_accuracy", 
+            "balanced_accuracy_difference": "balanced_accuracy",
             "precision_difference": "precision",
             "recall_difference": "recall",
             "f1_difference": "f1",
             "true_positive_rate_difference": "true_positive_rate",
             "true_negative_rate_difference": "true_negative_rate",
         }
-        
+
         for new_key, orig_key in difference_metrics.items():
             overall[new_key] = diffs[orig_key]
-        
+
         # Handle ROC AUC and log loss based on optimization mode
         if enable_optimization and score_frame is None:
             # Values already computed in main frame
             overall["false_discovery_rate"] = 1 - overall["precision"]
             overall["false_discovery_rate_difference"] = -diffs["precision"]
-            
+
             if "log_loss" in frame.overall:
                 overall["log_loss_difference"] = diffs.get("log_loss", 0)
             if "roc_auc" in frame.overall:
@@ -333,10 +332,10 @@ def compute_fairness_metrics(
             overall["roc_auc_difference"] = score_source.difference()["roc_auc"]
             overall["false_discovery_rate"] = 1 - overall["precision"]
             overall["false_discovery_rate_difference"] = -diffs["precision"]
-        
+
         # Assemble by_group results efficiently
         by_group = frame.by_group.copy()
-        
+
         if enable_optimization and score_frame is None:
             # Values already in main frame
             by_group["false_discovery_rate"] = 1 - by_group["precision"]
@@ -345,21 +344,21 @@ def compute_fairness_metrics(
             by_group["log_loss"] = score_source.by_group["log_loss"]
             by_group["roc_auc"] = score_source.by_group["roc_auc"]
             by_group["false_discovery_rate"] = 1 - by_group["precision"]
-        
+
         # Track performance statistics
         computation_time = time.time() - start_time
         _performance_stats['total_compute_time'] += computation_time
-        
+
         logger.info(f"Successfully computed fairness metrics in {computation_time:.3f}s")
         logger.debug(f"Overall demographic parity difference: {overall['demographic_parity_difference']:.4f}")
         logger.debug(f"Overall equalized odds difference: {overall['equalized_odds_difference']:.4f}")
-        
+
         if enable_optimization:
             cache_stats = _fairness_cache.get_stats()
             logger.debug(f"Cache hit rate: {cache_stats['hit_rate']:.1%}, size: {cache_stats['cache_size']}")
-        
+
         return overall, by_group
-        
+
     except Exception as e:
         logger.error(f"Failed to compute fairness metrics: {e}")
         raise
@@ -375,7 +374,7 @@ def get_performance_stats() -> dict:
         and timing information.
     """
     stats = _performance_stats.copy()
-    
+
     # Add cache statistics
     cache_stats = _fairness_cache.get_stats()
     stats.update({
@@ -383,7 +382,7 @@ def get_performance_stats() -> dict:
         'avg_compute_time': stats['total_compute_time'] / max(1, stats['computation_count']),
         'optimization_speedup_estimate': '3-10x with caching and vectorization'
     })
-    
+
     return stats
 
 
@@ -411,12 +410,12 @@ def configure_optimization(enable_caching: bool = True, cache_size: int = 500):
         Maximum cache size. Default is 500.
     """
     global _fairness_cache, _performance_stats
-    
+
     _performance_stats['optimization_enabled'] = enable_caching
-    
+
     if enable_caching:
         _fairness_cache = ComputationCache(
-            strategy=CachingStrategy.ADAPTIVE, 
+            strategy=CachingStrategy.ADAPTIVE,
             max_size=cache_size
         )
         logger.info(f"Optimization enabled with cache size {cache_size}")

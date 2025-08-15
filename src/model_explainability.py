@@ -6,10 +6,11 @@ fairness and bias in credit scoring predictions.
 """
 
 import logging
+from typing import Any, Dict, List
+
 import numpy as np
 import pandas as pd
 import shap
-from typing import Dict, List, Any
 
 try:
     from .config import get_config
@@ -27,7 +28,7 @@ class ModelExplainer:
     This class wraps SHAP explainers to provide interpretable explanations
     for model predictions, helping understand feature importance and bias.
     """
-    
+
     def __init__(self, model, background_data: pd.DataFrame, max_evals: int = 100):
         """
         Initialize the ModelExplainer.
@@ -40,12 +41,12 @@ class ModelExplainer:
         self.model = model
         self.background_data = background_data.copy()
         self.max_evals = max_evals
-        
+
         # Initialize SHAP explainer
         self._initialize_shap_explainer()
-        
+
         logger.info(f"ModelExplainer initialized with {len(background_data)} background samples")
-    
+
     def _initialize_shap_explainer(self):
         """Initialize the appropriate SHAP explainer."""
         try:
@@ -61,7 +62,7 @@ class ModelExplainer:
                     min(50, len(self.background_data)), random_state=random_state
                 )
                 self.shap_explainer = shap.KernelExplainer(
-                    self.model.predict_proba, 
+                    self.model.predict_proba,
                     background_sample
                 )
                 logger.info("Using SHAP KernelExplainer with background data")
@@ -69,27 +70,27 @@ class ModelExplainer:
             logger.warning(f"Failed to initialize optimal explainer: {e}")
             # Fallback to simple function wrapping for mocked models
             self.shap_explainer = self._create_fallback_explainer()
-    
+
     def _create_fallback_explainer(self):
         """Create a fallback explainer for testing or unsupported models."""
         class FallbackExplainer:
             def __init__(self, model, background_data):
                 self.model = model
                 self.background_data = background_data
-            
+
             def __call__(self, instances):
                 # Return mock SHAP values for testing
                 if hasattr(instances, 'shape'):
                     n_samples, n_features = instances.shape
                 else:
                     n_samples, n_features = len(instances), len(instances.columns)
-                
+
                 # Generate random SHAP values for testing
                 np.random.seed(42)
                 return np.random.normal(0, 0.1, (n_samples, n_features))
-        
+
         return FallbackExplainer(self.model, self.background_data)
-    
+
     def explain_prediction(self, instance: pd.DataFrame) -> Dict[str, Any]:
         """
         Explain a single prediction using SHAP values.
@@ -103,10 +104,10 @@ class ModelExplainer:
         try:
             # Get model prediction
             prediction_proba = self.model.predict_proba(instance)
-            
+
             # Calculate SHAP values
             shap_values = self.shap_explainer(instance)
-            
+
             # Handle different SHAP value formats
             if hasattr(shap_values, 'values'):
                 values = shap_values.values
@@ -116,17 +117,17 @@ class ModelExplainer:
                     values = values.flatten()
             else:
                 values = shap_values
-            
+
             # Create feature importance mapping
             feature_names = instance.columns.tolist()
             feature_importance = dict(zip(feature_names, values[0] if len(values.shape) > 1 else values))
-            
+
             return {
                 'shap_values': values.tolist() if hasattr(values, 'tolist') else values,
                 'feature_importance': feature_importance,
                 'prediction': prediction_proba[0].tolist() if len(prediction_proba) > 0 else []
             }
-            
+
         except Exception as e:
             logger.error(f"Error explaining prediction: {e}")
             # Return fallback explanation
@@ -136,7 +137,7 @@ class ModelExplainer:
                 'prediction': [0.5, 0.5],
                 'error': str(e)
             }
-    
+
     def get_feature_importance_plot(self) -> Dict[str, List]:
         """
         Get data for feature importance visualization.
@@ -148,9 +149,9 @@ class ModelExplainer:
             # Calculate average SHAP values across background data sample
             sample_size = min(50, len(self.background_data))
             sample_data = self.background_data.sample(sample_size)
-            
+
             shap_values = self.shap_explainer(sample_data)
-            
+
             # Handle different SHAP value formats
             if hasattr(shap_values, 'values'):
                 values = shap_values.values
@@ -158,17 +159,17 @@ class ModelExplainer:
                     values = values[:, :, 1]  # Use positive class
             else:
                 values = shap_values
-            
+
             # Calculate mean absolute SHAP values for each feature
             mean_importance = np.abs(values).mean(axis=0)
-            
+
             feature_names = self.background_data.columns.tolist()
-            
+
             return {
                 'features': feature_names,
                 'importance_scores': mean_importance.tolist()
             }
-            
+
         except Exception as e:
             logger.error(f"Error generating feature importance plot: {e}")
             # Return fallback data
@@ -177,7 +178,7 @@ class ModelExplainer:
                 'features': feature_names,
                 'importance_scores': [0.1] * len(feature_names)
             }
-    
+
     def explain_for_api(self, instance: pd.DataFrame) -> Dict[str, Any]:
         """
         Generate explanation in API-friendly format.
@@ -189,7 +190,7 @@ class ModelExplainer:
             JSON-serializable dictionary with explanation data
         """
         explanation = self.explain_prediction(instance)
-        
+
         return {
             'explanation': {
                 'feature_contributions': explanation['feature_importance'],
@@ -204,12 +205,12 @@ class ModelExplainer:
                     'importance_rank': rank + 1
                 }
                 for rank, (feature, contribution) in enumerate(
-                    sorted(explanation['feature_importance'].items(), 
+                    sorted(explanation['feature_importance'].items(),
                           key=lambda x: abs(x[1]), reverse=True)
                 )
             ]
         }
-    
+
     def get_model_summary(self) -> Dict[str, Any]:
         """
         Get summary statistics about the explainer and model.

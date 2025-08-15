@@ -13,22 +13,17 @@ Global Features:
 - Cross-cultural fairness validation and adaptation
 """
 
-import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass, field
-from enum import Enum
-import time
-from datetime import datetime
-import json
-from pathlib import Path
 import asyncio
-import aiohttp
-from concurrent.futures import ThreadPoolExecutor
+import logging
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 # Simplified imports to avoid syntax issues
-import logging
 
 # Create a simple logger
 logger = logging.getLogger(__name__)
@@ -43,7 +38,7 @@ class CulturalFairnessFramework:
 class DeploymentRegion(Enum):
     """Supported deployment regions."""
     NORTH_AMERICA = "na"
-    EUROPE = "eu"  
+    EUROPE = "eu"
     ASIA_PACIFIC = "ap"
     SOUTH_AMERICA = "sa"
     AFRICA = "af"
@@ -76,7 +71,7 @@ class RegionalConfig:
     monitoring_requirements: Dict[str, Any]
 
 
-@dataclass  
+@dataclass
 class DeploymentStatus:
     """Status of a regional deployment."""
     region: DeploymentRegion
@@ -96,14 +91,14 @@ class RegionalComplianceEngine:
     Handles different regulatory frameworks and their specific requirements
     for fairness, privacy, and algorithmic accountability.
     """
-    
+
     def __init__(self):
         """Initialize compliance engine."""
         self.compliance_rules = self._load_compliance_rules()
         self.audit_logs = {}
-        
+
         logger.info("RegionalComplianceEngine initialized")
-    
+
     def _load_compliance_rules(self) -> Dict[ComplianceFramework, Dict[str, Any]]:
         """Load compliance rules for different frameworks."""
         return {
@@ -173,7 +168,7 @@ class RegionalComplianceEngine:
                 }
             }
         }
-    
+
     def validate_compliance(
         self,
         region_config: RegionalConfig,
@@ -192,23 +187,23 @@ class RegionalComplianceEngine:
             Compliance validation results for each framework
         """
         logger.info(f"Validating compliance for region {region_config.region.value}")
-        
+
         validation_results = {}
-        
+
         for framework in region_config.compliance_frameworks:
             if framework not in self.compliance_rules:
                 logger.warning(f"Compliance rules not found for framework {framework.value}")
                 continue
-            
+
             rules = self.compliance_rules[framework]
             result = self._validate_framework_compliance(framework, rules, model_metadata, deployment_context)
             validation_results[framework] = result
-        
+
         # Log audit trail
         self._log_compliance_audit(region_config.region, validation_results, deployment_context)
-        
+
         return validation_results
-    
+
     def _validate_framework_compliance(
         self,
         framework: ComplianceFramework,
@@ -225,7 +220,7 @@ class RegionalComplianceEngine:
             'recommendations': [],
             'validation_timestamp': datetime.now().isoformat()
         }
-        
+
         # Validate data protection requirements
         if 'data_protection' in rules:
             data_protection_result = self._validate_data_protection(
@@ -234,7 +229,7 @@ class RegionalComplianceEngine:
             if not data_protection_result['compliant']:
                 validation_result['compliant'] = False
                 validation_result['violations'].extend(data_protection_result['violations'])
-        
+
         # Validate fairness requirements
         if 'fairness_requirements' in rules:
             fairness_result = self._validate_fairness_requirements(
@@ -243,7 +238,7 @@ class RegionalComplianceEngine:
             if not fairness_result['compliant']:
                 validation_result['compliant'] = False
                 validation_result['violations'].extend(fairness_result['violations'])
-        
+
         # Validate audit requirements
         if 'audit_requirements' in rules:
             audit_result = self._validate_audit_requirements(
@@ -251,9 +246,9 @@ class RegionalComplianceEngine:
             )
             validation_result['warnings'].extend(audit_result['warnings'])
             validation_result['recommendations'].extend(audit_result['recommendations'])
-        
+
         return validation_result
-    
+
     def _validate_data_protection(
         self,
         data_rules: Dict[str, Any],
@@ -262,27 +257,27 @@ class RegionalComplianceEngine:
     ) -> Dict[str, Any]:
         """Validate data protection compliance."""
         result = {'compliant': True, 'violations': []}
-        
+
         # Right to explanation
         if data_rules.get('right_to_explanation', False):
             if not model_metadata.get('explainable', False):
                 result['compliant'] = False
                 result['violations'].append('Model lacks explainability required for right to explanation')
-        
+
         # Data minimization
         if data_rules.get('data_minimization', False):
             features_used = model_metadata.get('features', [])
             if len(features_used) > 20:  # Arbitrary threshold
                 result['violations'].append(f'Potential data minimization violation: {len(features_used)} features used')
-        
+
         # Consent requirements
         if data_rules.get('consent_required', False):
             if not deployment_context.get('user_consent_obtained', False):
                 result['compliant'] = False
                 result['violations'].append('User consent required but not obtained')
-        
+
         return result
-    
+
     def _validate_fairness_requirements(
         self,
         fairness_rules: Dict[str, Any],
@@ -291,37 +286,37 @@ class RegionalComplianceEngine:
     ) -> Dict[str, Any]:
         """Validate fairness compliance."""
         result = {'compliant': True, 'violations': []}
-        
+
         # Non-discrimination
         if fairness_rules.get('non_discrimination', False):
             fairness_metrics = model_metadata.get('fairness_metrics', {})
-            
+
             # Check demographic parity
             dp_diff = fairness_metrics.get('demographic_parity_difference', 0)
             if abs(dp_diff) > 0.1:  # 10% threshold
                 result['compliant'] = False
                 result['violations'].append(f'Demographic parity violation: {dp_diff:.3f}')
-            
+
             # Check equalized odds
             eo_diff = fairness_metrics.get('equalized_odds_difference', 0)
             if abs(eo_diff) > 0.1:  # 10% threshold
                 result['compliant'] = False
                 result['violations'].append(f'Equalized odds violation: {eo_diff:.3f}')
-        
+
         # Bias monitoring
         if fairness_rules.get('bias_monitoring', False):
             if not model_metadata.get('bias_monitoring_enabled', False):
                 result['compliant'] = False
                 result['violations'].append('Bias monitoring required but not enabled')
-        
+
         # Human oversight
         if fairness_rules.get('human_oversight', False):
             if not deployment_context.get('human_in_loop', False):
                 result['compliant'] = False
                 result['violations'].append('Human oversight required but not implemented')
-        
+
         return result
-    
+
     def _validate_audit_requirements(
         self,
         audit_rules: Dict[str, Any],
@@ -330,29 +325,29 @@ class RegionalComplianceEngine:
     ) -> Dict[str, Any]:
         """Validate audit compliance."""
         result = {'warnings': [], 'recommendations': []}
-        
+
         # Audit frequency
         if 'algorithmic_audit_frequency_days' in audit_rules:
             last_audit = model_metadata.get('last_audit_date')
             if last_audit:
                 days_since_audit = (datetime.now() - datetime.fromisoformat(last_audit)).days
                 required_frequency = audit_rules['algorithmic_audit_frequency_days']
-                
+
                 if days_since_audit > required_frequency:
                     result['warnings'].append(f'Audit overdue by {days_since_audit - required_frequency} days')
-        
+
         # Impact assessment
         if audit_rules.get('impact_assessment_required', False):
             if not model_metadata.get('impact_assessment_completed', False):
                 result['recommendations'].append('Complete algorithmic impact assessment')
-        
+
         # Bias testing
         if audit_rules.get('bias_testing_required', False):
             if not model_metadata.get('bias_testing_completed', False):
                 result['recommendations'].append('Complete comprehensive bias testing')
-        
+
         return result
-    
+
     def _log_compliance_audit(
         self,
         region: DeploymentRegion,
@@ -366,54 +361,54 @@ class RegionalComplianceEngine:
             'validation_results': validation_results,
             'deployment_context': deployment_context
         }
-        
+
         region_key = region.value
         if region_key not in self.audit_logs:
             self.audit_logs[region_key] = []
-        
+
         self.audit_logs[region_key].append(audit_entry)
-        
+
         # Keep only last 100 audit entries per region
         self.audit_logs[region_key] = self.audit_logs[region_key][-100:]
-    
+
     def generate_compliance_report(self, region: DeploymentRegion) -> Dict[str, Any]:
         """Generate compliance report for a region."""
         region_key = region.value
         recent_audits = self.audit_logs.get(region_key, [])[-10:]  # Last 10 audits
-        
+
         if not recent_audits:
             return {'region': region_key, 'status': 'no_audits', 'message': 'No audit history available'}
-        
+
         # Analyze compliance trends
         compliance_trend = []
         violation_counts = {}
-        
+
         for audit in recent_audits:
             audit_compliant = True
             audit_violations = 0
-            
+
             for framework_result in audit['validation_results'].values():
                 if not framework_result['compliant']:
                     audit_compliant = False
                     audit_violations += len(framework_result['violations'])
-                    
+
                     # Count violation types
                     for violation in framework_result['violations']:
                         violation_counts[violation] = violation_counts.get(violation, 0) + 1
-            
+
             compliance_trend.append({
                 'timestamp': audit['timestamp'],
                 'compliant': audit_compliant,
                 'violation_count': audit_violations
             })
-        
+
         # Calculate compliance rate
         compliant_audits = sum(1 for audit in compliance_trend if audit['compliant'])
         compliance_rate = compliant_audits / len(compliance_trend)
-        
+
         # Identify most common violations
         common_violations = sorted(violation_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        
+
         return {
             'region': region_key,
             'compliance_rate': compliance_rate,
@@ -432,7 +427,7 @@ class GlobalDeploymentOrchestrator:
     Manages deployment across multiple regions while ensuring cultural
     appropriateness and regulatory compliance.
     """
-    
+
     def __init__(self):
         """Initialize global deployment orchestrator."""
         self.regional_configs = self._load_regional_configs()
@@ -440,9 +435,9 @@ class GlobalDeploymentOrchestrator:
         self.compliance_engine = RegionalComplianceEngine()
         self.cultural_framework = CulturalFairnessFramework()
         self.load_balancer = GlobalLoadBalancer()
-        
+
         logger.info("GlobalDeploymentOrchestrator initialized")
-    
+
     def _load_regional_configs(self) -> Dict[DeploymentRegion, RegionalConfig]:
         """Load regional deployment configurations."""
         configs = {
@@ -495,9 +490,9 @@ class GlobalDeploymentOrchestrator:
                 monitoring_requirements={'cultural_bias_monitoring': True, 'government_reporting': True}
             )
         }
-        
+
         return configs
-    
+
     async def deploy_globally(
         self,
         model_package: Dict[str, Any],
@@ -517,14 +512,14 @@ class GlobalDeploymentOrchestrator:
         """
         if target_regions is None:
             target_regions = list(self.regional_configs.keys())
-        
+
         logger.info(f"Starting global deployment to {len(target_regions)} regions")
-        
+
         deployment_tasks = []
         for region in target_regions:
             task = self._deploy_to_region(region, model_package, deployment_strategy)
             deployment_tasks.append((region, task))
-        
+
         # Execute deployments concurrently
         results = {}
         for region, task in deployment_tasks:
@@ -543,17 +538,17 @@ class GlobalDeploymentOrchestrator:
                     performance_metrics={},
                     error_log=[str(e)]
                 )
-        
+
         # Update global deployment status
         self.deployment_statuses.update(results)
-        
+
         # Configure load balancing
         await self.load_balancer.update_routing(results)
-        
+
         logger.info(f"Global deployment completed. {sum(1 for status in results.values() if status.status == 'active')}/{len(results)} regions active")
-        
+
         return results
-    
+
     async def _deploy_to_region(
         self,
         region: DeploymentRegion,
@@ -562,22 +557,22 @@ class GlobalDeploymentOrchestrator:
     ) -> DeploymentStatus:
         """Deploy to a specific region with cultural adaptation."""
         logger.info(f"Deploying to region {region.value}")
-        
+
         try:
             region_config = self.regional_configs[region]
-            
+
             # Step 1: Validate compliance
             compliance_results = self.compliance_engine.validate_compliance(
                 region_config, model_package['metadata'], {'deployment_timestamp': datetime.now()}
             )
-            
+
             # Check if deployment can proceed
             all_compliant = all(result['compliant'] for result in compliance_results.values())
             if not all_compliant:
                 violations = []
                 for result in compliance_results.values():
                     violations.extend(result['violations'])
-                
+
                 logger.error(f"Compliance violations prevent deployment to {region.value}: {violations}")
                 return DeploymentStatus(
                     region=region,
@@ -589,18 +584,18 @@ class GlobalDeploymentOrchestrator:
                     performance_metrics={},
                     error_log=[f"Compliance violations: {violations}"]
                 )
-            
+
             # Step 2: Cultural adaptation
             adapted_model = await self._adapt_model_culturally(model_package, region_config)
-            
+
             # Step 3: Regional deployment
             deployment_result = await self._execute_regional_deployment(
                 adapted_model, region_config, deployment_strategy
             )
-            
+
             # Step 4: Post-deployment validation
             validation_result = await self._post_deployment_validation(region, adapted_model)
-            
+
             # Create deployment status
             status = DeploymentStatus(
                 region=region,
@@ -612,9 +607,9 @@ class GlobalDeploymentOrchestrator:
                 performance_metrics=validation_result.get('performance_metrics', {}),
                 error_log=deployment_result.get('errors', [])
             )
-            
+
             return status
-            
+
         except Exception as e:
             logger.error(f"Regional deployment to {region.value} failed: {e}")
             return DeploymentStatus(
@@ -627,7 +622,7 @@ class GlobalDeploymentOrchestrator:
                 performance_metrics={},
                 error_log=[str(e)]
             )
-    
+
     async def _adapt_model_culturally(
         self,
         model_package: Dict[str, Any],
@@ -635,21 +630,21 @@ class GlobalDeploymentOrchestrator:
     ) -> Dict[str, Any]:
         """Adapt model for cultural context of the region."""
         logger.info(f"Adapting model for {region_config.region.value} cultural context")
-        
+
         # Use cultural fairness framework for adaptation
         cultural_adaptation = self.cultural_framework.adapt_model_for_culture(
             model_package,
             region_config.cultural_context,
             region_config.protected_classes
         )
-        
+
         # Update model package with cultural adaptations
         adapted_package = model_package.copy()
         adapted_package['cultural_adaptations'] = cultural_adaptation
         adapted_package['region_config'] = region_config
-        
+
         return adapted_package
-    
+
     async def _execute_regional_deployment(
         self,
         model_package: Dict[str, Any],
@@ -659,14 +654,14 @@ class GlobalDeploymentOrchestrator:
         """Execute the actual deployment to regional infrastructure."""
         # Simulate deployment process
         await asyncio.sleep(1)  # Simulate deployment time
-        
+
         # In a real implementation, this would:
         # 1. Deploy to regional Kubernetes clusters
         # 2. Configure regional databases
         # 3. Set up regional monitoring
         # 4. Configure regional load balancers
         # 5. Run smoke tests
-        
+
         deployment_result = {
             'success': True,
             'deployment_id': f"deploy_{region_config.region.value}_{int(time.time())}",
@@ -682,10 +677,10 @@ class GlobalDeploymentOrchestrator:
             },
             'errors': []
         }
-        
+
         logger.info(f"Regional deployment to {region_config.region.value} completed")
         return deployment_result
-    
+
     async def _post_deployment_validation(
         self,
         region: DeploymentRegion,
@@ -694,14 +689,14 @@ class GlobalDeploymentOrchestrator:
         """Validate deployment after it's active."""
         # Simulate validation tests
         await asyncio.sleep(0.5)
-        
+
         # In a real implementation, this would:
         # 1. Run health checks
         # 2. Validate API responses
         # 3. Test cultural adaptations
         # 4. Verify compliance controls
         # 5. Check performance metrics
-        
+
         validation_result = {
             'health_score': np.random.uniform(0.85, 1.0),  # Simulated health score
             'performance_metrics': {
@@ -715,14 +710,14 @@ class GlobalDeploymentOrchestrator:
                 'local_fairness_compliance': True
             }
         }
-        
+
         return validation_result
-    
+
     def get_global_status(self) -> Dict[str, Any]:
         """Get overall global deployment status."""
         active_regions = [status for status in self.deployment_statuses.values() if status.status == 'active']
         failed_regions = [status for status in self.deployment_statuses.values() if status.status == 'failed']
-        
+
         return {
             'total_regions': len(self.deployment_statuses),
             'active_regions': len(active_regions),
@@ -731,22 +726,22 @@ class GlobalDeploymentOrchestrator:
             'regional_status': {status.region.value: status.status for status in self.deployment_statuses.values()},
             'last_updated': datetime.now().isoformat()
         }
-    
+
     async def failover_region(self, failed_region: DeploymentRegion, backup_region: DeploymentRegion):
         """Failover traffic from failed region to backup region."""
         logger.info(f"Initiating failover from {failed_region.value} to {backup_region.value}")
-        
+
         if backup_region not in self.deployment_statuses or self.deployment_statuses[backup_region].status != 'active':
             raise ValueError(f"Backup region {backup_region.value} is not available for failover")
-        
+
         # Update load balancer routing
         await self.load_balancer.failover_traffic(failed_region, backup_region)
-        
+
         # Update regional status
         if failed_region in self.deployment_statuses:
             self.deployment_statuses[failed_region].status = 'maintenance'
             self.deployment_statuses[failed_region].last_updated = datetime.now()
-        
+
         logger.info(f"Failover from {failed_region.value} to {backup_region.value} completed")
 
 
@@ -757,22 +752,22 @@ class GlobalLoadBalancer:
     Implements intelligent routing based on user location, regional health,
     and compliance requirements.
     """
-    
+
     def __init__(self):
         """Initialize global load balancer."""
         self.routing_table = {}
         self.health_checks = {}
         self.traffic_weights = {}
-        
+
         logger.info("GlobalLoadBalancer initialized")
-    
+
     async def update_routing(self, deployment_statuses: Dict[DeploymentRegion, DeploymentStatus]):
         """Update routing based on deployment statuses."""
         logger.info("Updating global routing table")
-        
+
         # Update routing table
         active_regions = [region for region, status in deployment_statuses.items() if status.status == 'active']
-        
+
         # Calculate traffic weights based on health scores and capacity
         total_weight = 0
         for region in active_regions:
@@ -780,28 +775,28 @@ class GlobalLoadBalancer:
             weight = status.health_score * 100  # Base weight on health score
             self.traffic_weights[region] = weight
             total_weight += weight
-        
+
         # Normalize weights
         if total_weight > 0:
             for region in active_regions:
                 self.traffic_weights[region] = (self.traffic_weights[region] / total_weight) * 100
-        
+
         # Update routing table
         self.routing_table = {
             'active_regions': active_regions,
             'traffic_weights': self.traffic_weights,
             'last_updated': datetime.now().isoformat()
         }
-        
+
         logger.info(f"Routing table updated: {len(active_regions)} active regions")
-    
+
     def route_request(self, user_location: Optional[str] = None, user_preferences: Optional[Dict] = None) -> DeploymentRegion:
         """Route request to optimal region."""
         active_regions = self.routing_table.get('active_regions', [])
-        
+
         if not active_regions:
             raise RuntimeError("No active regions available for routing")
-        
+
         # Simple routing logic - in practice would be more sophisticated
         if user_location:
             # Route based on geographic proximity
@@ -813,39 +808,39 @@ class GlobalLoadBalancer:
                 preferred_region = DeploymentRegion.ASIA_PACIFIC
             else:
                 preferred_region = None
-            
+
             if preferred_region and preferred_region in active_regions:
                 return preferred_region
-        
+
         # Fallback to weighted round-robin
         weights = self.traffic_weights
         if not weights:
             return active_regions[0]  # Simple fallback
-        
+
         # Select region based on weights (simplified)
         import random
         total_weight = sum(weights.get(region, 0) for region in active_regions)
         if total_weight == 0:
             return active_regions[0]
-        
+
         r = random.uniform(0, total_weight)
         cumulative_weight = 0
-        
+
         for region in active_regions:
             cumulative_weight += weights.get(region, 0)
             if r <= cumulative_weight:
                 return region
-        
+
         return active_regions[0]  # Fallback
-    
+
     async def failover_traffic(self, failed_region: DeploymentRegion, backup_region: DeploymentRegion):
         """Failover traffic from failed region to backup."""
         logger.info(f"Executing traffic failover: {failed_region.value} -> {backup_region.value}")
-        
+
         # Remove failed region from routing
         if 'active_regions' in self.routing_table and failed_region in self.routing_table['active_regions']:
             self.routing_table['active_regions'].remove(failed_region)
-        
+
         # Redistribute traffic weight to backup region
         if failed_region in self.traffic_weights:
             failed_weight = self.traffic_weights.pop(failed_region)
@@ -853,9 +848,9 @@ class GlobalLoadBalancer:
                 self.traffic_weights[backup_region] += failed_weight
             else:
                 self.traffic_weights[backup_region] = failed_weight
-        
+
         logger.info("Traffic failover completed")
-    
+
     def get_routing_stats(self) -> Dict[str, Any]:
         """Get routing statistics."""
         return {
@@ -869,17 +864,17 @@ class GlobalLoadBalancer:
 def main():
     """CLI interface for multi-regional deployment."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Multi-Regional Deployment Demo")
     parser.add_argument("--demo", action="store_true", help="Run demonstration")
-    parser.add_argument("--regions", nargs="+", help="Target regions for deployment", 
+    parser.add_argument("--regions", nargs="+", help="Target regions for deployment",
                        choices=['na', 'eu', 'ap', 'sa', 'af', 'me', 'oc'])
-    
+
     args = parser.parse_args()
-    
+
     if args.demo:
         print("🌍 Multi-Regional Deployment Demo")
-        
+
         # Create mock model package
         model_package = {
             'metadata': {
@@ -903,11 +898,11 @@ def main():
                 'disk_requirements': '10GB'
             }
         }
-        
+
         # Initialize orchestrator
         print("\n⚙️ Initializing Global Deployment Orchestrator")
         orchestrator = GlobalDeploymentOrchestrator()
-        
+
         # Select target regions
         target_regions = []
         if args.regions:
@@ -923,38 +918,38 @@ def main():
             target_regions = [region_map[r] for r in args.regions if r in region_map]
         else:
             target_regions = [DeploymentRegion.NORTH_AMERICA, DeploymentRegion.EUROPE, DeploymentRegion.ASIA_PACIFIC]
-        
+
         print(f"   Target regions: {[r.value for r in target_regions]}")
-        
+
         # Run deployment
         async def run_deployment():
             print(f"\n🚀 Starting deployment to {len(target_regions)} regions")
-            
+
             deployment_results = await orchestrator.deploy_globally(
                 model_package=model_package,
                 target_regions=target_regions,
                 deployment_strategy="blue_green"
             )
-            
+
             print("\n📊 Deployment Results:")
             for region, status in deployment_results.items():
                 print(f"   {region.value}: {status.status} (health: {status.health_score:.2f})")
                 if status.error_log:
                     print(f"      Errors: {status.error_log}")
-            
+
             # Test compliance reporting
             print("\n📋 Compliance Reports:")
             for region in target_regions:
                 if region in orchestrator.regional_configs:
                     report = orchestrator.compliance_engine.generate_compliance_report(region)
                     print(f"   {region.value}: {report.get('current_status', 'unknown')} (rate: {report.get('compliance_rate', 0):.1%})")
-            
+
             # Test load balancer
             print("\n🔄 Load Balancer Status:")
             routing_stats = orchestrator.load_balancer.get_routing_stats()
             active_regions = routing_stats.get('routing_table', {}).get('active_regions', [])
             print(f"   Active regions: {[r.value for r in active_regions]}")
-            
+
             # Test routing
             if active_regions:
                 print("\n🎯 Routing Examples:")
@@ -965,19 +960,19 @@ def main():
                         print(f"   User in {location} -> {routed_region.value}")
                     except Exception as e:
                         print(f"   User in {location} -> Error: {e}")
-            
+
             # Global status
             print("\n🌍 Global Status:")
             global_status = orchestrator.get_global_status()
             print(f"   Active regions: {global_status['active_regions']}/{global_status['total_regions']}")
             print(f"   Global health score: {global_status['global_health_score']:.2f}")
-        
+
         # Run async deployment
         try:
             asyncio.run(run_deployment())
         except Exception as e:
             print(f"   Deployment failed: {e}")
-        
+
         print("\n✅ Multi-regional deployment demo completed! 🎉")
 
 

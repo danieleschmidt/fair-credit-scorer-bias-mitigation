@@ -41,15 +41,16 @@ Usage:
     ... )
 """
 
-import os
-import json
 import hashlib
+import json
 import logging
+import os
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any
-import pandas as pd
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +77,12 @@ class DataMetadata:
     missing_values: Optional[Dict[str, int]] = None
     statistics: Optional[Dict[str, Any]] = None
     created_at: Optional[datetime] = None
-    
+
     def __post_init__(self):
         """Initialize computed fields after object creation."""
         if self.created_at is None:
             self.created_at = datetime.now()
-    
+
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame, include_quality_assessment: bool = True,
                       include_statistics: bool = True) -> "DataMetadata":
@@ -104,13 +105,13 @@ class DataMetadata:
         # Basic information
         rows, columns = df.shape
         size_bytes = df.memory_usage(deep=True).sum()
-        
+
         # Schema information
         schema = {col: str(df[col].dtype) for col in df.columns}
-        
+
         # Missing values analysis
         missing_values = df.isnull().sum().to_dict()
-        
+
         # Quality assessment
         quality_score = 1.0
         if include_quality_assessment:
@@ -118,7 +119,7 @@ class DataMetadata:
             missing_cells = sum(missing_values.values())
             if total_cells > 0:
                 quality_score = max(0.0, 1.0 - (missing_cells / total_cells))
-        
+
         # Statistical summaries
         statistics = None
         if include_statistics:
@@ -138,7 +139,7 @@ class DataMetadata:
             except Exception as e:
                 logger.warning(f"Failed to compute statistics: {e}")
                 statistics = None
-        
+
         return cls(
             rows=rows,
             columns=columns,
@@ -148,13 +149,13 @@ class DataMetadata:
             missing_values=missing_values,
             statistics=statistics
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = asdict(self)
         if self.created_at:
             result['created_at'] = self.created_at.isoformat()
-        
+
         # Convert numpy types to native Python types for JSON serialization
         if self.missing_values:
             result['missing_values'] = {k: int(v) for k, v in self.missing_values.items()}
@@ -163,15 +164,15 @@ class DataMetadata:
                 col: {k: float(v) if v is not None else None for k, v in stats.items()}
                 for col, stats in self.statistics.items()
             }
-        
+
         # Convert all numeric fields to native Python types
         result['rows'] = int(result['rows'])
         result['columns'] = int(result['columns'])
         result['size_bytes'] = int(result['size_bytes'])
         result['quality_score'] = float(result['quality_score'])
-        
+
         return result
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DataMetadata":
         """Create DataMetadata from dictionary."""
@@ -200,12 +201,12 @@ class DataVersion:
     metadata: DataMetadata
     tags: Optional[List[str]] = None
     description: Optional[str] = None
-    
+
     def __post_init__(self):
         """Initialize computed fields after object creation."""
         if self.tags is None:
             self.tags = []
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = {
@@ -218,29 +219,29 @@ class DataVersion:
             'description': self.description
         }
         return result
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DataVersion":
         """Create DataVersion from dictionary."""
         metadata_dict = data.pop('metadata')
         metadata = DataMetadata.from_dict(metadata_dict)
-        
+
         timestamp_str = data.pop('timestamp')
         timestamp = datetime.fromisoformat(timestamp_str)
-        
+
         return cls(
             metadata=metadata,
             timestamp=timestamp,
             **data
         )
-    
+
     def __eq__(self, other) -> bool:
         """Check equality based on version_id and data_hash."""
         if not isinstance(other, DataVersion):
             return False
-        return (self.version_id == other.version_id and 
+        return (self.version_id == other.version_id and
                 self.data_hash == other.data_hash)
-    
+
     def __hash__(self) -> int:
         """Hash based on version_id for use in sets/dicts."""
         return hash(self.version_id)
@@ -268,19 +269,19 @@ class DataLineage:
     timestamp: Optional[datetime] = None
     code_hash: Optional[str] = None
     environment: Optional[Dict[str, str]] = None
-    
+
     def __post_init__(self):
         """Initialize computed fields after object creation."""
         if self.timestamp is None:
             self.timestamp = datetime.now()
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = asdict(self)
         if self.timestamp:
             result['timestamp'] = self.timestamp.isoformat()
         return result
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DataLineage":
         """Create DataLineage from dictionary."""
@@ -295,7 +296,7 @@ class DataVersionManager:
     This class provides comprehensive data versioning capabilities including
     version creation, storage, retrieval, and lineage tracking.
     """
-    
+
     def __init__(self, storage_path: str):
         """Initialize DataVersionManager.
         
@@ -308,14 +309,14 @@ class DataVersionManager:
         self.versions_dir = os.path.join(self.storage_path, "versions")
         self.lineage_dir = os.path.join(self.storage_path, "lineage")
         self.data_dir = os.path.join(self.storage_path, "data")
-        
+
         # Create storage directories
         os.makedirs(self.versions_dir, exist_ok=True)
         os.makedirs(self.lineage_dir, exist_ok=True)
         os.makedirs(self.data_dir, exist_ok=True)
-        
+
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     def _compute_data_hash(self, data: pd.DataFrame) -> str:
         """Compute content-based hash for data integrity.
         
@@ -333,11 +334,11 @@ class DataVersionManager:
         # Use sort to ensure consistent ordering
         data_sorted = data.sort_index(axis=1).sort_index(axis=0)
         data_string = data_sorted.to_string()
-        
+
         # Compute SHA256 hash
         hash_object = hashlib.sha256(data_string.encode('utf-8'))
         return hash_object.hexdigest()
-    
+
     def _generate_version_id(self, base_name: Optional[str] = None) -> str:
         """Generate unique version ID.
         
@@ -356,8 +357,8 @@ class DataVersionManager:
             return f"{base_name}_{timestamp}"
         else:
             return f"v{timestamp}"
-    
-    def create_version(self, data: pd.DataFrame, source_path: str, 
+
+    def create_version(self, data: pd.DataFrame, source_path: str,
                       version_id: Optional[str] = None,
                       tags: Optional[List[str]] = None,
                       description: Optional[str] = None) -> DataVersion:
@@ -383,11 +384,11 @@ class DataVersionManager:
         """
         if version_id is None:
             version_id = self._generate_version_id()
-        
+
         # Compute data hash and metadata
         data_hash = self._compute_data_hash(data)
         metadata = DataMetadata.from_dataframe(data)
-        
+
         # Create version object
         version = DataVersion(
             version_id=version_id,
@@ -398,10 +399,10 @@ class DataVersionManager:
             tags=tags or [],
             description=description
         )
-        
+
         self.logger.info(f"Created data version {version_id} with hash {data_hash[:8]}...")
         return version
-    
+
     def save_version(self, version: DataVersion, data: pd.DataFrame) -> None:
         """Save version metadata and data to storage.
         
@@ -416,13 +417,13 @@ class DataVersionManager:
         metadata_path = os.path.join(self.versions_dir, f"{version.version_id}.json")
         with open(metadata_path, 'w') as f:
             json.dump(version.to_dict(), f, indent=2)
-        
+
         # Save data
         data_path = os.path.join(self.data_dir, f"{version.version_id}.parquet")
         data.to_parquet(data_path, index=False)
-        
+
         self.logger.info(f"Saved version {version.version_id} to storage")
-    
+
     def load_version(self, version_id: str) -> DataVersion:
         """Load version metadata from storage.
         
@@ -442,15 +443,15 @@ class DataVersionManager:
             If version does not exist
         """
         metadata_path = os.path.join(self.versions_dir, f"{version_id}.json")
-        
+
         if not os.path.exists(metadata_path):
             raise FileNotFoundError(f"Version {version_id} not found")
-        
-        with open(metadata_path, 'r') as f:
+
+        with open(metadata_path) as f:
             version_dict = json.load(f)
-        
+
         return DataVersion.from_dict(version_dict)
-    
+
     def load_data(self, version_id: str) -> pd.DataFrame:
         """Load actual dataset for a version.
         
@@ -470,12 +471,12 @@ class DataVersionManager:
             If version data does not exist
         """
         data_path = os.path.join(self.data_dir, f"{version_id}.parquet")
-        
+
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"Data for version {version_id} not found")
-        
+
         return pd.read_parquet(data_path)
-    
+
     def list_versions(self) -> List[DataVersion]:
         """List all available data versions.
         
@@ -485,7 +486,7 @@ class DataVersionManager:
             List of all versions sorted by timestamp
         """
         versions = []
-        
+
         for filename in os.listdir(self.versions_dir):
             if filename.endswith('.json'):
                 version_id = filename[:-5]  # Remove .json extension
@@ -494,11 +495,11 @@ class DataVersionManager:
                     versions.append(version)
                 except Exception as e:
                     self.logger.warning(f"Failed to load version {version_id}: {e}")
-        
+
         # Sort by timestamp
         versions.sort(key=lambda v: v.timestamp)
         return versions
-    
+
     def track_transformation(self, transformation_id: str,
                            input_versions: List[str],
                            output_version: str,
@@ -539,15 +540,15 @@ class DataVersionManager:
             code_hash=code_hash,
             environment=environment
         )
-        
+
         # Save lineage
         lineage_path = os.path.join(self.lineage_dir, f"{transformation_id}.json")
         with open(lineage_path, 'w') as f:
             json.dump(lineage.to_dict(), f, indent=2)
-        
+
         self.logger.info(f"Tracked transformation {transformation_id}: {input_versions} -> {output_version}")
         return lineage
-    
+
     def get_lineage_history(self, version_id: str) -> List[DataLineage]:
         """Get transformation lineage history for a version.
         
@@ -562,27 +563,27 @@ class DataVersionManager:
             List of transformations that produced this version
         """
         lineage_history = []
-        
+
         for filename in os.listdir(self.lineage_dir):
             if filename.endswith('.json'):
                 try:
-                    with open(os.path.join(self.lineage_dir, filename), 'r') as f:
+                    with open(os.path.join(self.lineage_dir, filename)) as f:
                         lineage_dict = json.load(f)
-                    
+
                     lineage = DataLineage.from_dict(lineage_dict)
-                    
+
                     # Check if this transformation involves our version
-                    if (version_id == lineage.output_version or 
+                    if (version_id == lineage.output_version or
                         version_id in lineage.input_versions):
                         lineage_history.append(lineage)
-                        
+
                 except Exception as e:
                     self.logger.warning(f"Failed to load lineage {filename}: {e}")
-        
+
         # Sort by timestamp
         lineage_history.sort(key=lambda item: item.timestamp or datetime.min)
         return lineage_history
-    
+
     def verify_data_integrity(self, version_id: str) -> bool:
         """Verify data integrity using stored hash.
         
@@ -599,14 +600,14 @@ class DataVersionManager:
         try:
             version = self.load_version(version_id)
             data = self.load_data(version_id)
-            
+
             computed_hash = self._compute_data_hash(data)
             return computed_hash == version.data_hash
-            
+
         except Exception as e:
             self.logger.error(f"Failed to verify integrity for {version_id}: {e}")
             return False
-    
+
     def cleanup_old_versions(self, keep_latest: int = 10) -> int:
         """Clean up old versions keeping only the latest N versions.
         
@@ -621,31 +622,31 @@ class DataVersionManager:
             Number of versions cleaned up
         """
         versions = self.list_versions()
-        
+
         if len(versions) <= keep_latest:
             return 0
-        
+
         # Keep the latest versions
         versions_to_remove = versions[:-keep_latest]
         removed_count = 0
-        
+
         for version in versions_to_remove:
             try:
                 # Remove metadata and data files
                 metadata_path = os.path.join(self.versions_dir, f"{version.version_id}.json")
                 data_path = os.path.join(self.data_dir, f"{version.version_id}.parquet")
-                
+
                 if os.path.exists(metadata_path):
                     os.remove(metadata_path)
                 if os.path.exists(data_path):
                     os.remove(data_path)
-                
+
                 removed_count += 1
                 self.logger.info(f"Cleaned up version {version.version_id}")
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to cleanup version {version.version_id}: {e}")
-        
+
         return removed_count
 
 
@@ -736,9 +737,9 @@ def track_data_transformation(transformation_id: str,
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Data versioning CLI")
-    parser.add_argument("--storage", default="./data_versions", 
+    parser.add_argument("--storage", default="./data_versions",
                        help="Storage directory path")
     parser.add_argument("--list", action="store_true",
                        help="List all versions")
@@ -746,23 +747,23 @@ if __name__ == "__main__":
                        help="Verify integrity of specific version")
     parser.add_argument("--cleanup", type=int,
                        help="Clean up old versions, keep N latest")
-    
+
     args = parser.parse_args()
-    
+
     logging.basicConfig(level=logging.INFO)
     manager = DataVersionManager(args.storage)
-    
+
     if args.list:
         versions = manager.list_versions()
         print(f"\nFound {len(versions)} versions:")
         for version in versions:
             print(f"  {version.version_id}: {version.metadata.rows} rows, "
                   f"{version.metadata.columns} cols, {version.source_path}")
-    
+
     if args.verify:
         is_valid = manager.verify_data_integrity(args.verify)
         print(f"Version {args.verify} integrity: {'VALID' if is_valid else 'INVALID'}")
-    
+
     if args.cleanup:
         removed = manager.cleanup_old_versions(keep_latest=args.cleanup)
         print(f"Cleaned up {removed} old versions")

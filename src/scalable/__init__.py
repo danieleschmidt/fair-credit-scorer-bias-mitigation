@@ -5,23 +5,13 @@ This module provides distributed computing capabilities, cloud integration,
 and performance optimization for large-scale fairness research.
 """
 
+from .cloud_integration import AutoScaler, CloudExperimentManager, ResourceManager
 from .distributed_computing import (
+    ComputeCluster,
     DistributedFairnessFramework,
     TaskScheduler,
-    ComputeCluster
 )
-
-from .cloud_integration import (
-    CloudExperimentManager,
-    ResourceManager,
-    AutoScaler
-)
-
-from .performance_optimizer import (
-    PerformanceOptimizer,
-    ModelOptimizer,
-    DataOptimizer
-)
+from .performance_optimizer import DataOptimizer, ModelOptimizer, PerformanceOptimizer
 
 __all__ = [
     'DistributedFairnessFramework',

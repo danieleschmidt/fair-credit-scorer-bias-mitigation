@@ -13,14 +13,14 @@ Modules:
 
 __version__ = "0.2.0"
 
-from .optimization import AutoFairnessOptimizer, HyperparameterTuner
 from .analytics import AdvancedAnalytics, FairnessReporter
-from .automation import ModelLifecycleManager, AutoRetrainer
+from .automation import AutoRetrainer, ModelLifecycleManager
+from .optimization import AutoFairnessOptimizer, HyperparameterTuner
 
 __all__ = [
     "AutoFairnessOptimizer",
     "HyperparameterTuner",
-    "AdvancedAnalytics", 
+    "AdvancedAnalytics",
     "FairnessReporter",
     "ModelLifecycleManager",
     "AutoRetrainer"

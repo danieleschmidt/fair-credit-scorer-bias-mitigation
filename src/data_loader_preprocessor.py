@@ -44,9 +44,9 @@ real datasets are not available, ensuring consistent development and testing wor
 Data versioning integration provides complete audit trails for reproducible ML pipelines.
 """
 
+import logging
 import os
 from typing import Tuple
-import logging
 
 import pandas as pd
 from sklearn.datasets import make_classification
@@ -68,7 +68,7 @@ except ImportError:
     VERSIONING_AVAILABLE = False
 
 
-def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative=5, 
+def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative=5,
                                   n_redundant=2, random_state=None):
     """Generate synthetic credit scoring data for benchmarking and testing.
     
@@ -104,14 +104,14 @@ def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative
         raise ValueError(f"n_samples must be positive, got {n_samples}")
     if n_features <= 0:
         raise ValueError(f"n_features must be positive, got {n_features}")
-    
+
     # Use config default if random_state not provided
     if random_state is None:
         config = get_config()
         random_state = config.data.random_state
-        
+
     logger.debug(f"Generating {n_samples} synthetic credit samples with {n_features} features, random_state={random_state}")
-    
+
     # Generate base features and target
     X_full, y = make_classification(
         n_samples=n_samples,
@@ -121,14 +121,14 @@ def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative
         n_clusters_per_class=1,
         random_state=random_state
     )
-    
+
     # Create protected attribute based on first feature
     # This creates a realistic correlation pattern
     sensitive_features = (X_full[:, 0] > X_full[:, 0].mean()).astype(int)
-    
+
     # Return features without the protected attribute embedded
     X = X_full[:, 1:]  # Remove first feature used for protected attribute
-    
+
     return X, y, sensitive_features
 
 
@@ -161,13 +161,13 @@ def load_credit_dataset(
         If lacking permissions to read/write files
     """
     config = get_config()
-    
+
     # Override defaults with configuration values if using defaults
     if path == "data/credit_data.csv":
         path = config.data.default_dataset_path
     if random_state == 42:
         random_state = config.general.default_random_state
-    
+
     # Input validation
     if not isinstance(path, str):
         raise TypeError(f"path must be a string, got {type(path).__name__}")
@@ -177,10 +177,10 @@ def load_credit_dataset(
         raise TypeError(f"random_state must be an integer, got {type(random_state).__name__}")
     if random_state < 0:
         raise ValueError(f"random_state must be non-negative, got {random_state}")
-    
+
     # Normalize path
     path = os.path.normpath(path.strip())
-    
+
     try:
         if os.path.exists(path):
             logger.info(f"Loading existing dataset from {path}")
@@ -208,7 +208,7 @@ def load_credit_dataset(
             df = pd.DataFrame(X, columns=[f"{config.data.feature_column_prefix}{i}" for i in range(X.shape[1])])
             df[config.data.protected_column_name] = protected
             df[config.data.label_column_name] = y
-            
+
             # Create directory with proper error handling
             try:
                 dir_path = os.path.dirname(path)
@@ -220,7 +220,7 @@ def load_credit_dataset(
                 raise PermissionError(f"Permission denied when creating directory or writing to {path}")
             except OSError as e:
                 raise FileNotFoundError(f"Could not create directory or write file {path}: {e}")
-    
+
     except pd.errors.EmptyDataError:
         raise ValueError(f"Invalid CSV format: File {path} is empty or contains no data")
     except pd.errors.ParserError as e:
@@ -233,17 +233,17 @@ def load_credit_dataset(
     try:
         if config.data.label_column_name not in df.columns:
             raise ValueError(f"Dataset missing required '{config.data.label_column_name}' column. Available columns: {list(df.columns)}")
-        
+
         X = df.drop(config.data.label_column_name, axis=1)
         y = df[config.data.label_column_name]
-        
+
         if X.empty:
             raise ValueError("No features found after removing label column")
         if len(X.columns) == 0:
             raise ValueError("Dataset has no feature columns")
         if y.empty:
             raise ValueError("No labels found")
-            
+
         return X, y
     except KeyError as e:
         raise ValueError(f"Error extracting features and labels: {e}")
@@ -285,21 +285,21 @@ def load_credit_data(
         raise TypeError(f"test_size must be a number, got {type(test_size).__name__}")
     if not 0.0 < test_size < 1.0:
         raise ValueError(f"test_size must be between 0.0 and 1.0, got {test_size}")
-    
+
     try:
         # Reuse ``load_credit_dataset`` so dataset generation logic lives in one place
         X, y = load_credit_dataset(path=path, random_state=random_state)
-        
+
         # Ensure we have enough samples for splitting
         if len(X) < 2:
             raise ValueError(f"Dataset has only {len(X)} samples, need at least 2 for train/test split")
-        
+
         # Calculate minimum test size based on data size
         min_test_samples = 1
         min_test_size = min_test_samples / len(X)
         if test_size < min_test_size:
             raise ValueError(f"test_size {test_size} too small, minimum is {min_test_size:.3f} for {len(X)} samples")
-        
+
         return train_test_split(
             X, y, test_size=test_size, random_state=random_state, stratify=y
         )
@@ -330,16 +330,16 @@ def train_test_split_validated(X, y, test_size=0.3, random_state=None):
     # Validate inputs
     if len(X) == 0 or len(y) == 0:
         raise ValueError("Dataset cannot be empty")
-    
+
     if len(X) != len(y):
         raise ValueError(f"Features and labels must have the same length, got {len(X)} and {len(y)}")
-    
+
     if not isinstance(test_size, (int, float)):
         raise TypeError(f"test_size must be a number, got {type(test_size).__name__}")
-    
+
     if not 0.0 < test_size < 1.0:
         raise ValueError(f"test_size must be between 0 and 1, got {test_size}")
-    
+
     try:
         return train_test_split(X, y, test_size=test_size, random_state=random_state)
     except (TypeError, AttributeError) as e:
@@ -398,25 +398,25 @@ def load_versioned_credit_data(
             "Data versioning is enabled but data_versioning module is not available. "
             "Either disable versioning (enable_versioning=False) or ensure the module is installed."
         )
-    
+
     logger.info(f"Loading credit data with versioning={'enabled' if enable_versioning else 'disabled'}")
-    
+
     # Load data using standard function
     X_train, X_test, y_train, y_test = load_credit_data(
         path=path,
         test_size=test_size,
         random_state=random_state
     )
-    
+
     if enable_versioning:
         try:
             # Initialize version manager
             manager = DataVersionManager(version_storage_path)
-            
+
             # Create combined dataset for versioning
             X_combined = pd.concat([X_train, X_test], ignore_index=True)
             y_combined = pd.concat([y_train, y_test], ignore_index=True)
-            
+
             # Create version for original dataset
             original_version = manager.create_version(
                 data=pd.concat([X_combined, y_combined], axis=1),
@@ -426,11 +426,11 @@ def load_versioned_credit_data(
                 tags=["original", "credit_data"]
             )
             manager.save_version(original_version, pd.concat([X_combined, y_combined], axis=1))
-            
+
             # Create versions for train and test splits
             train_data = pd.concat([X_train, y_train], axis=1)
             test_data = pd.concat([X_test, y_test], axis=1)
-            
+
             train_version = manager.create_version(
                 data=train_data,
                 source_path=f"{path}_train_split",
@@ -439,7 +439,7 @@ def load_versioned_credit_data(
                 tags=["train", "split"]
             )
             manager.save_version(train_version, train_data)
-            
+
             test_version = manager.create_version(
                 data=test_data,
                 source_path=f"{path}_test_split",
@@ -448,7 +448,7 @@ def load_versioned_credit_data(
                 tags=["test", "split"]
             )
             manager.save_version(test_version, test_data)
-            
+
             # Track lineage for train/test split transformation
             manager.track_transformation(
                 transformation_id=f"train_test_split_{random_state}_{int(test_size*100)}",
@@ -462,7 +462,7 @@ def load_versioned_credit_data(
                     "split_type": "train"
                 }
             )
-            
+
             manager.track_transformation(
                 transformation_id=f"train_test_split_{random_state}_{int(test_size*100)}_test",
                 input_versions=[original_version.version_id],
@@ -475,13 +475,13 @@ def load_versioned_credit_data(
                     "split_type": "test"
                 }
             )
-            
+
             logger.info(f"Created data versions: {original_version.version_id}, "
                        f"{train_version.version_id}, {test_version.version_id}")
-            
+
         except Exception as e:
             logger.warning(f"Data versioning failed: {e}")
             if enable_versioning:
                 logger.warning("Continuing without versioning")
-    
+
     return X_train, X_test, y_train, y_test
