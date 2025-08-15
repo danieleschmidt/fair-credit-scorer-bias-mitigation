@@ -7,11 +7,11 @@ In the full implementation, this would contain comprehensive cultural adaptation
 
 class CulturalFairnessFramework:
     """Placeholder for cultural fairness framework."""
-    
+
     def __init__(self):
         """Initialize cultural fairness framework."""
         pass
-    
+
     def adapt_model_for_culture(self, model_package, cultural_context, protected_classes):
         """Adapt model for cultural context."""
         return {

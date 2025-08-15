@@ -13,13 +13,13 @@ Modules:
 
 __version__ = "0.2.0"
 
-from .bias_detection import RealTimeBiasDetector, DriftDetectionAlgorithm
-from .fairness_optimization import FairnessOptimizer, MultiObjectiveOptimizer
+from .bias_detection import DriftDetectionAlgorithm, RealTimeBiasDetector
 from .ensemble import FairEnsemble, StackedFairnessModel
+from .fairness_optimization import FairnessOptimizer, MultiObjectiveOptimizer
 
 __all__ = [
     "RealTimeBiasDetector",
-    "DriftDetectionAlgorithm", 
+    "DriftDetectionAlgorithm",
     "FairnessOptimizer",
     "MultiObjectiveOptimizer",
     "FairEnsemble",

@@ -6,17 +6,21 @@ and multiple provider support (SMTP, SendGrid, AWS SES).
 """
 
 import asyncio
-import logging
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
 from email import encoders
-from typing import Dict, List, Optional, Any
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from .base import NotificationService, Notification, NotificationStatus, NotificationPriority
 from ...logging_config import get_logger
+from .base import (
+    Notification,
+    NotificationPriority,
+    NotificationService,
+    NotificationStatus,
+)
 
 logger = get_logger(__name__)
 
@@ -33,7 +37,7 @@ class EmailService(NotificationService):
     - Email validation and filtering
     - Delivery tracking and retry logic
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize email service.
@@ -42,7 +46,7 @@ class EmailService(NotificationService):
             config: Email service configuration
         """
         super().__init__(config)
-        
+
         # Email configuration
         self.provider = self.config.get('provider', 'smtp')
         self.smtp_host = self.config.get('smtp_host', 'localhost')
@@ -52,32 +56,32 @@ class EmailService(NotificationService):
         self.from_email = self.config.get('from_email', 'noreply@example.com')
         self.from_name = self.config.get('from_name', 'Fair Credit Scorer')
         self.use_tls = self.config.get('use_tls', True)
-        
+
         # Template configuration
         self.template_dir = Path(self.config.get('template_dir', 'templates/email'))
         self.default_template = self.config.get('default_template', 'default.html')
-        
+
         # Load templates
         self._templates = self._load_templates()
-        
+
         logger.info(f"EmailService initialized with provider: {self.provider}")
-    
+
     def validate_config(self) -> bool:
         """Validate email service configuration."""
         required_fields = ['smtp_host', 'from_email']
-        
+
         for field in required_fields:
             if not self.config.get(field):
                 logger.error(f"Missing required email configuration: {field}")
                 return False
-        
+
         # Validate email format
         if not self._is_valid_email(self.from_email):
             logger.error(f"Invalid from_email format: {self.from_email}")
             return False
-        
+
         return True
-    
+
     async def send_notification(self, notification: Notification) -> bool:
         """
         Send email notification.
@@ -94,7 +98,7 @@ class EmailService(NotificationService):
                 email for email in notification.recipients
                 if self._is_valid_email(email)
             ]
-            
+
             if not valid_recipients:
                 self._update_notification_status(
                     notification,
@@ -102,10 +106,10 @@ class EmailService(NotificationService):
                     "No valid email recipients"
                 )
                 return False
-            
+
             # Prepare email content
             email_content = self._prepare_email_content(notification)
-            
+
             # Send based on provider
             if self.provider == 'smtp':
                 success = await self._send_via_smtp(valid_recipients, email_content)
@@ -116,7 +120,7 @@ class EmailService(NotificationService):
             else:
                 logger.error(f"Unknown email provider: {self.provider}")
                 success = False
-            
+
             # Update notification status
             if success:
                 self._update_notification_status(notification, NotificationStatus.SENT)
@@ -126,9 +130,9 @@ class EmailService(NotificationService):
                     NotificationStatus.FAILED,
                     "Failed to send email"
                 )
-            
+
             return success
-            
+
         except Exception as e:
             logger.error(f"Failed to send email notification: {e}")
             self._update_notification_status(
@@ -137,7 +141,7 @@ class EmailService(NotificationService):
                 str(e)
             )
             return False
-    
+
     async def send_templated_email(
         self,
         template_name: str,
@@ -163,11 +167,11 @@ class EmailService(NotificationService):
         """
         # Render template
         content = self._render_template(template_name, variables)
-        
+
         if not content:
             logger.error(f"Failed to render template: {template_name}")
             return False
-        
+
         # Create notification with template content
         notification = self.create_notification(
             title=subject,
@@ -180,9 +184,9 @@ class EmailService(NotificationService):
                 'attachments': [str(f) for f in (attachments or [])]
             }
         )
-        
+
         return await self.send_notification(notification)
-    
+
     async def send_bulk_emails(
         self,
         emails: List[Dict[str, Any]],
@@ -206,11 +210,11 @@ class EmailService(NotificationService):
             'failed': 0,
             'errors': []
         }
-        
+
         # Process emails in batches
         for i in range(0, len(emails), batch_size):
             batch = emails[i:i + batch_size]
-            
+
             # Send batch concurrently
             batch_tasks = []
             for email_config in batch:
@@ -220,12 +224,12 @@ class EmailService(NotificationService):
                     recipients=email_config['recipients'],
                     priority=email_config.get('priority', NotificationPriority.NORMAL)
                 )
-                
+
                 batch_tasks.append(self.send_notification(notification))
-            
+
             # Wait for batch completion
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
-            
+
             # Process results
             for j, result in enumerate(batch_results):
                 if isinstance(result, Exception):
@@ -235,19 +239,19 @@ class EmailService(NotificationService):
                     results['sent'] += 1
                 else:
                     results['failed'] += 1
-            
+
             # Delay between batches (except for last batch)
             if i + batch_size < len(emails):
                 await asyncio.sleep(delay_between_batches)
-        
+
         logger.info(f"Bulk email completed: {results['sent']}/{results['total']} sent")
         return results
-    
+
     def _prepare_email_content(self, notification: Notification) -> Dict[str, Any]:
         """Prepare email content from notification."""
         # Use HTML template if available
         template_name = notification.metadata.get('template', self.default_template)
-        
+
         if template_name in self._templates:
             html_content = self._render_template(
                 template_name,
@@ -255,7 +259,7 @@ class EmailService(NotificationService):
             )
         else:
             html_content = self._wrap_in_html_template(notification.message)
-        
+
         return {
             'subject': notification.title,
             'html_content': html_content,
@@ -264,7 +268,7 @@ class EmailService(NotificationService):
             'from_name': self.from_name,
             'attachments': notification.metadata.get('attachments', [])
         }
-    
+
     async def _send_via_smtp(self, recipients: List[str], content: Dict[str, Any]) -> bool:
         """Send email via SMTP."""
         try:
@@ -273,35 +277,35 @@ class EmailService(NotificationService):
             msg['Subject'] = content['subject']
             msg['From'] = f"{content['from_name']} <{content['from_email']}>"
             msg['To'] = ', '.join(recipients)
-            
+
             # Add text and HTML parts
             text_part = MIMEText(content['text_content'], 'plain')
             html_part = MIMEText(content['html_content'], 'html')
-            
+
             msg.attach(text_part)
             msg.attach(html_part)
-            
+
             # Add attachments
             for attachment_path in content.get('attachments', []):
                 self._add_attachment(msg, Path(attachment_path))
-            
+
             # Send email
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 if self.use_tls:
                     server.starttls()
-                
+
                 if self.smtp_username and self.smtp_password:
                     server.login(self.smtp_username, self.smtp_password)
-                
+
                 server.send_message(msg)
-            
+
             logger.info(f"Email sent via SMTP to {len(recipients)} recipients")
             return True
-            
+
         except Exception as e:
             logger.error(f"SMTP send failed: {e}")
             return False
-    
+
     async def _send_via_sendgrid(self, recipients: List[str], content: Dict[str, Any]) -> bool:
         """Send email via SendGrid API."""
         try:
@@ -309,11 +313,11 @@ class EmailService(NotificationService):
             # Implementation would use SendGrid API
             logger.warning("SendGrid integration not implemented")
             return False
-            
+
         except Exception as e:
             logger.error(f"SendGrid send failed: {e}")
             return False
-    
+
     async def _send_via_aws_ses(self, recipients: List[str], content: Dict[str, Any]) -> bool:
         """Send email via AWS SES."""
         try:
@@ -321,43 +325,43 @@ class EmailService(NotificationService):
             # Implementation would use AWS SES API
             logger.warning("AWS SES integration not implemented")
             return False
-            
+
         except Exception as e:
             logger.error(f"AWS SES send failed: {e}")
             return False
-    
+
     def _load_templates(self) -> Dict[str, str]:
         """Load email templates from template directory."""
         templates = {}
-        
+
         if not self.template_dir.exists():
             logger.warning(f"Template directory not found: {self.template_dir}")
             return templates
-        
+
         for template_file in self.template_dir.glob("*.html"):
             try:
-                with open(template_file, 'r', encoding='utf-8') as f:
+                with open(template_file, encoding='utf-8') as f:
                     templates[template_file.name] = f.read()
                 logger.debug(f"Loaded email template: {template_file.name}")
             except Exception as e:
                 logger.error(f"Failed to load template {template_file}: {e}")
-        
+
         return templates
-    
+
     def _render_template(self, template_name: str, variables: Dict[str, Any]) -> Optional[str]:
         """Render email template with variables."""
         if template_name not in self._templates:
             logger.error(f"Template not found: {template_name}")
             return None
-        
+
         template = self._templates[template_name]
-        
+
         try:
             return self.format_message(template, variables)
         except Exception as e:
             logger.error(f"Template rendering failed: {e}")
             return None
-    
+
     def _wrap_in_html_template(self, content: str) -> str:
         """Wrap plain text content in basic HTML template."""
         return f"""
@@ -380,52 +384,52 @@ class EmailService(NotificationService):
         </body>
         </html>
         """
-    
+
     def _html_to_text(self, html_content: str) -> str:
         """Convert HTML content to plain text."""
         try:
             # Simple HTML to text conversion
             # In production, would use libraries like BeautifulSoup
             import re
-            
+
             # Remove HTML tags
             text = re.sub(r'<[^>]+>', '', html_content)
-            
+
             # Clean up whitespace
             text = re.sub(r'\s+', ' ', text).strip()
-            
+
             return text
-            
+
         except Exception as e:
             logger.error(f"HTML to text conversion failed: {e}")
             return html_content
-    
+
     def _add_attachment(self, msg: MIMEMultipart, file_path: Path):
         """Add file attachment to email message."""
         try:
             if not file_path.exists():
                 logger.warning(f"Attachment file not found: {file_path}")
                 return
-            
+
             with open(file_path, 'rb') as attachment:
                 part = MIMEBase('application', 'octet-stream')
                 part.set_payload(attachment.read())
-            
+
             encoders.encode_base64(part)
             part.add_header(
                 'Content-Disposition',
                 f'attachment; filename= {file_path.name}'
             )
-            
+
             msg.attach(part)
-            
+
         except Exception as e:
             logger.error(f"Failed to add attachment {file_path}: {e}")
-    
+
     def _is_valid_email(self, email: str) -> bool:
         """Validate email address format."""
         import re
-        
+
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return re.match(pattern, email) is not None
 
@@ -434,7 +438,7 @@ class EmailService(NotificationService):
 def main():
     """CLI interface for email service testing."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Email Service CLI")
     parser.add_argument("command", choices=["send", "test-config"])
     parser.add_argument("--to", required=True, help="Recipient email")
@@ -443,9 +447,9 @@ def main():
     parser.add_argument("--smtp-host", default="localhost", help="SMTP host")
     parser.add_argument("--smtp-port", type=int, default=587, help="SMTP port")
     parser.add_argument("--from-email", required=True, help="From email address")
-    
+
     args = parser.parse_args()
-    
+
     config = {
         'provider': 'smtp',
         'smtp_host': args.smtp_host,
@@ -453,15 +457,15 @@ def main():
         'from_email': args.from_email,
         'use_tls': True
     }
-    
+
     service = EmailService(config)
-    
+
     if args.command == "test-config":
         if service.validate_config():
             print("Email configuration is valid")
         else:
             print("Email configuration is invalid")
-    
+
     elif args.command == "send":
         async def send_test_email():
             success = await service.send_simple_notification(
@@ -469,12 +473,12 @@ def main():
                 message=args.message,
                 recipients=[args.to]
             )
-            
+
             if success:
                 print("Email sent successfully")
             else:
                 print("Failed to send email")
-        
+
         asyncio.run(send_test_email())
 
 

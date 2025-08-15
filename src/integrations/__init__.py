@@ -14,15 +14,15 @@ Modules:
 
 __version__ = "0.2.0"
 
+from .auth.oauth import OAuthService
 from .github.client import GitHubClient
+from .monitoring.prometheus import PrometheusExporter
 from .notifications.email import EmailService
 from .notifications.slack import SlackService
-from .auth.oauth import OAuthService
-from .monitoring.prometheus import PrometheusExporter
 
 __all__ = [
     "GitHubClient",
-    "EmailService", 
+    "EmailService",
     "SlackService",
     "OAuthService",
     "PrometheusExporter"

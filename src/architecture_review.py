@@ -31,13 +31,13 @@ and onboarding documentation.
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass, field
 from pathlib import Path
-import ast
 from typing import List
 
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
 
 
 @dataclass

@@ -68,14 +68,14 @@ def train_baseline_model(
         Maximum iterations for solver. If None, uses configuration default.
     """
     logger.info("Starting baseline logistic regression training")
-    
+
     try:
         # Log training data characteristics
         if hasattr(X_train, 'shape'):
             logger.debug(f"Training data shape: {X_train.shape}")
         else:
             logger.debug(f"Training data length: {len(X_train)}")
-        
+
         # Log label distribution
         if hasattr(y_train, 'value_counts'):
             label_dist = y_train.value_counts().to_dict()
@@ -84,7 +84,7 @@ def train_baseline_model(
             unique, counts = np.unique(y_train, return_counts=True)
             label_dist = dict(zip(unique, counts))
             logger.debug(f"Label distribution: {label_dist}")
-        
+
         # Log sample weights if provided
         if sample_weight is not None:
             weight_stats = {
@@ -93,25 +93,25 @@ def train_baseline_model(
                 'mean': np.mean(sample_weight)
             }
             logger.debug(f"Using sample weights - stats: {weight_stats}")
-        
+
         config = get_config()
-        
+
         # Use provided values or fall back to configuration defaults
         if solver is None:
             solver = config.model.logistic_regression.solver
         if max_iter is None:
             max_iter = config.model.logistic_regression.max_iter
-        
+
         logger.debug(f"Training parameters: solver={solver}, max_iter={max_iter}")
-        
+
         model = LogisticRegression(max_iter=max_iter, solver=solver)
         model.fit(X_train, y_train, sample_weight=sample_weight)
-        
+
         logger.info("Successfully trained baseline logistic regression model")
         logger.debug(f"Model coefficients shape: {model.coef_.shape}")
-        
+
         return model
-        
+
     except Exception as e:
         logger.error(f"Failed to train baseline model: {e}")
         raise
@@ -144,31 +144,31 @@ def evaluate_model(
         the model's ``predict`` method is used directly.
     """
     logger.info("Starting model evaluation")
-    
+
     try:
         # Log evaluation parameters
         if hasattr(X_test, 'shape'):
             logger.debug(f"Test data shape: {X_test.shape}")
         else:
             logger.debug(f"Test data length: {len(X_test)}")
-        
+
         logger.debug(f"Evaluation parameters: return_probs={return_probs}, threshold={threshold}")
-        
+
         if sensitive_features is not None:
             logger.debug(f"Using sensitive features with {len(set(sensitive_features))} unique groups")
-        
+
         use_proba = threshold is not None or return_probs
-        
+
         if use_proba and hasattr(model, "predict_proba"):
             logger.debug("Using predict_proba for probability predictions")
-            
+
             if sensitive_features is not None:
                 proba = model.predict_proba(X_test, sensitive_features=sensitive_features)[:, 1]
             else:
                 proba = model.predict_proba(X_test)[:, 1]
-            
+
             logger.debug(f"Probability range: [{np.min(proba):.3f}, {np.max(proba):.3f}]")
-            
+
             if threshold is None:
                 logger.debug("Using model's default predict method for final predictions")
                 predictions = (
@@ -190,18 +190,18 @@ def evaluate_model(
                 else model.predict(X_test)
             )
             proba = None
-        
+
         # Log prediction statistics
         pred_dist = np.bincount(predictions)
         logger.debug(f"Prediction distribution: {dict(enumerate(pred_dist))}")
-        
+
         acc = accuracy_score(y_test, predictions)
         logger.info(f"Model evaluation completed - Accuracy: {acc:.4f}")
-        
+
         if return_probs:
             return acc, predictions, proba
         return acc, predictions
-        
+
     except Exception as e:
         logger.error(f"Failed to evaluate model: {e}")
         raise

@@ -5,12 +5,11 @@ Provides abstract base class for notification services with
 common functionality and standardized interface.
 """
 
-import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from ...logging_config import get_logger
 
@@ -47,7 +46,7 @@ class Notification:
     status: NotificationStatus = NotificationStatus.PENDING
     error_message: Optional[str] = None
     delivered_at: Optional[datetime] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert notification to dictionary."""
         return {
@@ -72,7 +71,7 @@ class NotificationService(ABC):
     Provides common interface and functionality for different
     notification channels (email, Slack, SMS, etc.).
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize notification service.
@@ -83,9 +82,9 @@ class NotificationService(ABC):
         self.config = config or {}
         self.service_name = self.__class__.__name__
         self._notification_history: List[Notification] = []
-        
+
         logger.info(f"{self.service_name} initialized")
-    
+
     @abstractmethod
     async def send_notification(
         self,
@@ -101,7 +100,7 @@ class NotificationService(ABC):
             Success status
         """
         pass
-    
+
     @abstractmethod
     def validate_config(self) -> bool:
         """
@@ -111,7 +110,7 @@ class NotificationService(ABC):
             True if configuration is valid
         """
         pass
-    
+
     def create_notification(
         self,
         title: str,
@@ -134,7 +133,7 @@ class NotificationService(ABC):
             Notification object
         """
         import uuid
-        
+
         notification = Notification(
             id=str(uuid.uuid4()),
             title=title,
@@ -145,9 +144,9 @@ class NotificationService(ABC):
             metadata=metadata or {},
             created_at=datetime.utcnow()
         )
-        
+
         return notification
-    
+
     async def send_simple_notification(
         self,
         title: str,
@@ -169,7 +168,7 @@ class NotificationService(ABC):
         """
         notification = self.create_notification(title, message, recipients, priority)
         return await self.send_notification(notification)
-    
+
     def get_notification_history(self, limit: Optional[int] = None) -> List[Notification]:
         """
         Get notification history.
@@ -181,12 +180,12 @@ class NotificationService(ABC):
             List of notifications
         """
         history = sorted(self._notification_history, key=lambda n: n.created_at, reverse=True)
-        
+
         if limit:
             history = history[:limit]
-        
+
         return history
-    
+
     def get_notification_stats(self) -> Dict[str, Any]:
         """
         Get notification statistics.
@@ -195,7 +194,7 @@ class NotificationService(ABC):
             Statistics dictionary
         """
         total = len(self._notification_history)
-        
+
         if total == 0:
             return {
                 'total': 0,
@@ -203,10 +202,10 @@ class NotificationService(ABC):
                 'failed': 0,
                 'success_rate': 0.0
             }
-        
+
         sent = len([n for n in self._notification_history if n.status == NotificationStatus.SENT])
         failed = len([n for n in self._notification_history if n.status == NotificationStatus.FAILED])
-        
+
         return {
             'total': total,
             'sent': sent,
@@ -214,7 +213,7 @@ class NotificationService(ABC):
             'success_rate': sent / total if total > 0 else 0.0,
             'service_name': self.service_name
         }
-    
+
     def _update_notification_status(
         self,
         notification: Notification,
@@ -224,16 +223,16 @@ class NotificationService(ABC):
         """Update notification status and add to history."""
         notification.status = status
         notification.error_message = error_message
-        
+
         if status in [NotificationStatus.SENT, NotificationStatus.DELIVERED]:
             notification.delivered_at = datetime.utcnow()
-        
+
         # Add to history if not already present
         if notification not in self._notification_history:
             self._notification_history.append(notification)
-        
+
         logger.info(f"Notification {notification.id} status updated to {status.value}")
-    
+
     def format_message(
         self,
         template: str,

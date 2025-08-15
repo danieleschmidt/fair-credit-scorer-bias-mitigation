@@ -5,14 +5,12 @@ Comprehensive audit logging for security events, compliance monitoring,
 and forensic analysis in the fair credit scoring system.
 """
 
-import json
-import logging
 import hashlib
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Union
-import warnings
+from typing import Any, Dict, List, Optional
 
 from ..logging_config import get_logger
 
@@ -53,17 +51,17 @@ class SecurityEvent:
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    
+
     def __post_init__(self):
         """Generate event ID if not provided."""
         if not self.event_id:
             self.event_id = self._generate_event_id()
-    
+
     def _generate_event_id(self) -> str:
         """Generate unique event ID."""
         content = f"{self.timestamp.isoformat()}{self.user_id}{self.action}{self.resource}"
         return hashlib.md5(content.encode()).hexdigest()[:16]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -79,7 +77,7 @@ class SecurityEvent:
             'user_agent': self.user_agent,
             'timestamp': self.timestamp.isoformat()
         }
-    
+
     def to_json(self) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
@@ -92,24 +90,24 @@ class AuditLog:
     events: List[SecurityEvent]
     checksum: str
     created_at: datetime = field(default_factory=datetime.utcnow)
-    
+
     def __post_init__(self):
         """Calculate checksum after initialization."""
         if not self.checksum:
             self.checksum = self._calculate_checksum()
-    
+
     def _calculate_checksum(self) -> str:
         """Calculate integrity checksum."""
         content = ""
         for event in sorted(self.events, key=lambda x: x.timestamp):
             content += event.event_id + event.timestamp.isoformat()
-        
+
         return hashlib.sha256(content.encode()).hexdigest()
-    
+
     def verify_integrity(self) -> bool:
         """Verify log integrity."""
         return self.checksum == self._calculate_checksum()
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -128,7 +126,7 @@ class SecurityAuditor:
     Provides comprehensive audit logging, compliance monitoring,
     and security event analysis capabilities.
     """
-    
+
     def __init__(
         self,
         retention_days: int = 365,
@@ -146,11 +144,11 @@ class SecurityAuditor:
         self.retention_days = retention_days
         self.max_events_per_log = max_events_per_log
         self.enable_real_time_alerts = enable_real_time_alerts
-        
+
         # Event storage
         self.events: List[SecurityEvent] = []
         self.audit_logs: List[AuditLog] = []
-        
+
         # Alert thresholds
         self.alert_thresholds = {
             'failed_logins_per_hour': 10,
@@ -158,12 +156,12 @@ class SecurityAuditor:
             'model_operations_per_minute': 100,
             'data_access_volume_mb_per_hour': 1000
         }
-        
+
         # Compliance tracking
         self.compliance_violations: List[Dict[str, Any]] = []
-        
+
         logger.info("SecurityAuditor initialized")
-    
+
     def log_event(
         self,
         event_type: EventType,
@@ -205,20 +203,20 @@ class SecurityAuditor:
             ip_address=ip_address,
             user_agent=user_agent
         )
-        
+
         self.events.append(event)
-        
+
         # Check for real-time alerts
         if self.enable_real_time_alerts:
             self._check_real_time_alerts(event)
-        
+
         # Create audit log if needed
         if len(self.events) >= self.max_events_per_log:
             self._create_audit_log()
-        
+
         logger.info(f"Security event logged: {event.action} on {event.resource}")
         return event
-    
+
     def log_authentication_event(
         self,
         action: str,
@@ -229,7 +227,7 @@ class SecurityAuditor:
     ) -> SecurityEvent:
         """Log authentication-related event."""
         severity = Severity.WARNING if outcome == "failure" else Severity.INFO
-        
+
         return self.log_event(
             event_type=EventType.AUTHENTICATION,
             severity=severity,
@@ -240,7 +238,7 @@ class SecurityAuditor:
             details=details,
             ip_address=ip_address
         )
-    
+
     def log_authorization_event(
         self,
         action: str,
@@ -251,7 +249,7 @@ class SecurityAuditor:
     ) -> SecurityEvent:
         """Log authorization-related event."""
         severity = Severity.WARNING if outcome == "denied" else Severity.INFO
-        
+
         return self.log_event(
             event_type=EventType.AUTHORIZATION,
             severity=severity,
@@ -261,7 +259,7 @@ class SecurityAuditor:
             user_id=user_id,
             details=details
         )
-    
+
     def log_data_access_event(
         self,
         action: str,
@@ -273,13 +271,13 @@ class SecurityAuditor:
     ) -> SecurityEvent:
         """Log data access event."""
         severity = Severity.WARNING if sensitive_data else Severity.INFO
-        
+
         details = {}
         if data_size_mb is not None:
             details['data_size_mb'] = data_size_mb
         if sensitive_data:
             details['sensitive_data'] = True
-        
+
         return self.log_event(
             event_type=EventType.DATA_ACCESS,
             severity=severity,
@@ -289,7 +287,7 @@ class SecurityAuditor:
             user_id=user_id,
             details=details
         )
-    
+
     def log_model_operation_event(
         self,
         action: str,
@@ -308,7 +306,7 @@ class SecurityAuditor:
             user_id=user_id,
             details=details
         )
-    
+
     def log_compliance_violation(
         self,
         violation_type: str,
@@ -322,7 +320,7 @@ class SecurityAuditor:
             'violation_type': violation_type,
             'description': description
         }
-        
+
         event = self.log_event(
             event_type=EventType.COMPLIANCE,
             severity=severity,
@@ -332,7 +330,7 @@ class SecurityAuditor:
             user_id=user_id,
             details=details
         )
-        
+
         # Track compliance violations separately
         violation_record = {
             'event_id': event.event_id,
@@ -343,11 +341,11 @@ class SecurityAuditor:
             'severity': severity.value,
             'timestamp': datetime.utcnow().isoformat()
         }
-        
+
         self.compliance_violations.append(violation_record)
-        
+
         return event
-    
+
     def search_events(
         self,
         event_type: Optional[EventType] = None,
@@ -374,13 +372,13 @@ class SecurityAuditor:
             List of matching events
         """
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-        
+
         filtered_events = []
         for event in self.events:
             # Time filter
             if event.timestamp < cutoff_time:
                 continue
-            
+
             # Apply filters
             if event_type and event.event_type != event_type:
                 continue
@@ -394,11 +392,11 @@ class SecurityAuditor:
                 continue
             if severity and event.severity != severity:
                 continue
-            
+
             filtered_events.append(event)
-        
+
         return filtered_events
-    
+
     def get_security_summary(self, hours: int = 24) -> Dict[str, Any]:
         """
         Get security summary for the specified time period.
@@ -411,42 +409,42 @@ class SecurityAuditor:
         """
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         recent_events = [e for e in self.events if e.timestamp >= cutoff_time]
-        
+
         # Count by type
         event_type_counts = {}
         for event_type in EventType:
             count = len([e for e in recent_events if e.event_type == event_type])
             event_type_counts[event_type.value] = count
-        
+
         # Count by severity
         severity_counts = {}
         for severity in Severity:
             count = len([e for e in recent_events if e.severity == severity])
             severity_counts[severity.value] = count
-        
+
         # Count by outcome
         outcome_counts = {}
         for event in recent_events:
             outcome_counts[event.outcome] = outcome_counts.get(event.outcome, 0) + 1
-        
+
         # Failed authentication attempts
         failed_auth = len([
             e for e in recent_events
             if e.event_type == EventType.AUTHENTICATION and e.outcome == "failure"
         ])
-        
+
         # Unauthorized access attempts
         unauthorized_access = len([
             e for e in recent_events
             if e.event_type == EventType.AUTHORIZATION and e.outcome == "denied"
         ])
-        
+
         # Recent compliance violations
         recent_violations = [
             v for v in self.compliance_violations
             if datetime.fromisoformat(v['timestamp']) >= cutoff_time
         ]
-        
+
         summary = {
             'time_period_hours': hours,
             'total_events': len(recent_events),
@@ -459,9 +457,9 @@ class SecurityAuditor:
             'unique_users': len(set(e.user_id for e in recent_events if e.user_id)),
             'unique_resources': len(set(e.resource for e in recent_events))
         }
-        
+
         return summary
-    
+
     def get_compliance_report(self, days: int = 30) -> Dict[str, Any]:
         """
         Generate compliance report.
@@ -473,25 +471,25 @@ class SecurityAuditor:
             Compliance report
         """
         cutoff_time = datetime.utcnow() - timedelta(days=days)
-        
+
         # Recent violations
         recent_violations = [
             v for v in self.compliance_violations
             if datetime.fromisoformat(v['timestamp']) >= cutoff_time
         ]
-        
+
         # Group by violation type
         violations_by_type = {}
         for violation in recent_violations:
             vtype = violation['violation_type']
             violations_by_type[vtype] = violations_by_type.get(vtype, 0) + 1
-        
+
         # Compliance events
         compliance_events = self.search_events(
             event_type=EventType.COMPLIANCE,
             hours=days * 24
         )
-        
+
         report = {
             'report_period_days': days,
             'total_violations': len(recent_violations),
@@ -504,9 +502,9 @@ class SecurityAuditor:
             ]),
             'recommendations': self._generate_compliance_recommendations(recent_violations)
         }
-        
+
         return report
-    
+
     def export_audit_trail(self, format: str = "json") -> str:
         """
         Export audit trail for external analysis.
@@ -527,20 +525,20 @@ class SecurityAuditor:
                 'summary': self.get_security_summary()
             }
             return json.dumps(audit_data, indent=2)
-        
+
         elif format == "csv":
             import csv
             import io
-            
+
             output = io.StringIO()
             writer = csv.writer(output)
-            
+
             # Write header
             writer.writerow([
                 'event_id', 'timestamp', 'event_type', 'severity', 'user_id',
                 'action', 'resource', 'outcome', 'ip_address'
             ])
-            
+
             # Write events
             for event in self.events[-1000:]:  # Last 1000 events
                 writer.writerow([
@@ -554,37 +552,37 @@ class SecurityAuditor:
                     event.outcome,
                     event.ip_address
                 ])
-            
+
             return output.getvalue()
-        
+
         else:
             raise ValueError(f"Unsupported export format: {format}")
-    
+
     def _create_audit_log(self):
         """Create audit log from current events."""
         if not self.events:
             return
-        
+
         log_id = f"audit_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
         audit_log = AuditLog(
             log_id=log_id,
             events=self.events.copy(),
             checksum=""  # Will be calculated
         )
-        
+
         self.audit_logs.append(audit_log)
         self.events.clear()
-        
+
         logger.info(f"Audit log created: {log_id}")
-    
+
     def _check_real_time_alerts(self, event: SecurityEvent):
         """Check for real-time security alerts."""
         current_time = datetime.utcnow()
-        
+
         # Failed login threshold
-        if (event.event_type == EventType.AUTHENTICATION and 
+        if (event.event_type == EventType.AUTHENTICATION and
             event.outcome == "failure"):
-            
+
             recent_failures = len([
                 e for e in self.events[-100:]  # Check last 100 events
                 if (e.event_type == EventType.AUTHENTICATION and
@@ -592,18 +590,18 @@ class SecurityAuditor:
                     e.user_id == event.user_id and
                     (current_time - e.timestamp).total_seconds() < 3600)  # Last hour
             ])
-            
+
             if recent_failures >= self.alert_thresholds['failed_logins_per_hour']:
                 self._trigger_security_alert(
                     "excessive_failed_logins",
                     f"User {event.user_id} has {recent_failures} failed login attempts in the last hour",
                     event
                 )
-        
+
         # Unauthorized access threshold
-        if (event.event_type == EventType.AUTHORIZATION and 
+        if (event.event_type == EventType.AUTHORIZATION and
             event.outcome == "denied"):
-            
+
             recent_denials = len([
                 e for e in self.events[-100:]
                 if (e.event_type == EventType.AUTHORIZATION and
@@ -611,14 +609,14 @@ class SecurityAuditor:
                     e.user_id == event.user_id and
                     (current_time - e.timestamp).total_seconds() < 3600)
             ])
-            
+
             if recent_denials >= self.alert_thresholds['unauthorized_access_per_hour']:
                 self._trigger_security_alert(
                     "excessive_unauthorized_access",
                     f"User {event.user_id} has {recent_denials} unauthorized access attempts in the last hour",
                     event
                 )
-    
+
     def _trigger_security_alert(self, alert_type: str, message: str, trigger_event: SecurityEvent):
         """Trigger security alert."""
         alert_event = self.log_event(
@@ -634,9 +632,9 @@ class SecurityAuditor:
                 'trigger_event_id': trigger_event.event_id
             }
         )
-        
+
         logger.critical(f"Security alert triggered: {alert_type} - {message}")
-    
+
     def _calculate_violation_trend(self, days: int) -> str:
         """Calculate compliance violation trend."""
         cutoff_time = datetime.utcnow() - timedelta(days=days)
@@ -644,14 +642,14 @@ class SecurityAuditor:
             v for v in self.compliance_violations
             if datetime.fromisoformat(v['timestamp']) >= cutoff_time
         ]
-        
+
         if len(recent_violations) < 2:
             return "insufficient_data"
-        
+
         # Simple trend calculation
         mid_point = days // 2
         first_half_cutoff = datetime.utcnow() - timedelta(days=mid_point)
-        
+
         first_half = [
             v for v in recent_violations
             if datetime.fromisoformat(v['timestamp']) < first_half_cutoff
@@ -660,44 +658,44 @@ class SecurityAuditor:
             v for v in recent_violations
             if datetime.fromisoformat(v['timestamp']) >= first_half_cutoff
         ]
-        
+
         if len(second_half) > len(first_half) * 1.2:
             return "increasing"
         elif len(second_half) < len(first_half) * 0.8:
             return "decreasing"
         else:
             return "stable"
-    
+
     def _generate_compliance_recommendations(self, violations: List[Dict[str, Any]]) -> List[str]:
         """Generate compliance recommendations based on violations."""
         recommendations = []
-        
+
         if not violations:
             recommendations.append("No compliance violations detected - maintain current practices")
             return recommendations
-        
+
         # Count violation types
         violation_types = {}
         for violation in violations:
             vtype = violation['violation_type']
             violation_types[vtype] = violation_types.get(vtype, 0) + 1
-        
+
         # Generate specific recommendations
         if violation_types.get('data_access', 0) > 0:
             recommendations.append("Review data access controls and implement stricter access policies")
-        
+
         if violation_types.get('authentication', 0) > 0:
             recommendations.append("Strengthen authentication requirements and monitor login patterns")
-        
+
         if violation_types.get('authorization', 0) > 0:
             recommendations.append("Review user roles and permissions for principle of least privilege")
-        
+
         if len(violations) > 10:
             recommendations.append("Consider implementing automated compliance monitoring")
-        
+
         recommendations.append("Conduct regular security training for users")
         recommendations.append("Review and update security policies based on violation patterns")
-        
+
         return recommendations
 
 
@@ -705,7 +703,7 @@ class SecurityAuditor:
 def main():
     """CLI interface for audit testing."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Security Audit CLI")
     parser.add_argument("command", choices=["log", "search", "summary", "export"])
     parser.add_argument("--event-type", help="Event type")
@@ -716,24 +714,24 @@ def main():
     parser.add_argument("--hours", type=int, default=24, help="Hours of history")
     parser.add_argument("--format", choices=["json", "csv"], default="json", help="Export format")
     parser.add_argument("--output", help="Output file path")
-    
+
     args = parser.parse_args()
-    
+
     # Initialize auditor
     auditor = SecurityAuditor()
-    
+
     if args.command == "log":
         # Log demo events
         auditor.log_authentication_event("login", "success", "user123", "192.168.1.100")
         auditor.log_authentication_event("login", "failure", "user456", "192.168.1.101")
         auditor.log_data_access_event("read", "customer_data", "success", "user123", 10.5, True)
         auditor.log_compliance_violation("unauthorized_access", "User accessed restricted data")
-        
+
         print("Demo security events logged")
-    
+
     elif args.command == "search":
         event_type = EventType(args.event_type) if args.event_type else None
-        
+
         events = auditor.search_events(
             event_type=event_type,
             user_id=args.user_id,
@@ -742,24 +740,24 @@ def main():
             outcome=args.outcome,
             hours=args.hours
         )
-        
+
         print(f"Found {len(events)} matching events:")
         for event in events[-10:]:  # Show last 10
             print(f"  {event.timestamp}: {event.action} on {event.resource} - {event.outcome}")
-    
+
     elif args.command == "summary":
         summary = auditor.get_security_summary(args.hours)
-        
+
         print(f"Security Summary ({args.hours} hours):")
         print(f"  Total events: {summary['total_events']}")
         print(f"  Failed authentications: {summary['failed_authentications']}")
         print(f"  Unauthorized access: {summary['unauthorized_access_attempts']}")
         print(f"  Compliance violations: {summary['compliance_violations']}")
         print(f"  Events by severity: {summary['events_by_severity']}")
-    
+
     elif args.command == "export":
         exported_data = auditor.export_audit_trail(args.format)
-        
+
         if args.output:
             with open(args.output, 'w') as f:
                 f.write(exported_data)

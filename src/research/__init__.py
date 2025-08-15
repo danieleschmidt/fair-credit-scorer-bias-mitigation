@@ -5,27 +5,25 @@ This module provides comprehensive tools for conducting reproducible fairness re
 including experimental design, statistical validation, and publication-ready results.
 """
 
+from .benchmarking_suite import (
+    FairnessBenchmarkSuite,
+    PerformanceMetrics,
+    StandardDatasets,
+)
 from .experimental_framework import (
     ExperimentalFramework,
     ResearchProtocol,
-    StatisticalValidation
+    StatisticalValidation,
 )
-
-from .benchmarking_suite import (
-    FairnessBenchmarkSuite,
-    StandardDatasets,
-    PerformanceMetrics
-)
-
 from .reproducibility_manager import (
-    ReproducibilityManager,
     ExperimentConfig,
-    ResultsManager
+    ReproducibilityManager,
+    ResultsManager,
 )
 
 __all__ = [
     'ExperimentalFramework',
-    'ResearchProtocol', 
+    'ResearchProtocol',
     'StatisticalValidation',
     'FairnessBenchmarkSuite',
     'StandardDatasets',

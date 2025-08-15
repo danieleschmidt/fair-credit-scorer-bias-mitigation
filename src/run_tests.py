@@ -35,10 +35,10 @@ subprocess usage is intentional and validated.
 """
 
 import os
-import sys
 import subprocess  # nosec B404
-import pytest
+import sys
 
+import pytest
 
 # Ensure local src modules are importable without installation and for subprocesses
 SRC_DIR = os.path.abspath(os.path.dirname(__file__))

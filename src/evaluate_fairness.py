@@ -40,25 +40,26 @@ application, and comprehensive fairness evaluation with detailed reporting.
 
 import argparse
 import logging
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from functools import partial
 import multiprocessing
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # Import version directly to avoid circular import
 __version__ = "0.2.0"
 
-from src.data_loader_preprocessor import load_credit_data, load_credit_dataset
-from src.baseline_model import train_baseline_model, evaluate_model
-from src.bias_mitigator import (
-    reweight_samples,
-    postprocess_equalized_odds,
-    expgrad_demographic_parity,
-)
-from src.fairness_metrics import compute_fairness_metrics
-from sklearn.model_selection import StratifiedKFold
-import pandas as pd
 import json
+
+import pandas as pd
+from sklearn.model_selection import StratifiedKFold
+
+from src.baseline_model import evaluate_model, train_baseline_model
+from src.bias_mitigator import (
+    expgrad_demographic_parity,
+    postprocess_equalized_odds,
+    reweight_samples,
+)
+from src.data_loader_preprocessor import load_credit_data, load_credit_dataset
+from src.fairness_metrics import compute_fairness_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -119,14 +120,14 @@ def _save_metrics_json(results, path):
         raise ValueError("path must be a non-empty string")
     if not isinstance(results, dict):
         raise ValueError("results must be a dictionary")
-        
+
     try:
         # Create directory if needed
         import os
         dir_path = os.path.dirname(path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-            
+
         with open(path, "w") as f:
             json.dump(_serialize_metrics(results), f, indent=2)
         logger.info(f"Successfully saved metrics to {path}")
@@ -163,14 +164,14 @@ def _validate_common_parameters(method, threshold=None, output_path=None):
         raise TypeError(f"method must be a string, got {type(method).__name__}")
     if method not in valid_methods:
         raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
-    
+
     # Threshold validation
     if threshold is not None:
         if not isinstance(threshold, (int, float)):
             raise TypeError(f"threshold must be a number or None, got {type(threshold).__name__}")
         if not 0.0 <= threshold <= 1.0:
             raise ValueError(f"threshold must be between 0.0 and 1.0, got {threshold}")
-    
+
     # Output path validation
     if output_path is not None:
         if not isinstance(output_path, str):
@@ -232,28 +233,28 @@ def run_pipeline(
     """
     # Input validation
     _validate_common_parameters(method, threshold, output_path)
-    
+
     # Validate in-memory data parameters
     if X is not None:
         if y is None or sensitive_features is None:
             raise ValueError("When X is provided, y and sensitive_features must also be provided")
         if len(X) != len(y) or len(X) != len(sensitive_features):
             raise ValueError("X, y, and sensitive_features must have the same length")
-            
+
     if verbose:
         logger.info(f"Running pipeline with method={method}, test_size={test_size}, threshold={threshold}")
 
     # Load or use provided data
     if X is not None:
         # Use in-memory data for benchmarking
-        from sklearn.model_selection import train_test_split
         import pandas as pd
-        
+        from sklearn.model_selection import train_test_split
+
         # Convert to DataFrame format expected by the pipeline
         X_df = pd.DataFrame(X) if not isinstance(X, pd.DataFrame) else X
         if 'protected' not in X_df.columns:
             X_df['protected'] = sensitive_features
-        
+
         X_train, X_test, y_train, y_test = train_test_split(
             X_df, y, test_size=test_size, random_state=random_state, stratify=y
         )
@@ -363,27 +364,27 @@ def run_cross_validation(
     """
     # Input validation
     _validate_common_parameters(method, threshold, output_path)
-    
+
     # CV-specific validation
     if not isinstance(cv, int):
         raise TypeError(f"cv must be an integer, got {type(cv).__name__}")
     if cv < 2:
         raise ValueError(f"cv must be at least 2, got {cv}")
-            
+
     start_time = time.time()
-    
+
     # Determine parallelization strategy
     if max_workers is None:
         max_workers = min(cv, multiprocessing.cpu_count())
-    
+
     parallel_enabled = enable_parallel and cv > 2 and max_workers > 1
-    
+
     logger.info(f"Running {cv}-fold cross-validation with method={method}, threshold={threshold}")
     logger.info(f"Parallel processing: {'enabled' if parallel_enabled else 'disabled'} (workers: {max_workers if parallel_enabled else 1})")
-    
+
     X, y = load_credit_dataset(path=data_path, random_state=random_state)
     skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
-    
+
     # Prepare fold data
     fold_data = []
     for fold_idx, (train_idx, test_idx) in enumerate(skf.split(X, y)):
@@ -396,7 +397,7 @@ def run_cross_validation(
             'method': method,
             'threshold': threshold
         })
-    
+
     # Execute folds in parallel or sequential
     if parallel_enabled:
         logger.info(f"Processing {cv} folds in parallel with {max_workers} workers")
@@ -416,12 +417,12 @@ def run_cross_validation(
     std_by_group = by_group_concat.groupby(level=0).std()
     accuracy = float(mean_overall["accuracy"])
     total_time = time.time() - start_time
-    
+
     logger.info(f"Cross-validation completed in {total_time:.2f}s")
     if parallel_enabled:
         sequential_estimate = total_time * max_workers
         logger.info(f"Estimated speedup: {sequential_estimate/total_time:.1f}x over sequential processing")
-    
+
     logger.info("Average overall metrics:\n%s", mean_overall)
     logger.info(
         "Standard deviation of metrics across folds:\n%s",
@@ -465,7 +466,7 @@ def _process_single_fold(fold_info):
     y = fold_info['y']
     method = fold_info['method']
     threshold = fold_info['threshold']
-    
+
     try:
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
@@ -520,14 +521,14 @@ def _process_single_fold(fold_info):
             y_scores=probs,
             enable_optimization=True,  # Enable optimizations for parallel processing
         )
-        
+
         return {
             "fold_idx": fold_idx,
-            "accuracy": overall["accuracy"], 
-            "overall": overall, 
+            "accuracy": overall["accuracy"],
+            "overall": overall,
             "by_group": by_group
         }
-        
+
     except Exception as e:
         logger.error(f"Error processing fold {fold_idx}: {e}")
         raise
@@ -549,12 +550,12 @@ def _run_folds_parallel(fold_data, max_workers):
         Results from all folds in original order.
     """
     fold_results = [None] * len(fold_data)
-    
+
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         # Submit all folds
-        future_to_fold = {executor.submit(_process_single_fold, fold_info): fold_info['fold_idx'] 
+        future_to_fold = {executor.submit(_process_single_fold, fold_info): fold_info['fold_idx']
                          for fold_info in fold_data}
-        
+
         # Collect results as they complete
         for future in as_completed(future_to_fold):
             fold_idx = future_to_fold[future]
@@ -565,7 +566,7 @@ def _run_folds_parallel(fold_data, max_workers):
             except Exception as e:
                 logger.error(f"Fold {fold_idx} generated an exception: {e}")
                 raise
-    
+
     return fold_results
 
 
@@ -583,12 +584,12 @@ def _run_folds_sequential(fold_data):
         Results from all folds.
     """
     fold_results = []
-    
+
     for fold_info in fold_data:
         result = _process_single_fold(fold_info)
         fold_results.append(result)
         logger.debug(f"Completed fold {fold_info['fold_idx']}")
-    
+
     return fold_results
 
 
