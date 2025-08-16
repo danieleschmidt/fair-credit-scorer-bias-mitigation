@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+from .progressive_quality_gates import ProgressiveQualityGates, QualityGateStatus
 
 logger = logging.getLogger(__name__)
 
@@ -91,11 +92,13 @@ class AutonomousSDLCExecutor:
     - Generation 3: Performance & scaling (MAKE IT SCALE)
     """
 
-    def __init__(self, config: SDLCConfiguration):
+    def __init__(self, config: SDLCConfiguration, repo_path: str = "/root/repo"):
         self.config = config
+        self.repo_path = repo_path
         self.execution_state = {}
         self.metrics = {}
         self.start_time = time.time()
+        self.progressive_gates = ProgressiveQualityGates(repo_path)
 
     async def execute_autonomous_sdlc(self) -> Dict[str, Any]:
         """
@@ -110,7 +113,7 @@ class AutonomousSDLCExecutor:
             # Execute all generations progressively
             for generation in self.config.generations:
                 await self._execute_generation(generation)
-                await self._run_quality_gates()
+                await self._run_progressive_quality_gates(generation)
 
             # Global-first implementation
             if self.config.global_first:
@@ -1264,8 +1267,31 @@ class AutonomousSDLCExecutor:
         # Publication readiness validation
         pass
 
+    async def _run_progressive_quality_gates(self, generation: GenerationPhase) -> None:
+        """Execute progressive quality gates for the current generation."""
+        logger.info(f"🚦 Running Progressive Quality Gates for {generation.value.upper()}")
+
+        # Run the progressive quality gates system
+        results = self.progressive_gates.run_all_gates()
+        
+        # Store results in metrics
+        self.metrics[f"quality_gates_{generation.value}"] = results
+        
+        # Save detailed report
+        report_file = f"quality_gates_{generation.value}_report.json"
+        self.progressive_gates.save_results(report_file)
+        
+        # Check if any required gates failed
+        if results["overall_status"] == "FAILED":
+            failed_gates = results.get("failed_gates", [])
+            error_msg = f"Required quality gates failed in {generation.value}: {', '.join(failed_gates)}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        
+        logger.info(f"✅ Progressive Quality Gates passed for {generation.value.upper()}")
+        
     async def _run_quality_gates(self) -> None:
-        """Execute all configured quality gates."""
+        """Execute all configured quality gates (legacy method)."""
         logger.info("🚦 Running quality gates validation")
 
         results = {}
