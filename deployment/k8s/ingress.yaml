@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fair-credit-scorer-bias-mitigation-ingress
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+  - hosts:
+    - api.fair-credit-scorer-bias-mitigation.com
+    secretName: fair-credit-scorer-bias-mitigation-tls
+  rules:
+  - host: api.fair-credit-scorer-bias-mitigation.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fair-credit-scorer-bias-mitigation-service
+            port:
+              number: 80

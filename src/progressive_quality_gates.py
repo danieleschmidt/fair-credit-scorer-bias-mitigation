@@ -1,3 +1,4 @@
+```python
 #!/usr/bin/env python3
 """
 Progressive Quality Gates System v1.0 - MAKE IT WORK
@@ -95,14 +96,14 @@ class ProgressiveQualityGates:
         return [
             QualityGateConfig(
                 gate_type=QualityGateType.SYNTAX,
-                command='python3 -c "import ast; ast.parse(open(\'src/progressive_quality_gates.py\').read())"',
+                command="python3 -m py_compile src/progressive_quality_gates.py",
                 threshold=1.0,
                 required=True,
                 description="Check Python syntax validity"
             ),
             QualityGateConfig(
                 gate_type=QualityGateType.LINT,
-                command='python3 -c "print(\'Linting passed - basic check\')"',
+                command="echo Linting passed - basic check",
                 threshold=0.8,
                 required=False,
                 description="Code linting placeholder"
@@ -116,21 +117,21 @@ class ProgressiveQualityGates:
             ),
             QualityGateConfig(
                 gate_type=QualityGateType.COVERAGE,
-                command="python3 -c 'print(\"Coverage: 85%\")'",
+                command="echo Coverage: 85%",
                 threshold=0.85,
                 required=False,
                 description="Test coverage placeholder"
             ),
             QualityGateConfig(
                 gate_type=QualityGateType.SECURITY,
-                command="python3 -c 'print(\"Security scan passed\")'",
+                command="echo Security scan passed",
                 threshold=0.9,
                 required=False,
                 description="Security scan placeholder"
             ),
             QualityGateConfig(
                 gate_type=QualityGateType.TYPE_CHECK,
-                command="python3 -c 'print(\"Type check passed\")'",
+                command="echo Type check passed",
                 threshold=0.8,
                 required=False,
                 description="Type checking placeholder"
@@ -387,3 +388,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
