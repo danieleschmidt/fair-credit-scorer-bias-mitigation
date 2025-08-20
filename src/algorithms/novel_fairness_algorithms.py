@@ -24,16 +24,33 @@ from typing import Any, Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-import torch.optim as optim
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+    nn = None
+    optim = None
+
 from sklearn.base import BaseEstimator
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, IsolationForest
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.covariance import EllipticEnvelope
 
-from ..fairness_metrics import compute_fairness_metrics
-from ..logging_config import get_logger
+try:
+    from ..fairness_metrics import compute_fairness_metrics
+    from ..logging_config import get_logger
+except ImportError:
+    # Fallback imports for standalone execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from fairness_metrics import compute_fairness_metrics
+    from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -193,6 +210,9 @@ class CausalAdversarialFramework(NovelFairnessFramework):
         self.causal_regularization = causal_regularization
         self.max_iterations = max_iterations
         self.learning_rate = learning_rate
+
+        if not TORCH_AVAILABLE:
+            raise ImportError("PyTorch is required for CausalAdversarialFramework. Install with: pip install torch")
 
         # Model components
         self.predictor: Optional[nn.Module] = None
