@@ -23,11 +23,36 @@ import pandas as pd
 try:
     from ..fairness_metrics import compute_fairness_metrics
     from ..logging_config import get_logger
-    from ..scalable.performance_optimizer import CachingStrategy, ComputationCache
 except ImportError:
-    from src.fairness_metrics import compute_fairness_metrics
-    from src.logging_config import get_logger
-    from src.scalable.performance_optimizer import CachingStrategy, ComputationCache
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from fairness_metrics import compute_fairness_metrics
+    from logging_config import get_logger
+
+# Define CachingStrategy and ComputationCache locally to avoid dependency
+from enum import Enum
+from functools import lru_cache
+from typing import Any, Callable, Dict
+
+class CachingStrategy(Enum):
+    """Caching strategies for fairness computations."""
+    NONE = "none"
+    LRU = "lru"
+    ADAPTIVE = "adaptive"
+    PERSISTENT = "persistent"
+
+class ComputationCache:
+    """Simple computation cache implementation."""
+    def __init__(self, strategy: CachingStrategy = CachingStrategy.LRU, max_size: int = 100):
+        self.strategy = strategy
+        self.max_size = max_size
+        self.cache = {}
+        
+    def cached_function(self, func):
+        if self.strategy == CachingStrategy.LRU:
+            return lru_cache(maxsize=self.max_size)(func)
+        return func
 
 logger = get_logger(__name__)
 
