@@ -1,0 +1,51 @@
+
+AUTONOMOUS FAIRNESS RESEARCH REPORT
+===================================
+Generated: 2025-08-21 15:08:29
+
+EXECUTIVE SUMMARY
+-----------------
+Total Experiments Conducted: 5
+Statistically Significant Findings: 1
+Research Duration: 5.6 seconds
+Datasets Created: 5
+Algorithms Tested: 3
+
+NOVEL INSIGHTS DISCOVERED
+-------------------------
+1. Novel Insight: Fairness metrics improve with larger dataset sizes, suggesting sampling bias in small datasets
+2. Novel Insight: Strong feature correlations with protected attributes significantly amplify algorithmic bias
+
+
+METHODOLOGY
+-----------
+- Hypothesis Generation: Literature-based systematic approach
+- Dataset Creation: Controlled synthetic data with bias injection
+- Statistical Validation: Comparative analysis with significance testing
+- Algorithms: logistic_regression, random_forest, svm
+
+LIMITATIONS
+-----------
+- Synthetic data may not capture real-world complexity
+- Limited to binary classification tasks
+- Simplified statistical testing approach
+- No external validation on real datasets
+
+
+FUTURE RESEARCH DIRECTIONS
+--------------------------
+- Extend to multi-class and regression problems
+- Incorporate real-world datasets
+- Implement advanced bias mitigation techniques
+- Develop automated hypothesis generation from literature
+
+
+DETAILED FINDINGS
+-----------------
+Algorithm Performance Rankings (by fairness):
+- logistic_regression: avg violation = 0.0222
+- random_forest: avg violation = 0.0330
+- svm: avg violation = 0.0330
+
+==================================================
+END OF AUTONOMOUS RESEARCH REPORT

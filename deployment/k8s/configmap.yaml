@@ -1,0 +1,326 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fair-credit-config
+  namespace: fair-credit-system
+  labels:
+    app.kubernetes.io/name: fair-credit-scorer
+    app.kubernetes.io/component: config
+data:
+  # Application Configuration
+  app.yaml: |
+    environment: production
+    log_level: INFO
+    debug: false
+    
+    # API Configuration
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 4
+      timeout: 300
+      max_request_size: "10MB"
+      
+    # Database Configuration
+    database:
+      pool_size: 20
+      pool_timeout: 30
+      pool_recycle: 3600
+      echo: false
+      
+    # Cache Configuration  
+    cache:
+      default_timeout: 3600
+      key_prefix: "fcs:"
+      
+    # Model Configuration
+    models:
+      auto_reload: true
+      cache_predictions: true
+      prediction_timeout: 30
+      batch_size: 100
+      
+    # Fairness Configuration
+    fairness:
+      protected_attributes:
+        - race
+        - gender
+        - age_group
+      thresholds:
+        demographic_parity: 0.05
+        equalized_odds: 0.05
+        calibration: 0.05
+        
+    # Security Configuration
+    security:
+      csrf_protection: true
+      rate_limiting: true
+      input_validation: strict
+      audit_logging: true
+      
+    # Monitoring Configuration
+    monitoring:
+      metrics_enabled: true
+      tracing_enabled: true
+      profiling_enabled: false
+      health_check_interval: 30
+
+  # Prometheus Configuration
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      
+    rule_files:
+      - "alert_rules.yml"
+      
+    scrape_configs:
+      - job_name: 'fair-credit-scorer'
+        static_configs:
+          - targets: ['fair-credit-service:8000']
+        scrape_interval: 10s
+        metrics_path: '/metrics'
+        
+      - job_name: 'postgres-exporter'
+        static_configs:
+          - targets: ['postgres-exporter:9187']
+          
+      - job_name: 'redis-exporter'
+        static_configs:
+          - targets: ['redis-exporter:9121']
+          
+      - job_name: 'nginx-exporter'
+        static_configs:
+          - targets: ['nginx-exporter:9113']
+          
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager:9093']
+
+  # Alert Rules
+  alert_rules.yml: |
+    groups:
+      - name: fairness_alerts
+        rules:
+          - alert: HighFairnessViolation
+            expr: fairness_demographic_parity_difference > 0.1
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High fairness violation detected"
+              description: "Demographic parity difference is {{ $value }}"
+              
+          - alert: ModelAccuracyDropped
+            expr: model_accuracy < 0.8
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Model accuracy dropped below threshold"
+              description: "Current accuracy is {{ $value }}"
+              
+          - alert: HighPredictionLatency
+            expr: prediction_duration_seconds{quantile="0.95"} > 1.0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High prediction latency"
+              description: "95th percentile latency is {{ $value }}s"
+              
+      - name: infrastructure_alerts
+        rules:
+          - alert: DatabaseConnectionIssue
+            expr: up{job="postgres-exporter"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Database connection lost"
+              description: "PostgreSQL database is unavailable"
+              
+          - alert: HighCPUUsage
+            expr: container_cpu_usage_seconds_total > 0.8
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage detected"
+              description: "CPU usage is {{ $value }}"
+              
+          - alert: HighMemoryUsage
+            expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.8
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage detected"
+              description: "Memory usage is {{ $value }}%"
+
+  # Nginx Configuration
+  nginx.conf: |
+    upstream fair_credit_backend {
+        least_conn;
+        server fair-credit-service:8000 max_fails=3 fail_timeout=30s;
+    }
+    
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
+    
+    server {
+        listen 80;
+        server_name _;
+        
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "no-referrer-when-downgrade" always;
+        add_header Content-Security-Policy "default-src 'self'" always;
+        
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+        }
+        
+        # API endpoints with rate limiting
+        location /api/ {
+            limit_req zone=api burst=20 nodelay;
+            proxy_pass http://fair_credit_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_read_timeout 30s;
+        }
+        
+        # Authentication endpoints with stricter rate limiting
+        location /auth/ {
+            limit_req zone=login burst=5 nodelay;
+            proxy_pass http://fair_credit_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        
+        # Metrics endpoint (restricted)
+        location /metrics {
+            allow 10.0.0.0/8;
+            allow 172.16.0.0/12;
+            allow 192.168.0.0/16;
+            deny all;
+            proxy_pass http://fair_credit_backend;
+        }
+        
+        # Default location
+        location / {
+            proxy_pass http://fair_credit_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fair-credit-db-config
+  namespace: fair-credit-system
+  labels:
+    app.kubernetes.io/name: fair-credit-scorer
+    app.kubernetes.io/component: database
+data:
+  # PostgreSQL Configuration
+  postgresql.conf: |
+    # Connection Settings
+    max_connections = 100
+    shared_buffers = 256MB
+    effective_cache_size = 1GB
+    work_mem = 4MB
+    maintenance_work_mem = 64MB
+    
+    # Logging
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = 'log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_truncate_on_rotation = on
+    log_rotation_age = 1d
+    log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    log_min_duration_statement = 1000
+    log_statement = 'ddl'
+    
+    # Security
+    ssl = on
+    ssl_cert_file = '/var/lib/postgresql/server.crt'
+    ssl_key_file = '/var/lib/postgresql/server.key'
+    
+    # Performance
+    checkpoint_completion_target = 0.9
+    wal_buffers = 16MB
+    default_statistics_target = 100
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+
+  init-db.sql: |
+    -- Create application database
+    CREATE DATABASE fairness_db;
+    CREATE DATABASE mlflow_db;
+    
+    -- Create application user
+    CREATE USER fairness_user WITH ENCRYPTED PASSWORD 'fairness_password';
+    GRANT ALL PRIVILEGES ON DATABASE fairness_db TO fairness_user;
+    GRANT ALL PRIVILEGES ON DATABASE mlflow_db TO fairness_user;
+    
+    \c fairness_db;
+    
+    -- Create audit table
+    CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(100),
+        action VARCHAR(100),
+        resource VARCHAR(100),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        details JSONB
+    );
+    
+    -- Create models table
+    CREATE TABLE IF NOT EXISTS models (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        version VARCHAR(50) NOT NULL,
+        model_path VARCHAR(500),
+        fairness_metrics JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Create predictions table
+    CREATE TABLE IF NOT EXISTS predictions (
+        id SERIAL PRIMARY KEY,
+        model_id INTEGER REFERENCES models(id),
+        input_data JSONB,
+        prediction JSONB,
+        fairness_assessment JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Create indices for performance
+    CREATE INDEX idx_audit_log_timestamp ON audit_log(timestamp);
+    CREATE INDEX idx_audit_log_user_id ON audit_log(user_id);
+    CREATE INDEX idx_models_name_version ON models(name, version);
+    CREATE INDEX idx_predictions_model_id ON predictions(model_id);
+    CREATE INDEX idx_predictions_created_at ON predictions(created_at);
+    
+    -- Grant permissions
+    GRANT ALL ON ALL TABLES IN SCHEMA public TO fairness_user;
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO fairness_user;
