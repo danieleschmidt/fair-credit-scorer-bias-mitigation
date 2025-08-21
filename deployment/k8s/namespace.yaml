@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fair-credit-system
+  labels:
+    name: fair-credit-system
+    app.kubernetes.io/name: fair-credit-scorer
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: system
+    environment: production
+    security.istio.io/tlsMode: istio
+    
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: fair-credit-quota
+  namespace: fair-credit-system
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"  
+    limits.memory: 40Gi
+    persistentvolumeclaims: "10"
+    pods: "20"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: fair-credit-limits
+  namespace: fair-credit-system
+spec:
+  limits:
+  - default:
+      cpu: "2"
+      memory: "2Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "128Mi"
+    type: Container
+  - default:
+      storage: "10Gi"
+    type: PersistentVolumeClaim
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fair-credit-network-policy
+  namespace: fair-credit-system
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: fair-credit-system
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring-system
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: fair-credit-system
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80

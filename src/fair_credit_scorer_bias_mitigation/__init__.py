@@ -2,16 +2,33 @@
 
 __version__ = "0.2.0"
 
-from architecture_review import ArchitectureReview
-from baseline_model import evaluate_model, train_baseline_model
-from bias_mitigator import (
-    expgrad_demographic_parity,
-    postprocess_equalized_odds,
-    reweight_samples,
-)
-from data_loader_preprocessor import load_credit_data, load_credit_dataset
-from evaluate_fairness import run_cross_validation, run_pipeline
-from fairness_metrics import compute_fairness_metrics
+try:
+    from ..architecture_review import ArchitectureReview
+    from ..baseline_model import evaluate_model, train_baseline_model
+    from ..bias_mitigator import (
+        expgrad_demographic_parity,
+        postprocess_equalized_odds,
+        reweight_samples,
+    )
+    from ..data_loader_preprocessor import load_credit_data, load_credit_dataset
+    from ..evaluate_fairness import run_cross_validation, run_pipeline
+    from ..fairness_metrics import compute_fairness_metrics
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    
+    from architecture_review import ArchitectureReview
+    from baseline_model import evaluate_model, train_baseline_model
+    from bias_mitigator import (
+        expgrad_demographic_parity,
+        postprocess_equalized_odds,
+        reweight_samples,
+    )
+    from data_loader_preprocessor import load_credit_data, load_credit_dataset
+    from evaluate_fairness import run_cross_validation, run_pipeline
+    from fairness_metrics import compute_fairness_metrics
 
 __all__ = [
     "__version__",
