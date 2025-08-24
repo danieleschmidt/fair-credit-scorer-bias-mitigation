@@ -26,14 +26,14 @@ Functions:
 
 Usage:
     >>> from data_versioning import DataVersionManager, create_data_version
-    >>> 
+    >>>
     >>> # Create version manager
     >>> manager = DataVersionManager("./data_versions")
-    >>> 
+    >>>
     >>> # Version a dataset
     >>> version = manager.create_version(df, source_path="data.csv")
     >>> manager.save_version(version, df)
-    >>> 
+    >>>
     >>> # Track transformation
     >>> manager.track_transformation(
     ...     "preprocessing_1", ["v1.0.0"], "v1.1.0", "preprocessing",
@@ -58,10 +58,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DataMetadata:
     """Metadata information for a versioned dataset.
-    
+
     Attributes:
         rows: Number of rows in the dataset
-        columns: Number of columns in the dataset  
+        columns: Number of columns in the dataset
         size_bytes: Size of the dataset in bytes
         schema: Column names and data types mapping
         quality_score: Data quality assessment score (0-1)
@@ -87,7 +87,7 @@ class DataMetadata:
     def from_dataframe(cls, df: pd.DataFrame, include_quality_assessment: bool = True,
                       include_statistics: bool = True) -> "DataMetadata":
         """Create DataMetadata from a pandas DataFrame.
-        
+
         Parameters
         ----------
         df : pd.DataFrame
@@ -96,7 +96,7 @@ class DataMetadata:
             Whether to compute quality score, by default True
         include_statistics : bool, optional
             Whether to include statistical summaries, by default True
-            
+
         Returns
         -------
         DataMetadata
@@ -184,7 +184,7 @@ class DataMetadata:
 @dataclass
 class DataVersion:
     """Represents a versioned dataset with complete metadata.
-    
+
     Attributes:
         version_id: Unique identifier for this version
         data_hash: Content-based hash for integrity verification
@@ -250,7 +250,7 @@ class DataVersion:
 @dataclass
 class DataLineage:
     """Tracks transformation relationships between data versions.
-    
+
     Attributes:
         transformation_id: Unique identifier for this transformation
         input_versions: List of input version IDs
@@ -292,14 +292,14 @@ class DataLineage:
 
 class DataVersionManager:
     """Main interface for data version management operations.
-    
+
     This class provides comprehensive data versioning capabilities including
     version creation, storage, retrieval, and lineage tracking.
     """
 
     def __init__(self, storage_path: str):
         """Initialize DataVersionManager.
-        
+
         Parameters
         ----------
         storage_path : str
@@ -319,12 +319,12 @@ class DataVersionManager:
 
     def _compute_data_hash(self, data: pd.DataFrame) -> str:
         """Compute content-based hash for data integrity.
-        
+
         Parameters
         ----------
         data : pd.DataFrame
             DataFrame to hash
-            
+
         Returns
         -------
         str
@@ -341,12 +341,12 @@ class DataVersionManager:
 
     def _generate_version_id(self, base_name: Optional[str] = None) -> str:
         """Generate unique version ID.
-        
+
         Parameters
         ----------
         base_name : str, optional
             Base name for version ID generation
-            
+
         Returns
         -------
         str
@@ -363,7 +363,7 @@ class DataVersionManager:
                       tags: Optional[List[str]] = None,
                       description: Optional[str] = None) -> DataVersion:
         """Create a new data version.
-        
+
         Parameters
         ----------
         data : pd.DataFrame
@@ -376,7 +376,7 @@ class DataVersionManager:
             Tags for categorization
         description : str, optional
             Human-readable description
-            
+
         Returns
         -------
         DataVersion
@@ -405,7 +405,7 @@ class DataVersionManager:
 
     def save_version(self, version: DataVersion, data: pd.DataFrame) -> None:
         """Save version metadata and data to storage.
-        
+
         Parameters
         ----------
         version : DataVersion
@@ -426,17 +426,17 @@ class DataVersionManager:
 
     def load_version(self, version_id: str) -> DataVersion:
         """Load version metadata from storage.
-        
+
         Parameters
         ----------
         version_id : str
             Version ID to load
-            
+
         Returns
         -------
         DataVersion
             Loaded version object
-            
+
         Raises
         ------
         FileNotFoundError
@@ -454,17 +454,17 @@ class DataVersionManager:
 
     def load_data(self, version_id: str) -> pd.DataFrame:
         """Load actual dataset for a version.
-        
+
         Parameters
         ----------
         version_id : str
             Version ID to load data for
-            
+
         Returns
         -------
         pd.DataFrame
             Dataset for the specified version
-            
+
         Raises
         ------
         FileNotFoundError
@@ -479,7 +479,7 @@ class DataVersionManager:
 
     def list_versions(self) -> List[DataVersion]:
         """List all available data versions.
-        
+
         Returns
         -------
         List[DataVersion]
@@ -508,7 +508,7 @@ class DataVersionManager:
                            code_hash: Optional[str] = None,
                            environment: Optional[Dict[str, str]] = None) -> DataLineage:
         """Track a data transformation in the lineage.
-        
+
         Parameters
         ----------
         transformation_id : str
@@ -525,7 +525,7 @@ class DataVersionManager:
             Hash of transformation code
         environment : Dict[str, str], optional
             Environment information
-            
+
         Returns
         -------
         DataLineage
@@ -551,12 +551,12 @@ class DataVersionManager:
 
     def get_lineage_history(self, version_id: str) -> List[DataLineage]:
         """Get transformation lineage history for a version.
-        
+
         Parameters
         ----------
         version_id : str
             Version ID to get lineage for
-            
+
         Returns
         -------
         List[DataLineage]
@@ -586,12 +586,12 @@ class DataVersionManager:
 
     def verify_data_integrity(self, version_id: str) -> bool:
         """Verify data integrity using stored hash.
-        
+
         Parameters
         ----------
         version_id : str
             Version ID to verify
-            
+
         Returns
         -------
         bool
@@ -610,12 +610,12 @@ class DataVersionManager:
 
     def cleanup_old_versions(self, keep_latest: int = 10) -> int:
         """Clean up old versions keeping only the latest N versions.
-        
+
         Parameters
         ----------
         keep_latest : int, optional
             Number of latest versions to keep, by default 10
-            
+
         Returns
         -------
         int
@@ -656,7 +656,7 @@ def create_data_version(data: pd.DataFrame, source_path: str,
                        tags: Optional[List[str]] = None,
                        description: Optional[str] = None) -> DataVersion:
     """Convenience function to create and save a data version.
-    
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -671,7 +671,7 @@ def create_data_version(data: pd.DataFrame, source_path: str,
         Version tags
     description : str, optional
         Version description
-        
+
     Returns
     -------
     DataVersion
@@ -698,7 +698,7 @@ def track_data_transformation(transformation_id: str,
                             code_hash: Optional[str] = None,
                             environment: Optional[Dict[str, str]] = None) -> DataLineage:
     """Convenience function to track a data transformation.
-    
+
     Parameters
     ----------
     transformation_id : str
@@ -717,7 +717,7 @@ def track_data_transformation(transformation_id: str,
         Code hash for reproducibility
     environment : Dict[str, str], optional
         Environment information
-        
+
     Returns
     -------
     DataLineage

@@ -16,7 +16,7 @@ Classes:
 
 Usage:
     python -m src.architecture_review
-    
+
 Example:
     >>> from architecture_review import ArchitectureReview
     >>> review = ArchitectureReview()
@@ -34,7 +34,6 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -47,14 +46,14 @@ class ArchitectureReview:
     src_path: Path = Path("src")
     requirements_file: Path = Path("requirements.txt")
     graph: nx.DiGraph = field(init=False, default_factory=nx.DiGraph)
-    dependencies: List[str] = field(init=False, default_factory=list)
+    dependencies: list[str] = field(init=False, default_factory=list)
 
     def analyze(self) -> None:
         """Populate dependency graph and requirements list."""
         self.dependencies = self._parse_requirements()
         self.graph = self._build_dependency_graph()
 
-    def _parse_requirements(self) -> List[str]:
+    def _parse_requirements(self) -> list[str]:
         if not self.requirements_file.exists():
             return []
         deps = []

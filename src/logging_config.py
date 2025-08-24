@@ -13,10 +13,10 @@ Features:
 
 Usage:
     >>> from logging_config import setup_logging, get_logger
-    >>> 
+    >>>
     >>> # Initialize logging system (call once at application start)
     >>> setup_logging()
-    >>> 
+    >>>
     >>> # Get logger for a module
     >>> logger = get_logger(__name__)
     >>> logger.info("Application started")
@@ -46,7 +46,7 @@ class ContextFilter(logging.Filter):
 
     def __init__(self, context: Optional[Dict[str, Any]] = None):
         """Initialize context filter.
-        
+
         Args:
             context: Dictionary of context information to add to log records
         """
@@ -63,10 +63,10 @@ class ContextFilter(logging.Filter):
 def setup_logging(config_override: Optional[Dict[str, Any]] = None,
                   force_reinit: bool = False) -> None:
     """Set up centralized logging configuration.
-    
+
     This function configures the root logger and sets up handlers based on
     the configuration file. It should be called once at application startup.
-    
+
     Args:
         config_override: Optional configuration override dictionary
         force_reinit: Force re-initialization even if already initialized
@@ -202,11 +202,11 @@ def _get_fallback_config():
 
 def get_logger(name: str, context: Optional[Dict[str, Any]] = None) -> logging.Logger:
     """Get a logger for the specified module with optional context.
-    
+
     Args:
         name: Logger name (typically __name__)
         context: Optional context dictionary to add to all log messages
-        
+
     Returns:
         Configured logger instance
     """
@@ -227,14 +227,14 @@ def get_logger(name: str, context: Optional[Dict[str, Any]] = None) -> logging.L
 def log_function_call(func_name: str, args: tuple = None, kwargs: dict = None,
                      logger: Optional[logging.Logger] = None) -> None:
     """Log function call with parameters.
-    
+
     Utility function for logging function calls with their parameters.
     Useful for debugging and audit trails.
-    
+
     Args:
         func_name: Name of the function being called
         args: Positional arguments
-        kwargs: Keyword arguments  
+        kwargs: Keyword arguments
         logger: Logger instance to use (creates one if None)
     """
     if logger is None:
@@ -257,7 +257,7 @@ def log_performance(operation: str, duration: float,
                    logger: Optional[logging.Logger] = None,
                    **kwargs) -> None:
     """Log performance metrics for an operation.
-    
+
     Args:
         operation: Name of the operation
         duration: Duration in seconds

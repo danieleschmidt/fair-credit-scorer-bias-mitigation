@@ -32,10 +32,10 @@ Example:
     >>> from data_loader_preprocessor import load_credit_data, load_versioned_credit_data
     >>> # Load and split data with versioning
     >>> X_train, X_test, y_train, y_test = load_versioned_credit_data(test_size=0.3, enable_versioning=True)
-    >>> 
+    >>>
     >>> # Load entire dataset without splitting
     >>> X, y = load_credit_dataset("path/to/data.csv")
-    >>> 
+    >>>
     >>> # Validated splitting with error handling
     >>> X_train, X_test, y_train, y_test = train_test_split_validated(X, y, test_size=0.2)
 
@@ -71,7 +71,7 @@ except ImportError:
 def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative=5,
                                   n_redundant=2, random_state=None):
     """Generate synthetic credit scoring data for benchmarking and testing.
-    
+
     Parameters
     ----------
     n_samples : int, optional
@@ -84,7 +84,7 @@ def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative
         Number of redundant features, by default 2
     random_state : int, optional
         Random seed for reproducibility, by default 42
-        
+
     Returns
     -------
     tuple
@@ -92,7 +92,7 @@ def generate_synthetic_credit_data(n_samples=10000, n_features=10, n_informative
         - X is the feature matrix (without protected attribute)
         - y is the target vector
         - sensitive_features is the protected attribute vector
-        
+
     Raises
     ------
     ValueError
@@ -136,19 +136,19 @@ def load_credit_dataset(
     path: str = "data/credit_data.csv", random_state: int = 42
 ) -> Tuple[pd.DataFrame, pd.Series]:
     """Return the entire credit dataset as features and labels.
-    
+
     Parameters
     ----------
     path : str
         Path to the CSV file. Defaults to configuration value.
     random_state : int
         Random seed for reproducibility. Defaults to configuration value.
-        
+
     Returns
     -------
     tuple(pd.DataFrame, pd.Series)
         Features and labels
-        
+
     Raises
     ------
     ValueError
@@ -272,7 +272,7 @@ def load_credit_data(
     -------
     tuple(pd.DataFrame, pd.DataFrame, pd.Series, pd.Series)
         X_train, X_test, y_train, y_test
-        
+
     Raises
     ------
     ValueError
@@ -313,16 +313,16 @@ def load_credit_data(
 
 def train_test_split_validated(X, y, test_size=0.3, random_state=None):
     """Validate inputs and perform train/test split with specific error handling.
-    
+
     Args:
         X: Features array/list
         y: Labels array/list
         test_size: Fraction for test set (0.0 < test_size < 1.0)
         random_state: Random seed for reproducibility
-    
+
     Returns:
         X_train, X_test, y_train, y_test
-        
+
     Raises:
         ValueError: For validation errors (empty data, invalid sizes, etc.)
         TypeError: For invalid data types
@@ -355,11 +355,11 @@ def load_versioned_credit_data(
     version_description: str = None
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Load credit data with automatic versioning and lineage tracking.
-    
+
     This function extends load_credit_data with integrated data versioning
     capabilities, automatically tracking data lineage and creating versions
     for the loaded dataset and train/test splits.
-    
+
     Parameters
     ----------
     path : str, optional
@@ -374,12 +374,12 @@ def load_versioned_credit_data(
         Directory for version storage, by default "./data_versions"
     version_description : str, optional
         Description for the created versions
-        
+
     Returns
     -------
     Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]
         X_train, X_test, y_train, y_test splits
-        
+
     Raises
     ------
     ImportError

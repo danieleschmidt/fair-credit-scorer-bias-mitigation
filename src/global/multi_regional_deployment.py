@@ -87,7 +87,7 @@ class DeploymentStatus:
 class RegionalComplianceEngine:
     """
     Engine for ensuring regulatory compliance across regions.
-    
+
     Handles different regulatory frameworks and their specific requirements
     for fairness, privacy, and algorithmic accountability.
     """
@@ -177,12 +177,12 @@ class RegionalComplianceEngine:
     ) -> Dict[ComplianceFramework, Dict[str, Any]]:
         """
         Validate compliance for a regional deployment.
-        
+
         Args:
             region_config: Regional configuration
             model_metadata: Metadata about the model being deployed
             deployment_context: Context of the deployment
-            
+
         Returns:
             Compliance validation results for each framework
         """
@@ -423,7 +423,7 @@ class RegionalComplianceEngine:
 class GlobalDeploymentOrchestrator:
     """
     Orchestrates multi-regional deployments with cultural adaptation.
-    
+
     Manages deployment across multiple regions while ensuring cultural
     appropriateness and regulatory compliance.
     """
@@ -501,12 +501,12 @@ class GlobalDeploymentOrchestrator:
     ) -> Dict[DeploymentRegion, DeploymentStatus]:
         """
         Deploy model package globally across regions.
-        
+
         Args:
             model_package: Package containing model and metadata
             target_regions: List of regions to deploy to (None for all)
             deployment_strategy: Deployment strategy ('blue_green', 'rolling', 'canary')
-            
+
         Returns:
             Deployment status for each region
         """
@@ -748,7 +748,7 @@ class GlobalDeploymentOrchestrator:
 class GlobalLoadBalancer:
     """
     Global load balancer for distributing traffic across regions.
-    
+
     Implements intelligent routing based on user location, regional health,
     and compliance requirements.
     """

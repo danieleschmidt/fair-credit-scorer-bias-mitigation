@@ -313,7 +313,7 @@ class AsyncLogHandler:
 class ComprehensiveLogger:
     """
     Main comprehensive logging system.
-    
+
     Features:
     - Structured logging with correlation IDs
     - Multiple output formats and destinations

@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import psutil
 
-from ..logging_config import get_logger
+from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -78,7 +78,7 @@ class MemorySnapshot:
 class AdvancedProfiler:
     """
     Advanced profiling system for ML models and data pipelines.
-    
+
     Provides comprehensive performance analysis including CPU profiling,
     memory tracking, and optimization recommendations.
     """
@@ -86,7 +86,7 @@ class AdvancedProfiler:
     def __init__(self, enable_memory_tracking: bool = True):
         """
         Initialize profiler.
-        
+
         Args:
             enable_memory_tracking: Enable detailed memory tracking
         """
@@ -105,7 +105,7 @@ class AdvancedProfiler:
     def profile_function(self, function_name: str):
         """
         Context manager for profiling a function.
-        
+
         Args:
             function_name: Name of the function being profiled
         """
@@ -177,12 +177,12 @@ class AdvancedProfiler:
     ) -> List[ProfileResult]:
         """
         Profile model inference performance.
-        
+
         Args:
             model: Trained model to profile
             X: Input data
             batch_sizes: List of batch sizes to test
-            
+
         Returns:
             List of profiling results
         """
@@ -220,12 +220,12 @@ class AdvancedProfiler:
     ) -> List[ProfileResult]:
         """
         Profile data processing functions.
-        
+
         Args:
             processing_function: Function to profile
             data_sizes: List of data sizes to test
             **kwargs: Arguments for processing function
-            
+
         Returns:
             List of profiling results
         """
@@ -274,7 +274,7 @@ class AdvancedProfiler:
     def monitor_memory_usage(self, duration_seconds: int = 60, interval_seconds: int = 1):
         """
         Monitor memory usage over time.
-        
+
         Args:
             duration_seconds: Monitoring duration
             interval_seconds: Sampling interval
@@ -305,7 +305,7 @@ class AdvancedProfiler:
 
         try:
             # Get function statistics
-            for func, (cc, nc, tt, ct, callers) in stats.stats.items():
+            for func, (cc, _nc, tt, ct, _callers) in stats.stats.items():
                 if tt > 0.001:  # Only include functions with significant time
                     filename, line, func_name = func
 
@@ -383,7 +383,7 @@ class AdvancedProfiler:
 
         try:
             stats = pstats.Stats(self._profiler)
-            total_calls, total_time = stats.total_tt, stats.total_tt
+            _total_calls, total_time = stats.total_tt, stats.total_tt
             return total_time
         except Exception:
             return 0.0
@@ -479,7 +479,7 @@ class AdvancedProfiler:
 class ResourceMonitor:
     """
     Real-time resource monitoring for production systems.
-    
+
     Monitors CPU, memory, disk, and network usage with alerting.
     """
 
@@ -490,7 +490,7 @@ class ResourceMonitor:
     ):
         """
         Initialize resource monitor.
-        
+
         Args:
             monitoring_interval: Monitoring interval in seconds
             alert_thresholds: Thresholds for resource alerts
@@ -512,7 +512,7 @@ class ResourceMonitor:
     def start_monitoring(self, duration_seconds: Optional[int] = None):
         """
         Start resource monitoring.
-        
+
         Args:
             duration_seconds: Monitoring duration (None for infinite)
         """
@@ -702,7 +702,7 @@ def main():
             return result.sum()
 
         with profiler.profile_function("example_function"):
-            result = example_function()
+            example_function()
 
         print("Profiling Results:")
         summary = profiler.get_performance_summary()

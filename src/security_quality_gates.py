@@ -303,7 +303,7 @@ class QualityChecker:
                 "--cov-report=term-missing", "--quiet"
             ]
 
-            result = subprocess.run(
+            subprocess.run(
                 cmd, cwd=self.repo_path, capture_output=True, text=True, timeout=300
             )
 
@@ -340,7 +340,7 @@ class QualityChecker:
             total_functions = 0
             high_complexity_functions = 0
 
-            for root, dirs, files in os.walk(os.path.join(self.repo_path, "src")):
+            for root, _dirs, files in os.walk(os.path.join(self.repo_path, "src")):
                 for file in files:
                     if file.endswith('.py'):
                         file_path = os.path.join(root, file)
@@ -405,7 +405,7 @@ class QualityChecker:
             total_functions = 0
             documented_functions = 0
 
-            for root, dirs, files in os.walk(os.path.join(self.repo_path, "src")):
+            for root, _dirs, files in os.walk(os.path.join(self.repo_path, "src")):
                 for file in files:
                     if file.endswith('.py'):
                         file_path = os.path.join(root, file)
@@ -593,7 +593,7 @@ class SecurityQualityGateManager:
         if changed_files is None:
             # Scan all source files
             changed_files = []
-            for root, dirs, files in os.walk(os.path.join(self.repo_path, "src")):
+            for root, _dirs, files in os.walk(os.path.join(self.repo_path, "src")):
                 for file in files:
                     if file.endswith('.py'):
                         changed_files.append(os.path.join(root, file))

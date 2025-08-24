@@ -67,7 +67,7 @@ class Notification:
 class NotificationService(ABC):
     """
     Abstract base class for notification services.
-    
+
     Provides common interface and functionality for different
     notification channels (email, Slack, SMS, etc.).
     """
@@ -75,7 +75,7 @@ class NotificationService(ABC):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize notification service.
-        
+
         Args:
             config: Service-specific configuration
         """
@@ -92,10 +92,10 @@ class NotificationService(ABC):
     ) -> bool:
         """
         Send notification through this service.
-        
+
         Args:
             notification: Notification to send
-            
+
         Returns:
             Success status
         """
@@ -105,7 +105,7 @@ class NotificationService(ABC):
     def validate_config(self) -> bool:
         """
         Validate service configuration.
-        
+
         Returns:
             True if configuration is valid
         """
@@ -121,14 +121,14 @@ class NotificationService(ABC):
     ) -> Notification:
         """
         Create a new notification.
-        
+
         Args:
             title: Notification title
             message: Notification message
             recipients: List of recipients
             priority: Notification priority
             metadata: Additional metadata
-            
+
         Returns:
             Notification object
         """
@@ -156,13 +156,13 @@ class NotificationService(ABC):
     ) -> bool:
         """
         Send a simple notification.
-        
+
         Args:
             title: Notification title
             message: Notification message
             recipients: List of recipients
             priority: Notification priority
-            
+
         Returns:
             Success status
         """
@@ -172,10 +172,10 @@ class NotificationService(ABC):
     def get_notification_history(self, limit: Optional[int] = None) -> List[Notification]:
         """
         Get notification history.
-        
+
         Args:
             limit: Maximum number of notifications to return
-            
+
         Returns:
             List of notifications
         """
@@ -189,7 +189,7 @@ class NotificationService(ABC):
     def get_notification_stats(self) -> Dict[str, Any]:
         """
         Get notification statistics.
-        
+
         Returns:
             Statistics dictionary
         """
@@ -240,11 +240,11 @@ class NotificationService(ABC):
     ) -> str:
         """
         Format message using template variables.
-        
+
         Args:
             template: Message template with placeholders
             variables: Variables to substitute
-            
+
         Returns:
             Formatted message
         """

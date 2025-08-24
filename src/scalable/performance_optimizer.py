@@ -136,7 +136,7 @@ class OptimizationResult:
 class ComputationCache:
     """
     Intelligent caching system for fairness computations.
-    
+
     Caches expensive computations like fairness metrics, bias detection results,
     and intermediate algorithm states to avoid redundant calculations.
     """
@@ -149,7 +149,7 @@ class ComputationCache:
     ):
         """
         Initialize computation cache.
-        
+
         Args:
             strategy: Caching strategy to use
             max_size: Maximum number of cached items
@@ -310,7 +310,7 @@ class ComputationCache:
 class ModelOptimizer:
     """
     Model-specific optimization for fairness algorithms.
-    
+
     Provides optimizations specific to machine learning models,
     including hyperparameter tuning, model compression, and
     fairness-aware optimizations.
@@ -319,7 +319,7 @@ class ModelOptimizer:
     def __init__(self, enable_gpu: bool = False):
         """
         Initialize model optimizer.
-        
+
         Args:
             enable_gpu: Enable GPU optimizations if available
         """
@@ -353,13 +353,13 @@ class ModelOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize model training process.
-        
+
         Args:
             algorithm: ML algorithm to optimize
             X_train: Training features
             y_train: Training target
             optimization_targets: List of optimization targets
-            
+
         Returns:
             Optimization results and recommendations
         """
@@ -437,11 +437,11 @@ class ModelOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize model inference performance.
-        
+
         Args:
             model: Trained model to optimize
             optimization_targets: List of optimization targets
-            
+
         Returns:
             Optimization results and recommendations
         """
@@ -507,13 +507,13 @@ class ModelOptimizer:
     ) -> PerformanceProfile:
         """
         Benchmark model performance.
-        
+
         Args:
             model: Model to benchmark
             X_test: Test features
             y_test: Test target
             num_runs: Number of benchmark runs
-            
+
         Returns:
             Performance profile
         """
@@ -522,13 +522,13 @@ class ModelOptimizer:
         execution_times = []
         memory_usages = []
 
-        for run in range(num_runs):
+        for _run in range(num_runs):
             # Measure training time and memory
             start_time = time.time()
             start_memory = self._get_memory_usage()
 
             # Make predictions
-            predictions = model.predict(X_test)
+            model.predict(X_test)
 
             end_time = time.time()
             end_memory = self._get_memory_usage()
@@ -626,7 +626,7 @@ class ModelOptimizer:
 class DataOptimizer:
     """
     Data processing optimization for fairness research.
-    
+
     Optimizes data loading, preprocessing, and transformation
     operations for large-scale fairness analysis.
     """
@@ -634,7 +634,7 @@ class DataOptimizer:
     def __init__(self, enable_parallel: bool = True):
         """
         Initialize data optimizer.
-        
+
         Args:
             enable_parallel: Enable parallel processing
         """
@@ -650,11 +650,11 @@ class DataOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize data loading strategy.
-        
+
         Args:
             data_source: Data source type (csv, parquet, database, etc.)
             data_size_mb: Data size in megabytes
-            
+
         Returns:
             Optimization recommendations
         """
@@ -718,12 +718,12 @@ class DataOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize preprocessing pipeline.
-        
+
         Args:
             preprocessing_steps: List of preprocessing step names
             dataset_size: Number of samples
             feature_count: Number of features
-            
+
         Returns:
             Optimization recommendations
         """
@@ -787,12 +787,12 @@ class DataOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize fairness metrics computation.
-        
+
         Args:
             sensitive_attributes: List of sensitive attribute names
             fairness_metrics: List of fairness metrics to compute
             dataset_size: Number of samples
-            
+
         Returns:
             Optimization recommendations
         """
@@ -852,7 +852,7 @@ class DataOptimizer:
 class PerformanceOptimizer:
     """
     Comprehensive performance optimizer for fairness research.
-    
+
     Coordinates model, data, and system-level optimizations to
     achieve optimal performance for fairness research workloads.
     """
@@ -865,7 +865,7 @@ class PerformanceOptimizer:
     ):
         """
         Initialize performance optimizer.
-        
+
         Args:
             enable_gpu: Enable GPU optimizations
             enable_parallel: Enable parallel processing
@@ -900,15 +900,15 @@ class PerformanceOptimizer:
     ) -> PerformanceProfile:
         """
         Comprehensive performance profiling of fairness algorithm.
-        
+
         Args:
             algorithm: Algorithm to profile
             X_train: Training features
             y_train: Training target
-            X_test: Test features  
+            X_test: Test features
             y_test: Test target
             sensitive_attrs: Sensitive attributes
-            
+
         Returns:
             Comprehensive performance profile
         """
@@ -927,7 +927,7 @@ class PerformanceOptimizer:
         start_time = time.time()
         start_memory = self._get_memory_usage()
 
-        predictions = algorithm.predict(X_test)
+        algorithm.predict(X_test)
 
         inference_time = time.time() - start_time
         inference_memory = self._get_memory_usage() - start_memory
@@ -983,7 +983,7 @@ class PerformanceOptimizer:
     ) -> OptimizationResult:
         """
         Optimize complete fairness research pipeline.
-        
+
         Args:
             algorithm: Algorithm to optimize
             X_train: Training features
@@ -992,7 +992,7 @@ class PerformanceOptimizer:
             y_test: Test target
             sensitive_attrs: Sensitive attributes
             optimization_targets: Optimization targets
-            
+
         Returns:
             Comprehensive optimization result
         """
@@ -1105,13 +1105,13 @@ class PerformanceOptimizer:
     ) -> Dict[str, Any]:
         """
         Get optimization recommendations without running full pipeline.
-        
+
         Args:
             algorithm_name: Name of algorithm
             dataset_size: Number of samples
             feature_count: Number of features
             optimization_targets: Optimization targets
-            
+
         Returns:
             Optimization recommendations
         """
@@ -1308,12 +1308,12 @@ def main():
 
         # First call (cache miss)
         start_time = time.time()
-        result1 = expensive_computation(10, 20)
+        expensive_computation(10, 20)
         first_call_time = time.time() - start_time
 
         # Second call (cache hit)
         start_time = time.time()
-        result2 = expensive_computation(10, 20)
+        expensive_computation(10, 20)
         second_call_time = time.time() - start_time
 
         cache_stats = cache.get_stats()

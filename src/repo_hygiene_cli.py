@@ -11,7 +11,7 @@ import os
 import sys
 from pathlib import Path
 
-from .repo_hygiene_bot import RepoHygieneBot
+from repo_hygiene_bot import RepoHygieneBot
 
 
 def setup_logging(verbose: bool = False) -> None:

@@ -19,7 +19,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from .progressive_quality_gates import ProgressiveQualityGates, QualityGateStatus
+
+from progressive_quality_gates import ProgressiveQualityGates
 
 logger = logging.getLogger(__name__)
 
@@ -85,10 +86,10 @@ class SDLCConfiguration:
 class AutonomousSDLCExecutor:
     """
     Main execution engine for autonomous SDLC implementation.
-    
+
     Implements progressive enhancement strategy with:
     - Generation 1: Basic functionality (MAKE IT WORK)
-    - Generation 2: Reliability & robustness (MAKE IT ROBUST) 
+    - Generation 2: Reliability & robustness (MAKE IT ROBUST)
     - Generation 3: Performance & scaling (MAKE IT SCALE)
     """
 
@@ -103,7 +104,7 @@ class AutonomousSDLCExecutor:
     async def execute_autonomous_sdlc(self) -> Dict[str, Any]:
         """
         Execute the complete autonomous SDLC cycle.
-        
+
         Returns:
             Dict containing execution results, metrics, and status.
         """
@@ -257,7 +258,7 @@ class AutonomousSDLCExecutor:
         logger.info("📤 Implementing multi-format export system")
 
         from src import usage_metrics_tracker
-        from src.usage_metrics_tracker import ExportFormat, get_tracker
+        from usage_metrics_tracker import ExportFormat, get_tracker
 
         tracker = get_tracker()
         export_dir = Path("/root/repo/data/metrics_exports")
@@ -324,7 +325,7 @@ class AutonomousSDLCExecutor:
         """Enhance real-time bias monitoring."""
         logger.info("🔍 Enhancing bias monitoring capabilities")
 
-        from src.usage_metrics_tracker import MetricType, get_tracker
+        from usage_metrics_tracker import MetricType, get_tracker
 
         tracker = get_tracker()
 
@@ -398,7 +399,7 @@ class AutonomousSDLCExecutor:
         logger.info("🧬 Implementing self-improving patterns")
 
         from src import self_improving_system
-        from src.usage_metrics_tracker import MetricType, get_tracker
+        from usage_metrics_tracker import MetricType, get_tracker
 
         # Initialize the self-improving system
         improving_system = self_improving_system.get_self_improving_system()
@@ -467,7 +468,7 @@ class AutonomousSDLCExecutor:
         """Implement comprehensive error handling."""
         logger.info("🛡️ Implementing robust error handling")
 
-        from src.usage_metrics_tracker import MetricType, get_tracker
+        from usage_metrics_tracker import MetricType, get_tracker
 
         tracker = get_tracker()
 
@@ -597,49 +598,12 @@ class AutonomousSDLCExecutor:
 
         import logging
 
-        from src.usage_metrics_tracker import MetricType, get_tracker
+        from usage_metrics_tracker import MetricType, get_tracker
 
         tracker = get_tracker()
 
         try:
             # Set up structured logging with multiple handlers
-            log_config = {
-                "version": 1,
-                "formatters": {
-                    "detailed": {
-                        "format": "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
-                    },
-                    "json": {
-                        "format": '{"timestamp": "%(asctime)s", "logger": "%(name)s", "level": "%(levelname)s", "message": "%(message)s"}'
-                    }
-                },
-                "handlers": {
-                    "console": {
-                        "class": "logging.StreamHandler",
-                        "formatter": "detailed",
-                        "level": "INFO"
-                    },
-                    "file": {
-                        "class": "logging.FileHandler",
-                        "filename": "/root/repo/logs/sdlc_execution.log",
-                        "formatter": "json",
-                        "level": "DEBUG"
-                    },
-                    "error_file": {
-                        "class": "logging.FileHandler",
-                        "filename": "/root/repo/logs/errors.log",
-                        "formatter": "detailed",
-                        "level": "ERROR"
-                    }
-                },
-                "loggers": {
-                    "autonomous_sdlc": {
-                        "handlers": ["console", "file", "error_file"],
-                        "level": "DEBUG",
-                        "propagate": False
-                    }
-                }
-            }
 
             # Create logs directory
             logs_dir = Path("/root/repo/logs")
@@ -787,7 +751,7 @@ class AutonomousSDLCExecutor:
         import hashlib
         import secrets
 
-        from src.usage_metrics_tracker import MetricType, get_tracker
+        from usage_metrics_tracker import MetricType, get_tracker
 
         tracker = get_tracker()
 
@@ -957,7 +921,7 @@ class AutonomousSDLCExecutor:
             security_tests["audit_trail"] = {
                 "status": "success",
                 "events_logged": len(security_events),
-                "event_types": list(set(event["event_type"] for event in security_events))
+                "event_types": list({event["event_type"] for event in security_events})
             }
 
             # Track security hardening metrics
@@ -1008,7 +972,7 @@ class AutonomousSDLCExecutor:
 
         import psutil
 
-        from src.usage_metrics_tracker import MetricType, get_tracker
+        from usage_metrics_tracker import MetricType, get_tracker
 
         tracker = get_tracker()
 
@@ -1106,7 +1070,7 @@ class AutonomousSDLCExecutor:
                 total_score = 0
                 check_count = 0
 
-                for check_name, check_result in checks.items():
+                for _check_name, check_result in checks.items():
                     status = check_result.get("status", "unhealthy")
                     total_score += scores.get(status, 0)
                     check_count += 1
@@ -1273,23 +1237,23 @@ class AutonomousSDLCExecutor:
 
         # Run the progressive quality gates system
         results = self.progressive_gates.run_all_gates()
-        
+
         # Store results in metrics
         self.metrics[f"quality_gates_{generation.value}"] = results
-        
+
         # Save detailed report
         report_file = f"quality_gates_{generation.value}_report.json"
         self.progressive_gates.save_results(report_file)
-        
+
         # Check if any required gates failed
         if results["overall_status"] == "FAILED":
             failed_gates = results.get("failed_gates", [])
             error_msg = f"Required quality gates failed in {generation.value}: {', '.join(failed_gates)}"
             logger.error(error_msg)
             raise Exception(error_msg)
-        
+
         logger.info(f"✅ Progressive Quality Gates passed for {generation.value.upper()}")
-        
+
     async def _run_quality_gates(self) -> None:
         """Execute all configured quality gates (legacy method)."""
         logger.info("🚦 Running quality gates validation")

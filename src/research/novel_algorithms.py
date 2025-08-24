@@ -28,8 +28,8 @@ try:
     from ..logging_config import get_logger
     from ..performance.advanced_optimizations import AdvancedOptimizationSuite
 except ImportError:
-    from src.fairness_metrics import compute_fairness_metrics
-    from src.logging_config import get_logger
+    from fairness_metrics import compute_fairness_metrics
+    from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -59,10 +59,10 @@ class OptimizationResult:
 class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
     """
     Causal fairness classifier implementing counterfactual reasoning.
-    
+
     This classifier incorporates causal inference principles to ensure fairness
     by considering counterfactual outcomes and causal pathways.
-    
+
     Research Innovation:
     - Implements counterfactual fairness as defined in causal inference literature
     - Uses structural equation modeling for fair predictions
@@ -80,7 +80,7 @@ class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
     ):
         """
         Initialize causal fairness classifier.
-        
+
         Args:
             base_estimator: Base classifier to make causally fair
             causal_graph: Directed acyclic graph representing causal relationships
@@ -106,7 +106,7 @@ class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
     def fit(self, X: pd.DataFrame, y: pd.Series, **kwargs):
         """
         Fit the causal fairness classifier.
-        
+
         Args:
             X: Feature matrix including protected and mediator attributes
             y: Target variable
@@ -139,10 +139,10 @@ class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """
         Predict using counterfactual fairness principles.
-        
+
         Args:
             X: Feature matrix
-            
+
         Returns:
             Causally fair predictions
         """
@@ -237,7 +237,7 @@ class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
                     confounder_data[col] = pd.cut(confounder_data[col], bins=3, labels=['low', 'medium', 'high'])
 
             # Group by confounder combinations
-            for group_name, group_indices in confounder_data.groupby(confounder_data.columns.tolist()).groups.items():
+            for _group_name, group_indices in confounder_data.groupby(confounder_data.columns.tolist()).groups.items():
                 group_X = X.loc[group_indices]
                 group_y = y.loc[group_indices]
 
@@ -319,7 +319,7 @@ class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
         corrected_predictions = predictions.copy()
 
         # Apply correction based on estimated causal effects
-        for i, protected_attr in enumerate(self.protected_attributes):
+        for _i, protected_attr in enumerate(self.protected_attributes):
             if protected_attr in self.causal_model_:
                 effect = self.causal_model_[protected_attr].get('average_treatment_effect', 0.0)
 
@@ -404,10 +404,10 @@ class CausalFairnessClassifier(BaseEstimator, ClassifierMixin):
 class ParetoFairnessOptimizer:
     """
     Pareto-optimal fairness-accuracy optimization.
-    
+
     Finds the Pareto frontier between fairness and accuracy objectives,
     allowing researchers to explore trade-offs and select optimal solutions.
-    
+
     Research Innovation:
     - Multi-objective optimization for fairness-accuracy trade-offs
     - Evolutionary algorithms for Pareto frontier discovery
@@ -426,7 +426,7 @@ class ParetoFairnessOptimizer:
     ):
         """
         Initialize Pareto fairness optimizer.
-        
+
         Args:
             base_estimator: Base model to optimize
             fairness_constraints: List of fairness constraints
@@ -461,14 +461,14 @@ class ParetoFairnessOptimizer:
     ) -> OptimizationResult:
         """
         Perform Pareto optimization for fairness-accuracy trade-offs.
-        
+
         Args:
             X_train: Training features
             y_train: Training targets
             X_val: Validation features
             y_val: Validation targets
             protected_attributes: List of protected attribute names
-            
+
         Returns:
             Optimization result with Pareto front and best models
         """
@@ -577,7 +577,7 @@ class ParetoFairnessOptimizer:
             try:
                 # Train model
                 X_train_features = X_train.drop(protected_attributes, axis=1, errors='ignore')
-                X_val_features = X_val.drop(protected_attributes, axis=1, errors='ignore')
+                X_val.drop(protected_attributes, axis=1, errors='ignore')
 
                 model.fit(X_train_features, y_train)
 

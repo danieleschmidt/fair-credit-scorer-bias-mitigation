@@ -306,7 +306,7 @@ https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
 This project uses [Conventional Commits](https://conventionalcommits.org/):
 
 - `feat:` for new features
-- `fix:` for bug fixes  
+- `fix:` for bug fixes
 - `docs:` for documentation changes
 - `test:` for test changes
 - `refactor:` for code refactoring
@@ -337,7 +337,7 @@ Please include:
 ## Response Timeline
 
 - **Initial Response**: Within 24 hours
-- **Status Update**: Within 72 hours  
+- **Status Update**: Within 72 hours
 - **Resolution**: Within 90 days
 
 We appreciate responsible disclosure and will credit reporters appropriately.
@@ -440,7 +440,6 @@ body:
         )
 
         # Check if changes are needed
-        needs_changes = False
 
         # STEP 1: Ensure Description / Website / Topics
         description_change = self._check_description(repo, changes)
@@ -448,14 +447,12 @@ body:
         topics_change = self._check_topics(repo, changes)
 
         if description_change or website_change or topics_change:
-            needs_changes = True
             self._apply_metadata_changes(repo_name, repo, changes)
 
         # Create branch if we need to make file changes
         file_changes_needed = self._check_file_changes_needed(repo_name)
 
         if file_changes_needed:
-            needs_changes = True
             # Create branch
             if not self.github_api.create_branch(repo_name, branch_name):
                 logging.error(f"Failed to create branch for {repo_name}")
@@ -703,15 +700,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Generate SBOM
         uses: CycloneDX/github-action@v1
         with:
           output: docs/sbom/latest.json
-          
+
       - name: Commit SBOM
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -838,7 +835,7 @@ This PR applies standardized DevSecOps practices to improve repository hygiene.
 
 ### Benefits:
 - ✅ Enhanced security scanning with CodeQL and Scorecard
-- ✅ Automated dependency updates with Dependabot  
+- ✅ Automated dependency updates with Dependabot
 - ✅ SBOM generation for supply chain security
 - ✅ Standardized community health files
 - ✅ Improved README documentation and badges

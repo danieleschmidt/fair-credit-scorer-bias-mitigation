@@ -17,7 +17,7 @@ Example:
     >>> from bias_mitigator import expgrad_demographic_parity, reweight_samples
     >>> # In-processing approach
     >>> fair_model = expgrad_demographic_parity(X_train, y_train, protected_attr)
-    >>> 
+    >>>
     >>> # Pre-processing approach
     >>> sample_weights = reweight_samples(y_train, protected_attr)
     >>> model.fit(X_train, y_train, sample_weight=sample_weights)

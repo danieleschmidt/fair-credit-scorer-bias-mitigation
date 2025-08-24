@@ -17,20 +17,21 @@ Generation 3: MAKE IT SCALE
 - Advanced analytics and reporting
 """
 
+import asyncio
 import json
 import logging
-import subprocess
 import time
-import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
-from .progressive_quality_gates import (
-    QualityGateStatus, QualityGateType, QualityGateResult, 
-    QualityGateConfig, ProgressiveQualityGates
+from progressive_quality_gates import (
+    ProgressiveQualityGates,
+    QualityGateConfig,
+    QualityGateResult,
+    QualityGateStatus,
+    QualityGateType,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ logger = logging.getLogger(__name__)
 class QualityGateGeneration(Enum):
     """Quality gate generations for progressive enhancement."""
     GENERATION_1 = "make_it_work"
-    GENERATION_2 = "make_it_robust" 
+    GENERATION_2 = "make_it_robust"
     GENERATION_3 = "make_it_scale"
 
 
@@ -67,19 +68,19 @@ class EnhancedQualityGateResult(QualityGateResult):
 class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
     """
     Enhanced Progressive Quality Gates system with multi-generation support.
-    
+
     Supports all three generations:
     - Generation 1: Basic validation (MAKE IT WORK)
     - Generation 2: Robustness and security (MAKE IT ROBUST)
     - Generation 3: Performance and scale (MAKE IT SCALE)
     """
-    
+
     def __init__(self, repo_path: str = "/root/repo", generation: QualityGateGeneration = QualityGateGeneration.GENERATION_1):
         super().__init__(repo_path)
         self.generation = generation
         self.config = self._get_generation_config()
         self.enhanced_results: List[EnhancedQualityGateResult] = []
-        
+
     def _get_generation_config(self) -> List[QualityGateConfig]:
         """Get quality gate configuration based on generation."""
         if self.generation == QualityGateGeneration.GENERATION_1:
@@ -90,7 +91,7 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
             return self._get_generation_3_config()
         else:
             return self._get_default_config()
-    
+
     def _get_generation_1_config(self) -> List[QualityGateConfig]:
         """Generation 1: Basic functionality validation."""
         return [
@@ -116,11 +117,11 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
                 description="Basic code linting"
             ),
         ]
-    
+
     def _get_generation_2_config(self) -> List[QualityGateConfig]:
         """Generation 2: Robustness and security validation."""
         base_config = self._get_generation_1_config()
-        
+
         enhanced_config = [
             # Enhanced security scanning
             QualityGateConfig(
@@ -155,13 +156,13 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
                 description="Static type checking validation"
             ),
         ]
-        
+
         return base_config + enhanced_config
-    
+
     def _get_generation_3_config(self) -> List[QualityGateConfig]:
         """Generation 3: Performance and scaling validation."""
         base_config = self._get_generation_2_config()
-        
+
         scale_config = [
             # Load testing
             QualityGateConfig(
@@ -196,43 +197,43 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
                 description="Advanced performance analytics"
             ),
         ]
-        
+
         return base_config + scale_config
-    
+
     async def run_all_gates_async(self) -> Dict[str, Any]:
         """Execute all quality gates asynchronously for better performance."""
         logger.info(f"Starting Progressive Quality Gates {self.generation.value.upper()}")
         start_time = time.time()
-        
+
         # Run gates in parallel using ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {
                 executor.submit(self._execute_gate, config): config
                 for config in self.config if config.enabled
             }
-            
+
             overall_status = QualityGateStatus.PASSED
             failed_gates = []
-            
+
             for future in as_completed(futures):
                 config = futures[future]
                 try:
                     result = future.result()
                     self.results.append(result)
-                    
+
                     if result.status == QualityGateStatus.FAILED and config.required:
                         overall_status = QualityGateStatus.FAILED
                         failed_gates.append(config.gate_type.value)
                         logger.error(f"Required quality gate failed: {config.gate_type.value}")
                     elif result.status == QualityGateStatus.PASSED:
                         logger.info(f"Quality gate passed: {config.gate_type.value} (score: {result.score:.2f})")
-                        
+
                 except Exception as e:
                     logger.error(f"Quality gate execution failed: {e}")
                     overall_status = QualityGateStatus.FAILED
-        
+
         total_time = time.time() - start_time
-        
+
         summary = {
             "generation": self.generation.value,
             "overall_status": overall_status.value,
@@ -244,31 +245,31 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
             "timestamp": time.time(),
             "performance_summary": self._generate_performance_summary()
         }
-        
+
         logger.info(f"Quality gates completed in {total_time:.2f}s - Status: {overall_status.value}")
         return summary
-    
+
     def _generate_performance_summary(self) -> Dict[str, Any]:
         """Generate performance summary from quality gate results."""
         performance_gates = [r for r in self.results if "performance" in r.gate_type.value.lower()]
-        
+
         if not performance_gates:
             return {"message": "No performance gates executed"}
-        
+
         avg_score = sum(r.score for r in performance_gates) / len(performance_gates)
         avg_time = sum(r.execution_time for r in performance_gates) / len(performance_gates)
-        
+
         return {
             "average_performance_score": avg_score,
             "average_execution_time": avg_time,
             "performance_gates_count": len(performance_gates),
             "recommendations": self._generate_performance_recommendations(avg_score)
         }
-    
+
     def _generate_performance_recommendations(self, avg_score: float) -> List[str]:
         """Generate performance improvement recommendations."""
         recommendations = []
-        
+
         if avg_score < 0.7:
             recommendations.extend([
                 "Consider implementing caching mechanisms",
@@ -283,13 +284,13 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
             ])
         else:
             recommendations.append("Performance is excellent - maintain current optimizations")
-        
+
         return recommendations
-    
+
     def save_enhanced_results(self, output_file: str = "enhanced_quality_gates_report.json"):
         """Save enhanced quality gate results with additional metrics."""
         output_path = self.repo_path / output_file
-        
+
         report_data = {
             "enhanced_progressive_quality_gates": {
                 "version": "2.0",
@@ -305,12 +306,12 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
                 "generation_features": self._get_generation_features()
             }
         }
-        
+
         with open(output_path, 'w') as f:
             json.dump(report_data, f, indent=2)
-            
+
         logger.info(f"Enhanced quality gates report saved to {output_path}")
-    
+
     def _get_generation_features(self) -> Dict[str, Any]:
         """Get features enabled for current generation."""
         features = {
@@ -318,7 +319,7 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
             "syntax_checking": True,
             "test_execution": True
         }
-        
+
         if self.generation in [QualityGateGeneration.GENERATION_2, QualityGateGeneration.GENERATION_3]:
             features.update({
                 "advanced_security": True,
@@ -326,7 +327,7 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
                 "comprehensive_coverage": True,
                 "type_checking": True
             })
-        
+
         if self.generation == QualityGateGeneration.GENERATION_3:
             features.update({
                 "load_testing": True,
@@ -335,46 +336,46 @@ class EnhancedProgressiveQualityGates(ProgressiveQualityGates):
                 "advanced_analytics": True,
                 "chaos_engineering": False  # Future enhancement
             })
-        
+
         return features
 
 
 async def main():
     """Main entry point for enhanced progressive quality gates."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Enhanced Progressive Quality Gates System")
     parser.add_argument("--repo-path", default="/root/repo", help="Repository path")
     parser.add_argument("--generation", choices=["1", "2", "3"], default="1", help="Quality gate generation")
     parser.add_argument("--output", default="enhanced_quality_gates_report.json", help="Output file for results")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("--async", action="store_true", help="Run gates asynchronously")
-    
+
     args = parser.parse_args()
-    
+
     # Setup logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     # Map generation number to enum
     generation_map = {
         "1": QualityGateGeneration.GENERATION_1,
         "2": QualityGateGeneration.GENERATION_2,
         "3": QualityGateGeneration.GENERATION_3
     }
-    
+
     # Run enhanced quality gates
     gates = EnhancedProgressiveQualityGates(args.repo_path, generation_map[args.generation])
-    
+
     if getattr(args, 'async', False):
         results = await gates.run_all_gates_async()
     else:
         results = gates.run_all_gates()
-        
+
     gates.save_enhanced_results(args.output)
-    
+
     # Exit with appropriate code
     if results["overall_status"] == "FAILED":
         print(f"❌ Quality gates failed for Generation {args.generation}!")

@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import psutil
 
-from ..logging_config import get_logger
+from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -95,7 +95,7 @@ class Alert:
 class MetricsCollector:
     """
     High-performance metrics collection system.
-    
+
     Collects, aggregates, and analyzes performance metrics
     with configurable retention and alerting.
     """
@@ -108,7 +108,7 @@ class MetricsCollector:
     ):
         """
         Initialize metrics collector.
-        
+
         Args:
             retention_hours: How long to retain metric data
             max_points_per_metric: Maximum data points per metric
@@ -145,7 +145,7 @@ class MetricsCollector:
     ):
         """
         Record a metric value.
-        
+
         Args:
             name: Metric name
             value: Metric value
@@ -185,10 +185,10 @@ class MetricsCollector:
     def start_timer(self, name: str) -> Callable:
         """
         Start a timer and return a function to stop it.
-        
+
         Args:
             name: Timer name
-            
+
         Returns:
             Function to call to record the timing
         """
@@ -204,11 +204,11 @@ class MetricsCollector:
     def get_metric_summary(self, name: str, hours: int = 1) -> Optional[MetricSummary]:
         """
         Get summary statistics for a metric.
-        
+
         Args:
             name: Metric name
             hours: Hours of data to analyze
-            
+
         Returns:
             Metric summary or None if no data
         """
@@ -280,7 +280,7 @@ class MetricsCollector:
     ):
         """
         Set an alert rule for a metric.
-        
+
         Args:
             metric_name: Name of metric to monitor
             alert_type: Type of alert (threshold, rate, etc.)
@@ -386,14 +386,14 @@ class MetricsCollector:
 class SystemMetricsCollector:
     """
     System-level metrics collector for infrastructure monitoring.
-    
+
     Automatically collects CPU, memory, disk, and network metrics.
     """
 
     def __init__(self, metrics_collector: MetricsCollector):
         """
         Initialize system metrics collector.
-        
+
         Args:
             metrics_collector: Main metrics collector instance
         """
@@ -460,14 +460,14 @@ class SystemMetricsCollector:
 class MLMetricsCollector:
     """
     ML-specific metrics collector for model performance monitoring.
-    
+
     Collects model prediction metrics, accuracy, latency, and bias indicators.
     """
 
     def __init__(self, metrics_collector: MetricsCollector):
         """
         Initialize ML metrics collector.
-        
+
         Args:
             metrics_collector: Main metrics collector instance
         """
@@ -488,7 +488,7 @@ class MLMetricsCollector:
     ):
         """
         Record a model prediction.
-        
+
         Args:
             model_name: Name of the model
             prediction_time_ms: Prediction latency in milliseconds
@@ -524,7 +524,7 @@ class MLMetricsCollector:
     ):
         """
         Record model accuracy metrics.
-        
+
         Args:
             model_name: Name of the model
             accuracy: Accuracy value (0-1)
@@ -550,7 +550,7 @@ class MLMetricsCollector:
     ):
         """
         Record bias detection metrics.
-        
+
         Args:
             model_name: Name of the model
             bias_type: Type of bias (demographic_parity, equalized_odds, etc.)
@@ -577,7 +577,7 @@ class MLMetricsCollector:
     ):
         """
         Record data drift metrics.
-        
+
         Args:
             feature_name: Name of the feature
             drift_score: Drift score (0-1, higher means more drift)

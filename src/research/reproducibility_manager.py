@@ -242,7 +242,7 @@ class ReproductionResult:
 class ResultsManager:
     """
     Manager for experiment results with validation and comparison capabilities.
-    
+
     Handles storage, retrieval, and validation of experiment results
     with comprehensive integrity checking.
     """
@@ -250,7 +250,7 @@ class ResultsManager:
     def __init__(self, results_dir: str = "experiment_results"):
         """
         Initialize results manager.
-        
+
         Args:
             results_dir: Directory for storing results
         """
@@ -273,14 +273,14 @@ class ResultsManager:
     ) -> str:
         """
         Save experiment results with integrity checking.
-        
+
         Args:
             experiment_id: Unique experiment identifier
             results: Experiment results dictionary
             metrics: Performance metrics
             predictions: Model predictions
             model_state: Model state dictionary
-            
+
         Returns:
             Checksum of saved results
         """
@@ -337,11 +337,11 @@ class ResultsManager:
     ) -> Dict[str, Any]:
         """
         Load experiment results with optional integrity validation.
-        
+
         Args:
             experiment_id: Experiment identifier
             validate_integrity: Whether to validate file integrity
-            
+
         Returns:
             Dictionary containing all experiment results
         """
@@ -402,12 +402,12 @@ class ResultsManager:
     ) -> Dict[str, Any]:
         """
         Compare results between two experiments.
-        
+
         Args:
             experiment_id_1: First experiment ID
             experiment_id_2: Second experiment ID
             tolerance: Tolerance levels for comparisons
-            
+
         Returns:
             Comparison results
         """
@@ -571,7 +571,7 @@ class ResultsManager:
 class ReproducibilityManager:
     """
     Comprehensive reproducibility manager for fairness research.
-    
+
     Provides end-to-end reproducibility management including experiment
     configuration, environment tracking, and reproduction validation.
     """
@@ -583,7 +583,7 @@ class ReproducibilityManager:
     ):
         """
         Initialize reproducibility manager.
-        
+
         Args:
             workspace_dir: Directory for reproducibility workspace
             reproducibility_level: Level of reproducibility assurance
@@ -620,7 +620,7 @@ class ReproducibilityManager:
     ) -> ExperimentConfig:
         """
         Create a complete experiment configuration.
-        
+
         Args:
             name: Experiment name
             description: Experiment description
@@ -631,7 +631,7 @@ class ReproducibilityManager:
             hyperparameters: Algorithm hyperparameters
             random_seed: Random seed
             experiment_parameters: Additional experiment parameters
-            
+
         Returns:
             Complete experiment configuration
         """
@@ -718,7 +718,7 @@ class ReproducibilityManager:
     ) -> Dict[str, Any]:
         """
         Run an experiment with full reproducibility tracking.
-        
+
         Args:
             config: Experiment configuration
             algorithm: ML algorithm instance
@@ -727,7 +727,7 @@ class ReproducibilityManager:
             X_test: Test features
             y_test: Test target
             sensitive_attrs_test: Test sensitive attributes
-            
+
         Returns:
             Experiment results
         """
@@ -849,11 +849,11 @@ class ReproducibilityManager:
     ) -> ReproductionResult:
         """
         Reproduce an existing experiment and validate results.
-        
+
         Args:
             original_experiment_id: ID of experiment to reproduce
             tolerance: Tolerance levels for result comparison
-            
+
         Returns:
             Reproduction result with validation
         """
@@ -875,7 +875,7 @@ class ReproducibilityManager:
         original_config = self.experiments[original_experiment_id]
 
         # Load original results
-        original_results = self.results_manager.load_results(original_experiment_id)
+        self.results_manager.load_results(original_experiment_id)
 
         # Create reproduction configuration
         reproduction_config = self._create_reproduction_config(original_config)
@@ -913,11 +913,11 @@ class ReproducibilityManager:
     ) -> Dict[str, Any]:
         """
         Validate experiment integrity and reproducibility.
-        
+
         Args:
             experiment_id: Experiment to validate
             validation_checks: List of validation checks to perform
-            
+
         Returns:
             Validation results
         """
@@ -957,7 +957,7 @@ class ReproducibilityManager:
         # Results integrity check
         if 'results_integrity' in validation_checks:
             try:
-                results = self.results_manager.load_results(experiment_id, validate_integrity=True)
+                self.results_manager.load_results(experiment_id, validate_integrity=True)
                 validation_results['check_results']['results_integrity'] = {
                     'status': 'passed',
                     'message': 'Results integrity verified'

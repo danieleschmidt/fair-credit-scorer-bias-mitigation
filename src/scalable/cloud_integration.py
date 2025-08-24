@@ -242,7 +242,7 @@ class MockCloudAdapter(CloudProviderAdapter):
 class ResourceManager:
     """
     Manages cloud resources for fairness research workloads.
-    
+
     Handles resource allocation, cost optimization, and lifecycle management
     across multiple cloud providers.
     """
@@ -254,7 +254,7 @@ class ResourceManager:
     ):
         """
         Initialize resource manager.
-        
+
         Args:
             default_provider: Default cloud provider
             default_region: Default region
@@ -284,12 +284,12 @@ class ResourceManager:
     ) -> List[CloudResource]:
         """
         Launch a cluster of resources for research workloads.
-        
+
         Args:
             cluster_config: Cluster configuration
             provider: Cloud provider (uses default if None)
             region: Region (uses default if None)
-            
+
         Returns:
             List of launched resources
         """
@@ -322,10 +322,10 @@ class ResourceManager:
     def terminate_cluster(self, resource_ids: List[str]) -> int:
         """
         Terminate a cluster of resources.
-        
+
         Args:
             resource_ids: List of resource IDs to terminate
-            
+
         Returns:
             Number of successfully terminated resources
         """
@@ -362,13 +362,13 @@ class ResourceManager:
     ) -> Dict[str, Any]:
         """
         Get cost estimate for running a cluster configuration.
-        
+
         Args:
             cluster_config: Cluster configuration
             duration_hours: Expected runtime in hours
             provider: Cloud provider
             region: Region
-            
+
         Returns:
             Cost estimate breakdown
         """
@@ -409,10 +409,10 @@ class ResourceManager:
     def optimize_costs(self, cluster_config: Dict[str, Any]) -> Dict[str, Any]:
         """
         Optimize cluster configuration for cost efficiency.
-        
+
         Args:
             cluster_config: Original cluster configuration
-            
+
         Returns:
             Optimized configuration with cost savings
         """
@@ -544,7 +544,7 @@ class ResourceManager:
 class AutoScaler:
     """
     Automatic scaling system for research workloads.
-    
+
     Monitors metrics and automatically scales cloud resources up or down
     based on configurable policies and thresholds.
     """
@@ -556,7 +556,7 @@ class AutoScaler:
     ):
         """
         Initialize auto-scaler.
-        
+
         Args:
             resource_manager: Resource manager instance
             monitoring_interval: Monitoring interval in seconds
@@ -766,7 +766,7 @@ class AutoScaler:
 class CloudExperimentManager:
     """
     High-level manager for cloud-based fairness experiments.
-    
+
     Orchestrates cloud resources, auto-scaling, and cost optimization
     for large-scale fairness research projects.
     """
@@ -780,7 +780,7 @@ class CloudExperimentManager:
     ):
         """
         Initialize cloud experiment manager.
-        
+
         Args:
             project_name: Name of the research project
             default_provider: Default cloud provider
@@ -813,11 +813,11 @@ class CloudExperimentManager:
     ) -> Dict[str, Any]:
         """
         Create cloud infrastructure for an experiment.
-        
+
         Args:
             experiment_name: Name of the experiment
             infrastructure_config: Infrastructure requirements
-            
+
         Returns:
             Infrastructure details and cost estimates
         """
@@ -876,10 +876,10 @@ class CloudExperimentManager:
     def terminate_experiment_infrastructure(self, experiment_name: str) -> Dict[str, Any]:
         """
         Terminate cloud infrastructure for an experiment.
-        
+
         Args:
             experiment_name: Name of the experiment
-            
+
         Returns:
             Termination summary with final costs
         """

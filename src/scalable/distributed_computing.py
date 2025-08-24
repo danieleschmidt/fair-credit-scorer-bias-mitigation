@@ -162,7 +162,7 @@ class DistributedTask:
 class TaskScheduler:
     """
     Intelligent task scheduler for distributed fairness computations.
-    
+
     Implements resource-aware scheduling with load balancing and
     fault tolerance for fairness research workloads.
     """
@@ -174,7 +174,7 @@ class TaskScheduler:
     ):
         """
         Initialize task scheduler.
-        
+
         Args:
             strategy: Distribution strategy to use
             max_concurrent_tasks: Maximum concurrent tasks per node
@@ -453,7 +453,7 @@ class TaskScheduler:
 class ComputeCluster:
     """
     Manages a cluster of compute nodes for distributed fairness research.
-    
+
     Provides high-level interface for cluster management and
     distributed task execution.
     """
@@ -461,7 +461,7 @@ class ComputeCluster:
     def __init__(self, cluster_name: str = "fairness_cluster"):
         """
         Initialize compute cluster.
-        
+
         Args:
             cluster_name: Name of the cluster
         """
@@ -661,7 +661,7 @@ class ComputeCluster:
 
         # Node utilization
         node_utilizations = []
-        for node_id, node_info in status['nodes'].items():
+        for node_id, _node_info in status['nodes'].items():
             task_count = status['node_task_counts'].get(node_id, 0)
             utilization = task_count / self.scheduler.max_concurrent_tasks
             node_utilizations.append(utilization)
@@ -683,7 +683,7 @@ class ComputeCluster:
 class DistributedFairnessFramework:
     """
     High-level framework for distributed fairness research.
-    
+
     Provides easy-to-use interface for conducting large-scale
     fairness experiments across distributed compute resources.
     """
@@ -695,7 +695,7 @@ class DistributedFairnessFramework:
     ):
         """
         Initialize distributed fairness framework.
-        
+
         Args:
             cluster_name: Name of the compute cluster
             enable_auto_scaling: Enable automatic scaling of compute resources
@@ -731,13 +731,13 @@ class DistributedFairnessFramework:
     ) -> str:
         """
         Run a distributed fairness benchmark across algorithms and datasets.
-        
+
         Args:
             algorithms: List of algorithm configurations
             datasets: List of dataset configurations
             evaluation_metrics: Metrics to evaluate
             experiment_name: Name for the experiment
-            
+
         Returns:
             Experiment ID
         """
@@ -788,12 +788,12 @@ class DistributedFairnessFramework:
     ) -> str:
         """
         Run distributed bias detection scan across a dataset.
-        
+
         Args:
             dataset_config: Dataset configuration
             detection_methods: Bias detection methods to use
             experiment_name: Name for the experiment
-            
+
         Returns:
             Experiment ID
         """
@@ -849,7 +849,7 @@ class DistributedFairnessFramework:
     ) -> str:
         """
         Run distributed hyperparameter optimization for fairness algorithms.
-        
+
         Args:
             algorithm_name: Name of algorithm to optimize
             parameter_space: Parameter space to explore
@@ -857,7 +857,7 @@ class DistributedFairnessFramework:
             optimization_objective: Objective function to optimize
             max_evaluations: Maximum number of parameter combinations to evaluate
             experiment_name: Name for the experiment
-            
+
         Returns:
             Experiment ID
         """

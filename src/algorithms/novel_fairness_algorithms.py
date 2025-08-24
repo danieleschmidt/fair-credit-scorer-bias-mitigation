@@ -3,7 +3,7 @@ Novel Fairness Algorithms for Advanced Bias Mitigation.
 
 This module implements cutting-edge fairness algorithms based on 2024 research:
 1. Causal-Adversarial Hybrid Framework
-2. Multi-Objective Pareto Optimization with Chebyshev Scalarization  
+2. Multi-Objective Pareto Optimization with Chebyshev Scalarization
 3. Unanticipated Bias Detection (UBD) System
 4. Cross-Domain Transfer Unlearning
 5. Intersectional Multimodal Bias Detection (IMBD)
@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 try:
     import torch
     import torch.nn as nn
@@ -36,18 +37,18 @@ except ImportError:
     optim = None
 
 from sklearn.base import BaseEstimator
-from sklearn.ensemble import RandomForestClassifier, IsolationForest
+from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.covariance import EllipticEnvelope
 
 try:
     from ..fairness_metrics import compute_fairness_metrics
     from ..logging_config import get_logger
 except ImportError:
     # Fallback imports for standalone execution
-    import sys
     import os
+    import sys
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     from fairness_metrics import compute_fairness_metrics
     from logging_config import get_logger
@@ -190,9 +191,9 @@ class NovelFairnessFramework(ABC):
 class CausalAdversarialFramework(NovelFairnessFramework):
     """
     Novel Causal-Adversarial Hybrid Framework.
-    
+
     Combines causal inference with adversarial debiasing for robust fairness.
-    Research contribution: Addresses both direct and indirect bias through 
+    Research contribution: Addresses both direct and indirect bias through
     causal understanding while maintaining adversarial robustness.
     """
 
@@ -288,7 +289,7 @@ class CausalAdversarialFramework(NovelFairnessFramework):
         """Compute causal regularization loss based on causal graph."""
         # Encode inputs through causal encoder
         mu, log_var = self.causal_encoder(X_tensor)
-        z = self.causal_encoder.reparameterize(mu, log_var)
+        self.causal_encoder.reparameterize(mu, log_var)
 
         # KL divergence for causal representation
         kl_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
@@ -442,8 +443,8 @@ class CausalAdversarialFramework(NovelFairnessFramework):
 class MultiObjectiveParetoOptimizer(NovelFairnessFramework):
     """
     Multi-Objective Pareto Optimization with Chebyshev Scalarization.
-    
-    Research contribution: Superior theoretical framework for recovering Pareto 
+
+    Research contribution: Superior theoretical framework for recovering Pareto
     optimal solutions without linear scalarization limitations.
     """
 
@@ -630,7 +631,7 @@ class MultiObjectiveParetoOptimizer(NovelFairnessFramework):
         weight_vectors = self._generate_weight_vectors(self.population_size)
 
         # Calculate reference point (ideal point)
-        reference_point = {obj.value: 1.0 for obj in self.objectives}
+        {obj.value: 1.0 for obj in self.objectives}
 
         # Initialize population
         self.population = []
@@ -858,7 +859,7 @@ class MultiObjectiveParetoOptimizer(NovelFairnessFramework):
 class UnanticipatedBiasDetector(NovelFairnessFramework):
     """
     Unanticipated Bias Detection (UBD) System.
-    
+
     Research contribution: Detects biases in areas where they are not typically expected,
     using advanced pattern recognition and anomaly detection techniques.
     """
@@ -1301,8 +1302,8 @@ def run_novel_algorithms_experiment(X: pd.DataFrame, y: pd.Series,
                                   output_dir: str = "research_results") -> Dict[str, Any]:
     """
     Run comprehensive experiment with all novel fairness algorithms.
-    
-    This function implements a complete research pipeline suitable for 
+
+    This function implements a complete research pipeline suitable for
     academic publication, including statistical validation and visualization.
     """
     import os
@@ -1331,7 +1332,7 @@ def run_novel_algorithms_experiment(X: pd.DataFrame, y: pd.Series,
                   [(feat, 'target') for feat in X.columns[:5]],  # Top 5 features
             protected_attributes=list(sensitive_attrs.columns),
             target_variable='target',
-            confounders=[feat for feat in X.columns[:3]]  # Top 3 as confounders
+            confounders=list(X.columns[:3])  # Top 3 as confounders
         )
 
         causal_adv = CausalAdversarialFramework(causal_graph=causal_graph)
@@ -1485,7 +1486,7 @@ def main():
 
     if args.algorithm == "all":
         # Run comprehensive experiment
-        results = run_novel_algorithms_experiment(
+        run_novel_algorithms_experiment(
             X_df, y_series, sensitive_attrs_df, args.output_dir
         )
         print(f"Comprehensive experiment completed. Results in {args.output_dir}/")

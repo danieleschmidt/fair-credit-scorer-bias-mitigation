@@ -67,7 +67,7 @@ class OptimizationResult:
 class AutoFairnessOptimizer:
     """
     Automated fairness optimization using multi-objective optimization.
-    
+
     Finds optimal fairness-accuracy tradeoffs using evolutionary algorithms
     and Pareto optimization.
     """
@@ -83,7 +83,7 @@ class AutoFairnessOptimizer:
     ):
         """
         Initialize fairness optimizer.
-        
+
         Args:
             protected_attributes: List of protected attribute names
             fairness_constraints: Constraints on fairness metrics
@@ -119,7 +119,7 @@ class AutoFairnessOptimizer:
     ) -> OptimizationResult:
         """
         Optimize fairness-accuracy tradeoff.
-        
+
         Args:
             X_train: Training features
             y_train: Training labels
@@ -127,7 +127,7 @@ class AutoFairnessOptimizer:
             y_val: Validation labels
             base_model: Base model to optimize
             mitigation_methods: List of mitigation methods to try
-            
+
         Returns:
             OptimizationResult with best configuration
         """
@@ -539,7 +539,7 @@ class AutoFairnessOptimizer:
         for method in search_space['mitigation_method']:
             # Sample model parameters
             model_param_grid = []
-            for param, values in search_space['model_params'].items():
+            for _param, values in search_space['model_params'].items():
                 if isinstance(values, tuple):
                     # Sample a few values for continuous parameters
                     param_values = np.linspace(values[0], values[1], 3)
@@ -608,7 +608,7 @@ class AutoFairnessOptimizer:
 class HyperparameterTuner:
     """
     Advanced hyperparameter tuning with fairness considerations.
-    
+
     Extends traditional hyperparameter tuning to include fairness
     metrics in the optimization objective.
     """
@@ -623,7 +623,7 @@ class HyperparameterTuner:
     ):
         """
         Initialize hyperparameter tuner.
-        
+
         Args:
             param_space: Parameter space definition
             scoring_function: Custom scoring function
@@ -651,13 +651,13 @@ class HyperparameterTuner:
     ) -> Dict[str, Any]:
         """
         Tune hyperparameters with fairness considerations.
-        
+
         Args:
             model: Model to tune
             X: Feature matrix
             y: Target variable
             protected_attributes: Protected attribute names
-            
+
         Returns:
             Tuning results with best parameters
         """

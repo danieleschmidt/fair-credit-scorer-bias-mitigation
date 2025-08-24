@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Any, Callable, Dict
 
-from src.health_check import metrics_collector
+from health_check import metrics_collector
 
 
 class ApplicationMonitor:

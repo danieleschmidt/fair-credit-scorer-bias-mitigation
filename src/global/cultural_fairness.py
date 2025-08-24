@@ -118,7 +118,7 @@ class CrossCulturalFairnessResult:
 class CulturalContextManager:
     """
     Manages cultural contexts and their fairness characteristics.
-    
+
     Provides a comprehensive database of cultural contexts with
     their associated fairness values, legal frameworks, and
     protected attribute priorities.
@@ -127,7 +127,7 @@ class CulturalContextManager:
     def __init__(self, contexts_file: Optional[str] = None):
         """
         Initialize cultural context manager.
-        
+
         Args:
             contexts_file: Optional file path for custom cultural contexts
         """
@@ -399,7 +399,7 @@ class CulturalContextManager:
 class CrossCulturalValidator:
     """
     Validates fairness across different cultural contexts.
-    
+
     Evaluates how fairness metrics and bias detection results
     vary across different cultural perspectives and value systems.
     """
@@ -407,7 +407,7 @@ class CrossCulturalValidator:
     def __init__(self, context_manager: CulturalContextManager):
         """
         Initialize cross-cultural validator.
-        
+
         Args:
             context_manager: Cultural context manager
         """
@@ -427,7 +427,7 @@ class CrossCulturalValidator:
     ) -> CrossCulturalFairnessResult:
         """
         Validate fairness across multiple cultural contexts.
-        
+
         Args:
             y_true: True labels
             y_pred: Predicted labels
@@ -435,7 +435,7 @@ class CrossCulturalValidator:
             primary_context: Primary cultural context
             comparison_contexts: List of contexts to compare against
             confidence_level: Confidence level for intervals
-            
+
         Returns:
             Cross-cultural fairness analysis result
         """
@@ -742,7 +742,7 @@ class CrossCulturalValidator:
                 "Adjust protected attribute priorities based on cultural context"
             )
 
-            varying_attrs = list(set(d['attribute'] for d in priority_differences))
+            varying_attrs = list({d['attribute'] for d in priority_differences})
             recommendations.append(
                 f"Attributes showing cultural variation: {', '.join(varying_attrs[:3])}"
             )
@@ -869,7 +869,7 @@ class CrossCulturalValidator:
 class CulturalFairnessFramework:
     """
     Comprehensive framework for cultural fairness research.
-    
+
     Integrates cultural context management with cross-cultural
     validation to provide comprehensive fairness evaluation
     across different cultural perspectives.
@@ -878,7 +878,7 @@ class CulturalFairnessFramework:
     def __init__(self, contexts_file: Optional[str] = None):
         """
         Initialize cultural fairness framework.
-        
+
         Args:
             contexts_file: Optional file for custom cultural contexts
         """
@@ -914,14 +914,14 @@ class CulturalFairnessFramework:
     ) -> Dict[str, Any]:
         """
         Evaluate fairness across all active cultural contexts.
-        
+
         Args:
             algorithm_name: Name of the algorithm being evaluated
             y_true: True labels
-            y_pred: Predicted labels  
+            y_pred: Predicted labels
             sensitive_attrs: Sensitive attributes
             primary_context: Primary cultural context (uses first active if None)
-            
+
         Returns:
             Comprehensive cultural fairness evaluation
         """
@@ -1027,10 +1027,10 @@ class CulturalFairnessFramework:
     ) -> Dict[str, Any]:
         """
         Compare multiple algorithms from cultural fairness perspective.
-        
+
         Args:
             algorithm_results: Dictionary mapping algorithm names to their cultural evaluation results
-            
+
         Returns:
             Comprehensive cross-algorithm cultural comparison
         """

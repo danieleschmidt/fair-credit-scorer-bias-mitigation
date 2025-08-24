@@ -31,7 +31,7 @@ class ValidationRule:
     def validate(self, value: Any) -> tuple[bool, str]:
         """
         Validate a value against this rule.
-        
+
         Returns:
             Tuple of (is_valid, error_message)
         """
@@ -65,7 +65,7 @@ class ValidationResult:
 class InputValidator:
     """
     Comprehensive input validation system.
-    
+
     Validates user inputs, API requests, and data uploads to prevent
     security vulnerabilities and ensure data quality.
     """
@@ -124,7 +124,7 @@ class InputValidator:
     def add_rule(self, field_name: str, rule: ValidationRule):
         """
         Add validation rule for a specific field.
-        
+
         Args:
             field_name: Name of the field to validate
             rule: Validation rule to add
@@ -138,7 +138,7 @@ class InputValidator:
     def add_global_rule(self, rule: ValidationRule):
         """
         Add global validation rule that applies to all inputs.
-        
+
         Args:
             rule: Validation rule to add
         """
@@ -148,10 +148,10 @@ class InputValidator:
     def validate_input(self, data: Dict[str, Any]) -> ValidationResult:
         """
         Validate input data against defined rules.
-        
+
         Args:
             data: Input data to validate
-            
+
         Returns:
             ValidationResult with validation status and messages
         """
@@ -195,11 +195,11 @@ class InputValidator:
     def validate_dataframe(self, df: pd.DataFrame, schema: Optional[Dict[str, str]] = None) -> ValidationResult:
         """
         Validate pandas DataFrame for ML pipeline.
-        
+
         Args:
             df: DataFrame to validate
             schema: Optional schema definition
-            
+
         Returns:
             ValidationResult
         """
@@ -411,7 +411,7 @@ class InputValidator:
 class DataSanitizer:
     """
     Data sanitization and cleaning utilities.
-    
+
     Cleans and sanitizes data to prevent security vulnerabilities
     and ensure data quality.
     """
@@ -423,11 +423,11 @@ class DataSanitizer:
     def sanitize_string(self, text: str, allow_html: bool = False) -> str:
         """
         Sanitize string input.
-        
+
         Args:
             text: Input text to sanitize
             allow_html: Whether to allow HTML tags
-            
+
         Returns:
             Sanitized string
         """
@@ -452,10 +452,10 @@ class DataSanitizer:
     def sanitize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Sanitize pandas DataFrame.
-        
+
         Args:
             df: DataFrame to sanitize
-            
+
         Returns:
             Sanitized DataFrame
         """
@@ -482,10 +482,10 @@ class DataSanitizer:
     def sanitize_filename(self, filename: str) -> str:
         """
         Sanitize filename for safe storage.
-        
+
         Args:
             filename: Original filename
-            
+
         Returns:
             Sanitized filename
         """
@@ -513,10 +513,10 @@ class DataSanitizer:
     def remove_pii(self, text: str) -> str:
         """
         Remove common PII patterns from text.
-        
+
         Args:
             text: Text that may contain PII
-            
+
         Returns:
             Text with PII removed/masked
         """
@@ -538,11 +538,11 @@ class DataSanitizer:
     def mask_sensitive_data(self, data: Dict[str, Any], sensitive_fields: List[str]) -> Dict[str, Any]:
         """
         Mask sensitive fields in data dictionary.
-        
+
         Args:
             data: Data dictionary
             sensitive_fields: List of field names to mask
-            
+
         Returns:
             Data with sensitive fields masked
         """
@@ -566,7 +566,7 @@ class DataSanitizer:
 def create_credit_score_validator() -> InputValidator:
     """
     Create validator specifically for credit scoring data.
-    
+
     Returns:
         Configured InputValidator for credit scoring
     """

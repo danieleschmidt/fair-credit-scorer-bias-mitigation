@@ -2,7 +2,7 @@
 Distributed Fairness Optimization Framework.
 
 High-performance distributed computing framework for fairness-aware ML at scale.
-Supports multi-GPU training, distributed hyperparameter optimization, and 
+Supports multi-GPU training, distributed hyperparameter optimization, and
 federated fairness optimization across multiple data sources.
 
 Features:
@@ -25,17 +25,16 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
-from .advanced_input_validation import FairnessAwareValidator
-from .enhanced_error_recovery import ErrorRecoveryManager
-from .fairness_metrics import compute_fairness_metrics
-from .logging_config import get_logger
+from enhanced_error_recovery import ErrorRecoveryManager
+from fairness_metrics import compute_fairness_metrics
+from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -88,7 +87,7 @@ class ComputeResource:
         """Check if resource can handle task requirements."""
         required_cores = task_requirements.get('cores', 1)
         required_memory = task_requirements.get('memory_gb', 1.0)
-        
+
         return (
             self.available and
             self.cores >= required_cores and
@@ -128,12 +127,12 @@ class OptimizationResult:
 
 class ResourceManager:
     """Manage distributed compute resources."""
-    
+
     def __init__(self):
         self.resources: Dict[str, ComputeResource] = {}
         self.resource_lock = threading.Lock()
         self._discover_resources()
-        
+
         logger.info(f"ResourceManager initialized with {len(self.resources)} resources")
 
     def _discover_resources(self):
@@ -141,7 +140,7 @@ class ResourceManager:
         # CPU resources
         cpu_count = mp.cpu_count()
         memory_gb = self._get_system_memory_gb()
-        
+
         for i in range(cpu_count):
             resource = ComputeResource(
                 resource_id=f"cpu_{i}",
@@ -150,7 +149,7 @@ class ResourceManager:
                 memory_gb=memory_gb / cpu_count
             )
             self.resources[resource.resource_id] = resource
-        
+
         # GPU resources (if PyTorch available)
         if TORCH_AVAILABLE and torch.cuda.is_available():
             for i in range(torch.cuda.device_count()):
@@ -202,7 +201,7 @@ class ResourceManager:
 
 class TaskScheduler:
     """Schedule optimization tasks across resources."""
-    
+
     def __init__(
         self,
         resource_manager: ResourceManager,
@@ -213,7 +212,7 @@ class TaskScheduler:
         self.task_queue = queue.PriorityQueue()
         self.active_tasks: Dict[str, OptimizationTask] = {}
         self.completed_tasks: List[OptimizationTask] = []
-        
+
         logger.info(f"TaskScheduler initialized with {strategy.value} strategy")
 
     def submit_task(self, task: OptimizationTask):
@@ -235,16 +234,16 @@ class TaskScheduler:
         task = self.get_next_task()
         if not task:
             return None
-        
+
         resource = self.resource_manager.allocate_resource(task.requirements)
         if not resource:
             # Put task back in queue
             self.task_queue.put((-task.priority, task.created_at, task))
             return None
-        
+
         task.started_at = datetime.now()
         self.active_tasks[task.task_id] = task
-        
+
         return task, resource
 
     def complete_task(self, task_id: str, result: OptimizationResult):
@@ -258,7 +257,7 @@ class TaskScheduler:
 
 class DistributedOptimizer(ABC):
     """Base class for distributed optimization algorithms."""
-    
+
     @abstractmethod
     def optimize(
         self,
@@ -271,11 +270,11 @@ class DistributedOptimizer(ABC):
 
 class ThreadPoolOptimizer(DistributedOptimizer):
     """Thread-based distributed optimizer."""
-    
+
     def __init__(self, max_workers: int = None):
         self.max_workers = max_workers or mp.cpu_count()
         self.error_recovery = ErrorRecoveryManager()
-        
+
     def optimize(
         self,
         tasks: List[OptimizationTask],
@@ -283,28 +282,28 @@ class ThreadPoolOptimizer(DistributedOptimizer):
     ) -> List[OptimizationResult]:
         """Run optimization using thread pool."""
         results = []
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks
             future_to_task = {}
-            
+
             for task in tasks:
                 scheduler.submit_task(task)
-            
+
             # Process tasks as resources become available
             while True:
                 allocation = scheduler.allocate_task()
                 if not allocation:
                     break
-                
+
                 task, resource = allocation
                 future = executor.submit(self._execute_task, task, resource)
                 future_to_task[future] = (task, resource)
-            
+
             # Collect results
             for future in concurrent.futures.as_completed(future_to_task):
                 task, resource = future_to_task[future]
-                
+
                 try:
                     result = future.result()
                     scheduler.complete_task(task.task_id, result)
@@ -324,7 +323,7 @@ class ThreadPoolOptimizer(DistributedOptimizer):
                     results.append(error_result)
                 finally:
                     scheduler.resource_manager.release_resource(resource.resource_id)
-        
+
         return results
 
     @ErrorRecoveryManager().with_retry()
@@ -335,25 +334,25 @@ class ThreadPoolOptimizer(DistributedOptimizer):
     ) -> OptimizationResult:
         """Execute single optimization task."""
         start_time = time.time()
-        
+
         try:
             X, y, sensitive_attrs = task.data
-            
+
             # Configure algorithm with parameters
             algorithm = clone(task.algorithm)
             algorithm.set_params(**task.parameters)
-            
+
             # Train model
             algorithm.fit(X, y)
             predictions = algorithm.predict(X)
-            
+
             # Compute performance metrics
             from sklearn.metrics import accuracy_score, roc_auc_score
-            
+
             performance_metrics = {
                 'accuracy': accuracy_score(y, predictions)
             }
-            
+
             # Try to compute AUC if possible
             try:
                 if hasattr(algorithm, 'predict_proba'):
@@ -361,7 +360,7 @@ class ThreadPoolOptimizer(DistributedOptimizer):
                     performance_metrics['auc'] = roc_auc_score(y, proba)
             except:
                 pass
-            
+
             # Compute fairness metrics
             fairness_metrics = {}
             for attr_name in sensitive_attrs.columns:
@@ -372,9 +371,9 @@ class ThreadPoolOptimizer(DistributedOptimizer):
                     'overall': overall,
                     'by_group': by_group.to_dict() if hasattr(by_group, 'to_dict') else by_group
                 }
-            
+
             execution_time = time.time() - start_time
-            
+
             return OptimizationResult(
                 task_id=task.task_id,
                 parameters=task.parameters,
@@ -387,11 +386,11 @@ class ThreadPoolOptimizer(DistributedOptimizer):
                 },
                 success=True
             )
-            
+
         except Exception as e:
             execution_time = time.time() - start_time
             logger.error(f"Task execution failed: {e}")
-            
+
             return OptimizationResult(
                 task_id=task.task_id,
                 parameters=task.parameters,
@@ -409,10 +408,10 @@ class ThreadPoolOptimizer(DistributedOptimizer):
 
 class AsyncOptimizer(DistributedOptimizer):
     """Asynchronous distributed optimizer."""
-    
+
     def __init__(self, max_concurrent_tasks: int = None):
         self.max_concurrent_tasks = max_concurrent_tasks or mp.cpu_count()
-        
+
     def optimize(
         self,
         tasks: List[OptimizationTask],
@@ -429,26 +428,26 @@ class AsyncOptimizer(DistributedOptimizer):
         """Asynchronous optimization implementation."""
         results = []
         semaphore = asyncio.Semaphore(self.max_concurrent_tasks)
-        
+
         # Submit all tasks
         for task in tasks:
             scheduler.submit_task(task)
-        
+
         # Create task coroutines
         coroutines = []
-        
+
         while True:
             allocation = scheduler.allocate_task()
             if not allocation:
                 break
-            
+
             task, resource = allocation
             coroutines.append(self._execute_task_async(task, resource, semaphore, scheduler))
-        
+
         # Wait for all tasks to complete
         if coroutines:
             results = await asyncio.gather(*coroutines, return_exceptions=True)
-        
+
         # Filter out exceptions and convert to proper results
         valid_results = []
         for result in results:
@@ -456,7 +455,7 @@ class AsyncOptimizer(DistributedOptimizer):
                 valid_results.append(result)
             elif isinstance(result, Exception):
                 logger.error(f"Async task failed: {result}")
-        
+
         return valid_results
 
     async def _execute_task_async(
@@ -473,10 +472,10 @@ class AsyncOptimizer(DistributedOptimizer):
             result = await loop.run_in_executor(
                 None, self._execute_task_sync, task, resource
             )
-            
+
             scheduler.complete_task(task.task_id, result)
             scheduler.resource_manager.release_resource(resource.resource_id)
-            
+
             return result
 
     def _execute_task_sync(
@@ -492,7 +491,7 @@ class AsyncOptimizer(DistributedOptimizer):
 
 class HyperparameterOptimizer:
     """Distributed hyperparameter optimization."""
-    
+
     def __init__(
         self,
         backend: OptimizationBackend = OptimizationBackend.THREADING,
@@ -502,11 +501,11 @@ class HyperparameterOptimizer:
         self.backend = backend
         self.max_evaluations = max_evaluations
         self.enable_early_stopping = enable_early_stopping
-        
+
         # Initialize components
         self.resource_manager = ResourceManager()
         self.scheduler = TaskScheduler(self.resource_manager)
-        
+
         # Choose optimizer based on backend
         if backend == OptimizationBackend.THREADING:
             self.optimizer = ThreadPoolOptimizer()
@@ -514,7 +513,7 @@ class HyperparameterOptimizer:
             self.optimizer = AsyncOptimizer()
         else:
             raise ValueError(f"Backend {backend} not yet implemented")
-        
+
         logger.info(f"HyperparameterOptimizer initialized with {backend.value} backend")
 
     def optimize(
@@ -530,7 +529,7 @@ class HyperparameterOptimizer:
     ) -> Dict[str, Any]:
         """
         Run distributed hyperparameter optimization.
-        
+
         Args:
             algorithm: Base algorithm to optimize
             param_grid: Parameter grid to search
@@ -540,24 +539,24 @@ class HyperparameterOptimizer:
             cv_folds: Cross-validation folds
             scoring_metric: Metric to optimize
             fairness_constraints: Fairness constraints
-            
+
         Returns:
             Optimization results
         """
         logger.info(f"Starting hyperparameter optimization with {len(list(ParameterGrid(param_grid)))} combinations")
-        
+
         start_time = time.time()
-        
+
         # Generate parameter combinations
         param_combinations = list(ParameterGrid(param_grid))
-        
+
         # Limit evaluations if too many combinations
         if len(param_combinations) > self.max_evaluations:
             logger.info(f"Limiting to {self.max_evaluations} evaluations via random sampling")
             param_combinations = list(ParameterSampler(
                 param_grid, n_iter=self.max_evaluations, random_state=42
             ))
-        
+
         # Create optimization tasks
         tasks = []
         for i, params in enumerate(param_combinations):
@@ -569,16 +568,16 @@ class HyperparameterOptimizer:
                 requirements={'cores': 1, 'memory_gb': 2.0}
             )
             tasks.append(task)
-        
+
         # Run distributed optimization
         results = self.optimizer.optimize(tasks, self.scheduler)
-        
+
         # Analyze results
         successful_results = [r for r in results if r.success]
-        
+
         if not successful_results:
             raise RuntimeError("No successful optimization runs")
-        
+
         # Find best result based on scoring metric
         if fairness_constraints:
             best_result = self._find_best_with_fairness_constraints(
@@ -589,9 +588,9 @@ class HyperparameterOptimizer:
                 successful_results,
                 key=lambda r: r.performance_metrics.get(scoring_metric, 0)
             )
-        
+
         optimization_time = time.time() - start_time
-        
+
         # Compile optimization summary
         summary = {
             'best_parameters': best_result.parameters,
@@ -603,10 +602,10 @@ class HyperparameterOptimizer:
             'resource_utilization': self.resource_manager.get_resource_utilization(),
             'all_results': results
         }
-        
+
         logger.info(f"Hyperparameter optimization completed in {optimization_time:.2f}s")
         logger.info(f"Best {scoring_metric}: {summary['best_score']:.4f}")
-        
+
         return summary
 
     def _find_best_with_fairness_constraints(
@@ -617,16 +616,16 @@ class HyperparameterOptimizer:
     ) -> OptimizationResult:
         """Find best result satisfying fairness constraints."""
         feasible_results = []
-        
+
         for result in results:
             satisfies_constraints = True
-            
-            for attr_name, fairness_metrics in result.fairness_metrics.items():
+
+            for _attr_name, fairness_metrics in result.fairness_metrics.items():
                 overall_metrics = fairness_metrics.get('overall', {})
-                
+
                 for constraint_name, threshold in fairness_constraints.items():
                     metric_value = overall_metrics.get(constraint_name)
-                    
+
                     if metric_value is not None:
                         # For difference metrics, we want them to be below threshold
                         if 'difference' in constraint_name:
@@ -638,30 +637,30 @@ class HyperparameterOptimizer:
                             if abs(metric_value - 1.0) > threshold:
                                 satisfies_constraints = False
                                 break
-                
+
                 if not satisfies_constraints:
                     break
-            
+
             if satisfies_constraints:
                 feasible_results.append(result)
-        
+
         if not feasible_results:
             logger.warning("No results satisfy fairness constraints, returning best unconstrained result")
             return max(results, key=lambda r: r.performance_metrics.get(scoring_metric, 0))
-        
+
         # Return best feasible result
         return max(feasible_results, key=lambda r: r.performance_metrics.get(scoring_metric, 0))
 
 
 class FederatedFairnessOptimizer:
     """Federated optimization for fairness across multiple data sources."""
-    
+
     def __init__(self, num_rounds: int = 10, min_participants: int = 2):
         self.num_rounds = num_rounds
         self.min_participants = min_participants
         self.participants: Dict[str, Dict[str, Any]] = {}
         self.global_model = None
-        
+
         logger.info("FederatedFairnessOptimizer initialized")
 
     def register_participant(
@@ -671,7 +670,7 @@ class FederatedFairnessOptimizer:
     ):
         """Register a federated learning participant."""
         X, y, sensitive_attrs = data
-        
+
         self.participants[participant_id] = {
             'data': data,
             'data_size': len(X),
@@ -679,7 +678,7 @@ class FederatedFairnessOptimizer:
             'fairness_metrics': {},
             'last_update': None
         }
-        
+
         logger.info(f"Registered participant {participant_id} with {len(X)} samples")
 
     def federated_optimize(
@@ -689,44 +688,44 @@ class FederatedFairnessOptimizer:
     ) -> Dict[str, Any]:
         """
         Run federated fairness optimization.
-        
+
         Args:
             base_algorithm: Base algorithm for training
             algorithm_params: Algorithm parameters
-            
+
         Returns:
             Federated optimization results
         """
         if len(self.participants) < self.min_participants:
             raise ValueError(f"Need at least {self.min_participants} participants")
-        
+
         logger.info(f"Starting federated optimization with {len(self.participants)} participants")
-        
+
         # Initialize global model
         self.global_model = clone(base_algorithm)
         if algorithm_params:
             self.global_model.set_params(**algorithm_params)
-        
+
         round_results = []
-        
+
         for round_num in range(self.num_rounds):
             logger.info(f"Federated round {round_num + 1}/{self.num_rounds}")
-            
+
             # Local training on each participant
             local_models = {}
             local_fairness_metrics = {}
-            
+
             for participant_id, participant_data in self.participants.items():
                 X, y, sensitive_attrs = participant_data['data']
-                
+
                 # Train local model
                 local_model = clone(self.global_model)
                 local_model.fit(X, y)
-                
+
                 # Compute local fairness metrics
                 predictions = local_model.predict(X)
                 fairness_metrics = {}
-                
+
                 for attr_name in sensitive_attrs.columns:
                     overall, by_group = compute_fairness_metrics(
                         y, predictions, sensitive_attrs[attr_name]
@@ -735,24 +734,24 @@ class FederatedFairnessOptimizer:
                         'overall': overall,
                         'by_group': by_group.to_dict() if hasattr(by_group, 'to_dict') else by_group
                     }
-                
+
                 local_models[participant_id] = local_model
                 local_fairness_metrics[participant_id] = fairness_metrics
-                
+
                 # Update participant data
                 participant_data['local_model'] = local_model
                 participant_data['fairness_metrics'] = fairness_metrics
                 participant_data['last_update'] = datetime.now()
-            
+
             # Aggregate models (simplified federated averaging)
             aggregated_params = self._aggregate_model_parameters(local_models)
-            
+
             # Update global model with aggregated parameters
             self._update_global_model(aggregated_params)
-            
+
             # Compute global fairness metrics
             global_fairness = self._compute_global_fairness_metrics()
-            
+
             round_result = {
                 'round': round_num + 1,
                 'participants': len(local_models),
@@ -760,11 +759,11 @@ class FederatedFairnessOptimizer:
                 'global_fairness_metrics': global_fairness,
                 'aggregation_time': datetime.now()
             }
-            
+
             round_results.append(round_result)
-            
+
             logger.info(f"Round {round_num + 1} completed")
-        
+
         # Final results
         final_results = {
             'global_model': self.global_model,
@@ -773,7 +772,7 @@ class FederatedFairnessOptimizer:
             'round_results': round_results,
             'final_fairness_metrics': round_results[-1]['global_fairness_metrics'] if round_results else {}
         }
-        
+
         logger.info("Federated optimization completed")
         return final_results
 
@@ -784,13 +783,13 @@ class FederatedFairnessOptimizer:
         """Aggregate parameters from local models."""
         # This is a simplified implementation
         # In practice, would need more sophisticated aggregation
-        
+
         # For now, just use the first model's parameters
         # In real federated learning, would aggregate weights properly
         if local_models:
             first_model = next(iter(local_models.values()))
             return first_model.get_params()
-        
+
         return {}
 
     def _update_global_model(self, aggregated_params: Dict[str, Any]):
@@ -804,32 +803,32 @@ class FederatedFairnessOptimizer:
     def _compute_global_fairness_metrics(self) -> Dict[str, Any]:
         """Compute global fairness metrics across all participants."""
         global_metrics = {}
-        
+
         # Aggregate fairness metrics across participants
         for participant_id, participant_data in self.participants.items():
             local_fairness = participant_data.get('fairness_metrics', {})
-            
+
             for attr_name, metrics in local_fairness.items():
                 if attr_name not in global_metrics:
                     global_metrics[attr_name] = {'participants': [], 'overall': {}}
-                
+
                 global_metrics[attr_name]['participants'].append({
                     'participant_id': participant_id,
                     'metrics': metrics['overall']
                 })
-        
+
         # Compute aggregate statistics
         for attr_name, attr_metrics in global_metrics.items():
             participant_metrics = attr_metrics['participants']
-            
+
             if participant_metrics:
                 # Average fairness metrics across participants
                 metric_names = participant_metrics[0]['metrics'].keys()
-                
+
                 for metric_name in metric_names:
                     values = [p['metrics'].get(metric_name, 0) for p in participant_metrics]
                     values = [v for v in values if v is not None]
-                    
+
                     if values:
                         global_metrics[attr_name]['overall'][metric_name] = {
                             'mean': np.mean(values),
@@ -837,18 +836,18 @@ class FederatedFairnessOptimizer:
                             'min': np.min(values),
                             'max': np.max(values)
                         }
-        
+
         return global_metrics
 
 
 # Performance monitoring and visualization
 class PerformanceMonitor:
     """Monitor distributed optimization performance."""
-    
+
     def __init__(self):
         self.metrics_history = []
         self.resource_utilization_history = []
-        
+
     def record_performance(
         self,
         timestamp: datetime,
@@ -865,7 +864,7 @@ class PerformanceMonitor:
             'success_rate': tasks_completed / max(1, tasks_completed + tasks_failed),
             'average_execution_time': average_execution_time
         })
-        
+
         self.resource_utilization_history.append({
             'timestamp': timestamp,
             'utilization': resource_utilization.copy()
@@ -875,9 +874,9 @@ class PerformanceMonitor:
         """Generate performance monitoring report."""
         if not self.metrics_history:
             return "No performance data available"
-        
+
         latest_metrics = self.metrics_history[-1]
-        
+
         report = f"""
 # Distributed Optimization Performance Report
 
@@ -891,12 +890,12 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ## Resource Utilization
 """
-        
+
         if self.resource_utilization_history:
             latest_utilization = self.resource_utilization_history[-1]['utilization']
             for resource_id, utilization in latest_utilization.items():
                 report += f"- {resource_id}: {utilization:.1%}\n"
-        
+
         return report
 
 
@@ -904,51 +903,52 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 def main():
     """CLI interface for distributed fairness optimizer."""
     import argparse
+
+    from sklearn.datasets import make_classification
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
-    from sklearn.datasets import make_classification
-    
+
     parser = argparse.ArgumentParser(description="Distributed Fairness Optimization")
     parser.add_argument("--demo", choices=["hyperopt", "federated"], help="Run demonstration")
-    parser.add_argument("--backend", choices=["threading", "asyncio"], default="threading", 
+    parser.add_argument("--backend", choices=["threading", "asyncio"], default="threading",
                        help="Optimization backend")
     parser.add_argument("--max-evaluations", type=int, default=20, help="Max evaluations for hyperopt")
-    
+
     args = parser.parse_args()
-    
+
     if args.demo == "hyperopt":
         print("Running Hyperparameter Optimization Demo...")
-        
+
         # Generate synthetic data
         X, y = make_classification(
             n_samples=1000, n_features=20, n_informative=15,
             n_redundant=2, n_clusters_per_class=2, flip_y=0.05,
             random_state=42
         )
-        
+
         X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(X.shape[1])])
         y_series = pd.Series(y, name='target')
-        
+
         # Create synthetic sensitive attributes
         sensitive_attrs_df = pd.DataFrame({
             'group_a': np.random.binomial(1, 0.3, len(X)),
             'group_b': np.random.choice([0, 1, 2], len(X))
         })
-        
+
         # Initialize optimizer
         backend = OptimizationBackend.THREADING if args.backend == "threading" else OptimizationBackend.ASYNCIO
         optimizer = HyperparameterOptimizer(
             backend=backend,
             max_evaluations=args.max_evaluations
         )
-        
+
         # Define parameter grid
         param_grid = {
             'n_estimators': [10, 50, 100],
             'max_depth': [None, 5, 10],
             'min_samples_split': [2, 5, 10]
         }
-        
+
         # Run optimization
         results = optimizer.optimize(
             algorithm=RandomForestClassifier(random_state=42),
@@ -958,38 +958,38 @@ def main():
             sensitive_attrs=sensitive_attrs_df,
             scoring_metric='accuracy'
         )
-        
-        print(f"Optimization completed!")
+
+        print("Optimization completed!")
         print(f"Best parameters: {results['best_parameters']}")
         print(f"Best score: {results['best_score']:.4f}")
         print(f"Total evaluations: {results['total_evaluations']}")
         print(f"Optimization time: {results['optimization_time']:.2f}s")
-    
+
     elif args.demo == "federated":
         print("Running Federated Optimization Demo...")
-        
+
         # Create multiple datasets (simulating different participants)
         fed_optimizer = FederatedFairnessOptimizer(num_rounds=5)
-        
+
         for i in range(3):
             # Generate data for each participant
             X, y = make_classification(
                 n_samples=300, n_features=10, n_informative=8,
                 n_redundant=1, random_state=42 + i
             )
-            
+
             X_df = pd.DataFrame(X, columns=[f'feature_{j}' for j in range(X.shape[1])])
             y_series = pd.Series(y, name='target')
             sensitive_attrs_df = pd.DataFrame({
                 'group': np.random.binomial(1, 0.4, len(X))
             })
-            
+
             fed_optimizer.register_participant(f"participant_{i}", (X_df, y_series, sensitive_attrs_df))
-        
+
         # Run federated optimization
         results = fed_optimizer.federated_optimize(LogisticRegression(random_state=42))
-        
-        print(f"Federated optimization completed!")
+
+        print("Federated optimization completed!")
         print(f"Rounds: {results['num_rounds']}")
         print(f"Participants: {results['num_participants']}")
         print(f"Final fairness metrics: {results['final_fairness_metrics']}")

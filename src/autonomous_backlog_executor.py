@@ -6,7 +6,7 @@ This is the main entry point for the autonomous backlog management system.
 It implements the continuous execution loop that:
 
 1. Syncs & refreshes backlog from all sources
-2. Discovers new tasks automatically 
+2. Discovers new tasks automatically
 3. Scores and ranks all items using WSJF methodology
 4. Executes ready items using TDD micro-cycles
 5. Maintains quality gates and security checks
@@ -24,8 +24,8 @@ import sys
 import time
 from typing import Optional
 
-from src.backlog_manager import BacklogItem, BacklogManager, TaskStatus
-from src.logging_config import setup_logging
+from backlog_manager import BacklogItem, BacklogManager, TaskStatus
+from logging_config import setup_logging
 
 
 class AutonomousBacklogExecutor:
@@ -52,11 +52,11 @@ class AutonomousBacklogExecutor:
     def execute_full_backlog_cycle(self, max_cycles: Optional[int] = None, cycle_delay: float = 5.0) -> dict:
         """
         Execute the full autonomous backlog management cycle.
-        
+
         Args:
             max_cycles: Maximum number of cycles to run (None for unlimited)
             cycle_delay: Delay between cycles in seconds
-            
+
         Returns:
             Final execution statistics
         """
@@ -86,7 +86,7 @@ class AutonomousBacklogExecutor:
                     # === PHASE 1: SYNC & REFRESH ===
                     self.logger.info("🔄 Phase 1: Sync & Refresh")
                     self.manager.load_backlog()
-                    initial_size = len(self.manager.backlog)
+                    len(self.manager.backlog)
 
                     # === PHASE 2: DISCOVER NEW TASKS ===
                     self.logger.info("🔍 Phase 2: Task Discovery")

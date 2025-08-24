@@ -17,7 +17,8 @@ except ImportError:
     # Fallback for environments without FastAPI
     FASTAPI_AVAILABLE = False
     BaseModel = object
-    Field = lambda **kwargs: None
+    def Field(**kwargs):
+        return None
 
 import numpy as np
 import pandas as pd
@@ -77,7 +78,7 @@ class ModelTrainingRequest(BaseModel):
 class FairnessAPI:
     """
     Production-ready FastAPI application for fairness evaluation.
-    
+
     Provides endpoints for:
     - Individual and batch predictions with bias analysis
     - Model training with fairness constraints

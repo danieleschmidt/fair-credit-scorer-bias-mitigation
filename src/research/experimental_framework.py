@@ -165,7 +165,7 @@ class ExperimentResult:
 class StatisticalValidation:
     """
     Statistical validation framework for fairness research.
-    
+
     Provides comprehensive statistical testing capabilities with proper
     multiple testing correction and effect size computation.
     """
@@ -179,7 +179,7 @@ class StatisticalValidation:
     ):
         """
         Initialize statistical validation framework.
-        
+
         Args:
             alpha: Significance level
             correction_method: Multiple testing correction method
@@ -203,13 +203,13 @@ class StatisticalValidation:
     ) -> StatisticalResult:
         """
         Compare two algorithms using statistical tests.
-        
+
         Args:
             results_a: Performance results for algorithm A
             results_b: Performance results for algorithm B
             test_type: Statistical test to use
             paired: Whether to use paired test
-            
+
         Returns:
             Statistical test result
         """
@@ -267,12 +267,12 @@ class StatisticalValidation:
     ) -> List[StatisticalResult]:
         """
         Perform multiple pairwise comparisons with correction.
-        
+
         Args:
             results_list: List of result arrays for each condition
             condition_names: Names of experimental conditions
             test_type: Statistical test to use
-            
+
         Returns:
             List of statistical results with corrected p-values
         """
@@ -316,12 +316,12 @@ class StatisticalValidation:
     ) -> Dict[str, float]:
         """
         Perform statistical power analysis.
-        
+
         Args:
             effect_size: Expected effect size
             sample_size: Sample size per group
             alpha: Significance level (uses instance default if None)
-            
+
         Returns:
             Power analysis results
         """
@@ -491,7 +491,7 @@ class StatisticalValidation:
 class ResearchProtocol:
     """
     Research protocol for conducting systematic fairness experiments.
-    
+
     Implements standardized protocols for reproducible fairness research
     following academic best practices.
     """
@@ -507,7 +507,7 @@ class ResearchProtocol:
     ):
         """
         Initialize research protocol.
-        
+
         Args:
             protocol_name: Name of the research protocol
             description: Description of the protocol
@@ -542,14 +542,14 @@ class ResearchProtocol:
     ) -> Dict[str, Any]:
         """
         Evaluate algorithm using the research protocol.
-        
+
         Args:
             algorithm: Algorithm to evaluate
             X: Feature matrix
             y: Target vector
             sensitive_attrs: Sensitive attributes
             metrics: Performance metrics to compute
-            
+
         Returns:
             Evaluation results
         """
@@ -628,7 +628,7 @@ class ResearchProtocol:
     ) -> Dict[str, Any]:
         """
         Compare multiple algorithms using the research protocol.
-        
+
         Args:
             algorithms: List of algorithms to compare
             algorithm_names: Names for the algorithms
@@ -636,7 +636,7 @@ class ResearchProtocol:
             y: Target vector
             sensitive_attrs: Sensitive attributes
             primary_metric: Primary metric for statistical comparison
-            
+
         Returns:
             Comparison results
         """
@@ -708,7 +708,7 @@ class ResearchProtocol:
 class ExperimentalFramework:
     """
     Comprehensive experimental framework for fairness research.
-    
+
     Orchestrates complete research experiments with proper controls,
     statistical validation, and publication-ready results.
     """
@@ -720,7 +720,7 @@ class ExperimentalFramework:
     ):
         """
         Initialize experimental framework.
-        
+
         Args:
             output_dir: Directory for saving results
             random_state: Random seed for reproducibility
@@ -749,7 +749,7 @@ class ExperimentalFramework:
     ) -> ExperimentResult:
         """
         Conduct a complete research experiment.
-        
+
         Args:
             experiment_name: Name of the experiment
             hypothesis: Research hypothesis to test
@@ -757,7 +757,7 @@ class ExperimentalFramework:
             X: Feature matrix
             y: Target vector
             sensitive_attrs: Sensitive attributes
-            
+
         Returns:
             Complete experiment results
         """
@@ -840,11 +840,11 @@ class ExperimentalFramework:
     ) -> str:
         """
         Generate comprehensive research report.
-        
+
         Args:
             experiment_results: Experiment results to include (defaults to all)
             report_name: Name for the report file
-            
+
         Returns:
             Path to generated report
         """
