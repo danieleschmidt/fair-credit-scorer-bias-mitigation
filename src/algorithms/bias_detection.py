@@ -96,7 +96,7 @@ class DriftAlert:
 class RealTimeBiasDetector:
     """
     Real-time bias detection system for production ML models.
-    
+
     Monitors predictions and detects various types of bias in real-time
     using sliding windows and statistical tests.
     """
@@ -109,7 +109,7 @@ class RealTimeBiasDetector:
     ):
         """
         Initialize bias detector.
-        
+
         Args:
             window_size: Size of sliding window for analysis
             alert_thresholds: Thresholds for different bias metrics
@@ -151,7 +151,7 @@ class RealTimeBiasDetector:
     ):
         """
         Add a new prediction to the monitoring system.
-        
+
         Args:
             prediction: Model prediction (probability or class)
             true_label: True label (if available)
@@ -175,7 +175,7 @@ class RealTimeBiasDetector:
     def set_baseline(self, reference_data: pd.DataFrame, target_column: str):
         """
         Set baseline statistics from reference data.
-        
+
         Args:
             reference_data: Reference dataset
             target_column: Target column name
@@ -296,7 +296,7 @@ class RealTimeBiasDetector:
                 if eo_diff > threshold:
                     # Analyze TPR and FPR differences
                     tpr_by_group = by_group['true_positive_rate']
-                    fpr_by_group = by_group['false_positive_rate']
+                    by_group['false_positive_rate']
 
                     alert = BiasAlert(
                         timestamp=datetime.utcnow(),
@@ -560,7 +560,7 @@ class RealTimeBiasDetector:
 class DriftDetectionAlgorithm:
     """
     Statistical drift detection for features and predictions.
-    
+
     Implements multiple statistical tests for detecting different
     types of data drift in machine learning systems.
     """
@@ -573,7 +573,7 @@ class DriftDetectionAlgorithm:
     ):
         """
         Initialize drift detection algorithm.
-        
+
         Args:
             reference_window_size: Size of reference window
             detection_window_size: Size of detection window
@@ -827,7 +827,7 @@ def main():
         print(f"Simulating {args.samples} predictions with bias level {args.bias_level}")
 
         # Simulate biased predictions
-        for i in range(args.samples):
+        for _i in range(args.samples):
             # Simulate protected attribute
             protected_attr = np.random.choice(['A', 'B'])
 

@@ -70,10 +70,10 @@ class AggregatedMetrics:
 class UsageMetricsTracker:
     """
     Advanced usage metrics tracking system with real-time analytics.
-    
+
     Features:
     - Real-time metric collection and aggregation
-    - Bias detection and alerting  
+    - Bias detection and alerting
     - Performance monitoring
     - Multi-format export capabilities
     - Adaptive caching and self-optimization
@@ -149,16 +149,16 @@ class UsageMetricsTracker:
                     metadata: Optional[Dict[str, Any]] = None) -> str:
         """
         Track a single metric entry.
-        
+
         Args:
             name: Metric name
             value: Metric value
             metric_type: Type of metric
             tags: Optional tags for categorization
             user_id: User identifier
-            session_id: Session identifier  
+            session_id: Session identifier
             metadata: Additional metadata
-            
+
         Returns:
             Metric ID for the tracked entry
         """
@@ -298,14 +298,14 @@ class UsageMetricsTracker:
                       include_aggregations: bool = True) -> Path:
         """
         Export metrics in various formats.
-        
+
         Args:
             format: Export format
             output_path: Output file path
             start_time: Start time for filtering
             end_time: End time for filtering
             include_aggregations: Include aggregated metrics
-            
+
         Returns:
             Path to exported file
         """
@@ -356,7 +356,7 @@ class UsageMetricsTracker:
         try:
             with sqlite3.connect(self.storage_path) as conn:
                 conn.execute("""
-                    INSERT OR REPLACE INTO metrics 
+                    INSERT OR REPLACE INTO metrics
                     (metric_id, timestamp, metric_type, name, value, tags, user_id, session_id, metadata)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
@@ -642,10 +642,10 @@ class UsageMetricsTracker:
         <h1>Usage Metrics Report</h1>
         <p>Generated at: {datetime.now()}</p>
         <p>Total metrics: {len(metrics)}</p>
-        
+
         <h2>Metrics Data</h2>
         {df.to_html(index=False)}
-        
+
         """
 
         if include_aggregations:

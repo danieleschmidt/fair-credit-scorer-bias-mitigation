@@ -79,7 +79,7 @@ class DriftDetector:
     def __init__(self, window_size: int = 1000, alpha: float = 0.05):
         """
         Initialize drift detector.
-        
+
         Args:
             window_size: Size of the reference window
             alpha: Significance level for statistical tests
@@ -96,11 +96,11 @@ class DriftDetector:
     def detect_drift(self, metric_name: str, current_values: List[float]) -> Tuple[bool, float]:
         """
         Detect drift using Kolmogorov-Smirnov test.
-        
+
         Args:
             metric_name: Name of the metric
             current_values: Current metric values
-            
+
         Returns:
             Tuple of (drift_detected, p_value)
         """
@@ -131,11 +131,11 @@ class DriftDetector:
     def compute_drift_magnitude(self, metric_name: str, current_values: List[float]) -> float:
         """
         Compute magnitude of drift using effect size.
-        
+
         Args:
             metric_name: Name of the metric
             current_values: Current metric values
-            
+
         Returns:
             Effect size (Cohen's d)
         """
@@ -166,7 +166,7 @@ class DriftDetector:
 class BiasMonitor:
     """
     Production bias monitoring system.
-    
+
     Features:
     - Real-time bias drift detection
     - Configurable alerting thresholds
@@ -183,7 +183,7 @@ class BiasMonitor:
     ):
         """
         Initialize bias monitor.
-        
+
         Args:
             window_duration: Duration of each monitoring window
             max_windows: Maximum number of windows to retain
@@ -222,7 +222,7 @@ class BiasMonitor:
     ):
         """
         Add a new prediction for monitoring.
-        
+
         Args:
             model_name: Name of the model
             prediction: Model prediction
@@ -252,10 +252,10 @@ class BiasMonitor:
     def process_monitoring_window(self, model_name: str) -> Optional[MonitoringWindow]:
         """
         Process current monitoring window and detect bias drift.
-        
+
         Args:
             model_name: Name of the model to monitor
-            
+
         Returns:
             Monitoring window with results (if sufficient data)
         """
@@ -343,10 +343,10 @@ class BiasMonitor:
     def get_monitoring_status(self, model_name: str) -> Dict[str, Any]:
         """
         Get current monitoring status for a model.
-        
+
         Args:
             model_name: Name of the model
-            
+
         Returns:
             Monitoring status dictionary
         """
@@ -387,12 +387,12 @@ class BiasMonitor:
     ) -> List[Dict[str, Any]]:
         """
         Get historical monitoring data for a model.
-        
+
         Args:
             model_name: Name of the model
             start_time: Start of time range (24 hours ago if None)
             end_time: End of time range (now if None)
-            
+
         Returns:
             List of monitoring windows
         """
@@ -642,7 +642,7 @@ def main():
         # Simulate some predictions for testing
         print(f"Simulating predictions for {args.model_name}...")
 
-        for i in range(100):
+        for _i in range(100):
             monitor.add_prediction(
                 model_name=args.model_name,
                 prediction=np.random.randint(0, 2),

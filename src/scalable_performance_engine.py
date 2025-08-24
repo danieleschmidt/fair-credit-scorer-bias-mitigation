@@ -4,7 +4,7 @@ Advanced performance optimization, auto-scaling, and distributed computing.
 
 This module provides enterprise-grade performance optimization with:
 - Intelligent auto-scaling based on load patterns
-- Advanced caching strategies with ML-driven optimization  
+- Advanced caching strategies with ML-driven optimization
 - Distributed computing coordination
 - Real-time performance monitoring and adaptation
 - Resource pool management and optimization
@@ -84,7 +84,7 @@ class ScalingRule:
 class IntelligentCache:
     """
     ML-driven intelligent caching system with adaptive optimization.
-    
+
     Features:
     - Access pattern learning
     - Predictive preloading
@@ -423,7 +423,7 @@ class IntelligentCache:
 class ResourcePool:
     """
     Intelligent resource pool management with adaptive scaling.
-    
+
     Manages computational resources (threads, processes) based on:
     - Current load and queue depth
     - Resource utilization patterns
@@ -694,7 +694,7 @@ class ResourcePool:
 class ScalablePerformanceEngine:
     """
     Main performance engine coordinating all scaling and optimization components.
-    
+
     Features:
     - Intelligent auto-scaling based on multiple metrics
     - ML-driven cache optimization

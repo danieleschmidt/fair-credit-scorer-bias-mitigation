@@ -31,7 +31,7 @@ class ConfigSection:
 
     def __init__(self, data: Dict[str, Any]):
         """Initialize configuration section from dictionary.
-        
+
         Args:
             data: Dictionary containing configuration values
         """
@@ -49,7 +49,7 @@ class ConfigSection:
 
 class Config:
     """Centralized configuration management system.
-    
+
     Provides access to all configuration parameters with support for:
     - Default values from YAML configuration files
     - Environment variable overrides
@@ -71,11 +71,11 @@ class Config:
 
     def __init__(self, config_path: Optional[str] = None, force_reload: bool = False):
         """Initialize configuration system.
-        
+
         Args:
             config_path: Optional path to custom configuration file
             force_reload: Force reload even for singleton instance
-            
+
         Raises:
             ConfigValidationError: If configuration validation fails
             FileNotFoundError: If specified config file doesn't exist
@@ -96,10 +96,10 @@ class Config:
 
     def _load_configuration(self, config_path: Optional[str] = None) -> None:
         """Load configuration from YAML file.
-        
+
         Args:
             config_path: Optional path to custom configuration file
-            
+
         Raises:
             FileNotFoundError: If configuration file doesn't exist
             ImportError: If PyYAML is not installed
@@ -135,7 +135,7 @@ class Config:
 
     def _create_sections(self, config_data: Dict[str, Any]) -> None:
         """Create configuration sections from loaded data.
-        
+
         Args:
             config_data: Dictionary containing configuration data
         """
@@ -151,10 +151,10 @@ class Config:
 
     def _apply_environment_overrides(self) -> None:
         """Apply environment variable overrides to configuration.
-        
+
         Environment variables should follow the pattern:
         FAIRNESS_<SECTION>_<PARAMETER> = value
-        
+
         Examples:
         - FAIRNESS_MODEL_MAX_ITER=500 (maps to model.logistic_regression.max_iter)
         - FAIRNESS_DATA_TEST_SIZE=0.25 (maps to data.default_test_size)
@@ -193,7 +193,7 @@ class Config:
 
     def _set_nested_value(self, path: str, value: str) -> None:
         """Set a nested configuration value using dot notation.
-        
+
         Args:
             path: Dot-separated path to configuration value
             value: String value to set (will be converted to appropriate type)
@@ -221,11 +221,11 @@ class Config:
 
     def _convert_env_value(self, value: str, target_type: type) -> Any:
         """Convert environment variable string to target type.
-        
+
         Args:
             value: String value from environment variable
             target_type: Target type for conversion
-            
+
         Returns:
             Converted value
         """
@@ -240,7 +240,7 @@ class Config:
 
     def _validate_configuration(self) -> None:
         """Validate configuration values.
-        
+
         Raises:
             ConfigValidationError: If validation fails
         """
@@ -279,7 +279,7 @@ class Config:
 
     def reload(self, config_path: Optional[str] = None) -> None:
         """Reload configuration from file.
-        
+
         Args:
             config_path: Optional path to new configuration file
         """
@@ -288,11 +288,11 @@ class Config:
 
     def get_nested_value(self, path: str, default: Any = None) -> Any:
         """Get a nested configuration value using dot notation.
-        
+
         Args:
             path: Dot-separated path to configuration value (e.g., 'model.logistic_regression.max_iter')
             default: Default value if path not found
-            
+
         Returns:
             Configuration value or default
         """
@@ -308,7 +308,7 @@ class Config:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary representation.
-        
+
         Returns:
             Dictionary containing all configuration values
         """
@@ -338,7 +338,7 @@ config = Config()
 
 def get_config() -> Config:
     """Get the global configuration instance.
-    
+
     Returns:
         Global configuration instance
     """
@@ -347,7 +347,7 @@ def get_config() -> Config:
 
 def reload_config(config_path: Optional[str] = None) -> None:
     """Reload the global configuration.
-    
+
     Args:
         config_path: Optional path to new configuration file
     """

@@ -122,7 +122,7 @@ class AuditLog:
 class SecurityAuditor:
     """
     Security audit logging and monitoring system.
-    
+
     Provides comprehensive audit logging, compliance monitoring,
     and security event analysis capabilities.
     """
@@ -135,7 +135,7 @@ class SecurityAuditor:
     ):
         """
         Initialize security auditor.
-        
+
         Args:
             retention_days: How long to retain audit logs
             max_events_per_log: Maximum events per audit log
@@ -176,7 +176,7 @@ class SecurityAuditor:
     ) -> SecurityEvent:
         """
         Log a security event.
-        
+
         Args:
             event_type: Type of security event
             severity: Event severity
@@ -187,7 +187,7 @@ class SecurityAuditor:
             details: Additional event details
             ip_address: Client IP address
             user_agent: Client user agent
-            
+
         Returns:
             Created SecurityEvent
         """
@@ -358,7 +358,7 @@ class SecurityAuditor:
     ) -> List[SecurityEvent]:
         """
         Search security events.
-        
+
         Args:
             event_type: Filter by event type
             user_id: Filter by user ID
@@ -367,7 +367,7 @@ class SecurityAuditor:
             outcome: Filter by outcome
             severity: Filter by severity
             hours: Hours of history to search
-            
+
         Returns:
             List of matching events
         """
@@ -400,10 +400,10 @@ class SecurityAuditor:
     def get_security_summary(self, hours: int = 24) -> Dict[str, Any]:
         """
         Get security summary for the specified time period.
-        
+
         Args:
             hours: Hours of history to analyze
-            
+
         Returns:
             Security summary statistics
         """
@@ -454,8 +454,8 @@ class SecurityAuditor:
             'failed_authentications': failed_auth,
             'unauthorized_access_attempts': unauthorized_access,
             'compliance_violations': len(recent_violations),
-            'unique_users': len(set(e.user_id for e in recent_events if e.user_id)),
-            'unique_resources': len(set(e.resource for e in recent_events))
+            'unique_users': len({e.user_id for e in recent_events if e.user_id}),
+            'unique_resources': len({e.resource for e in recent_events})
         }
 
         return summary
@@ -463,10 +463,10 @@ class SecurityAuditor:
     def get_compliance_report(self, days: int = 30) -> Dict[str, Any]:
         """
         Generate compliance report.
-        
+
         Args:
             days: Days of history to include
-            
+
         Returns:
             Compliance report
         """
@@ -508,10 +508,10 @@ class SecurityAuditor:
     def export_audit_trail(self, format: str = "json") -> str:
         """
         Export audit trail for external analysis.
-        
+
         Args:
             format: Export format (json, csv)
-            
+
         Returns:
             Exported audit data
         """
@@ -619,7 +619,7 @@ class SecurityAuditor:
 
     def _trigger_security_alert(self, alert_type: str, message: str, trigger_event: SecurityEvent):
         """Trigger security alert."""
-        alert_event = self.log_event(
+        self.log_event(
             event_type=EventType.SECURITY_VIOLATION,
             severity=Severity.CRITICAL,
             action=f"security_alert:{alert_type}",

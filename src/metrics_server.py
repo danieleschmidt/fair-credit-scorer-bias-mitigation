@@ -5,7 +5,7 @@ import logging
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from src.health_check import get_prometheus_metrics, health_checker
+from health_check import get_prometheus_metrics, health_checker
 
 
 class MetricsHandler(BaseHTTPRequestHandler):

@@ -1,4 +1,3 @@
-```python
 #!/usr/bin/env python3
 """
 Progressive Quality Gates System v1.0 - MAKE IT WORK
@@ -23,7 +22,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ logger = logging.getLogger(__name__)
 class QualityGateStatus(Enum):
     """Status of individual quality gate execution."""
     PENDING = "pending"
-    RUNNING = "running" 
+    RUNNING = "running"
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -77,7 +76,7 @@ class ProgressiveQualityGates:
     """
     Progressive Quality Gates system that validates code quality, security,
     and performance with increasing sophistication across SDLC phases.
-    
+
     Generation 1 (MAKE IT WORK): Basic validation
     - Code runs without syntax errors
     - Basic test execution
@@ -85,12 +84,12 @@ class ProgressiveQualityGates:
     - Basic security scan
     - Performance smoke test
     """
-    
+
     def __init__(self, repo_path: str = "/root/repo"):
         self.repo_path = Path(repo_path)
         self.results: List[QualityGateResult] = []
         self.config = self._get_default_config()
-        
+
     def _get_default_config(self) -> List[QualityGateConfig]:
         """Get default quality gate configuration for Generation 1."""
         return [
@@ -137,37 +136,37 @@ class ProgressiveQualityGates:
                 description="Type checking placeholder"
             ),
         ]
-    
+
     def run_all_gates(self) -> Dict[str, Any]:
         """
         Execute all configured quality gates in sequence.
-        
+
         Returns:
             Dict containing overall results and individual gate results
         """
         logger.info("Starting Progressive Quality Gates validation")
         start_time = time.time()
-        
+
         overall_status = QualityGateStatus.PASSED
         failed_gates = []
-        
+
         for gate_config in self.config:
             if not gate_config.enabled:
                 continue
-                
+
             logger.info(f"Running quality gate: {gate_config.gate_type.value}")
             result = self._execute_gate(gate_config)
             self.results.append(result)
-            
+
             if result.status == QualityGateStatus.FAILED and gate_config.required:
                 overall_status = QualityGateStatus.FAILED
                 failed_gates.append(gate_config.gate_type.value)
                 logger.error(f"Required quality gate failed: {gate_config.gate_type.value}")
             elif result.status == QualityGateStatus.PASSED:
                 logger.info(f"Quality gate passed: {gate_config.gate_type.value} (score: {result.score:.2f})")
-        
+
         total_time = time.time() - start_time
-        
+
         summary = {
             "overall_status": overall_status.value,
             "total_execution_time": total_time,
@@ -177,14 +176,14 @@ class ProgressiveQualityGates:
             "results": [self._result_to_dict(r) for r in self.results],
             "timestamp": time.time()
         }
-        
+
         logger.info(f"Quality gates completed in {total_time:.2f}s - Status: {overall_status.value}")
         return summary
-    
+
     def _execute_gate(self, config: QualityGateConfig) -> QualityGateResult:
         """Execute a single quality gate."""
         start_time = time.time()
-        
+
         try:
             # Execute the command
             result = subprocess.run(
@@ -194,19 +193,19 @@ class ProgressiveQualityGates:
                 text=True,
                 timeout=config.timeout
             )
-            
+
             execution_time = time.time() - start_time
-            
+
             # Parse result based on gate type
             score, details = self._parse_gate_result(config.gate_type, result)
-            
+
             # Determine pass/fail based on threshold
             status = QualityGateStatus.PASSED if score >= config.threshold else QualityGateStatus.FAILED
-            
+
             message = f"Score: {score:.2f}, Threshold: {config.threshold:.2f}"
             if result.stderr:
                 message += f" | Error: {result.stderr[:200]}"
-            
+
             return QualityGateResult(
                 gate_type=config.gate_type,
                 status=status,
@@ -216,7 +215,7 @@ class ProgressiveQualityGates:
                 details=details,
                 execution_time=execution_time
             )
-            
+
         except subprocess.TimeoutExpired:
             return QualityGateResult(
                 gate_type=config.gate_type,
@@ -231,7 +230,7 @@ class ProgressiveQualityGates:
                 message=f"Execution error: {str(e)}",
                 execution_time=time.time() - start_time
             )
-    
+
     def _parse_gate_result(self, gate_type: QualityGateType, result: subprocess.CompletedProcess) -> Tuple[float, Dict[str, Any]]:
         """Parse command result based on gate type."""
         details = {
@@ -239,11 +238,11 @@ class ProgressiveQualityGates:
             "stdout": result.stdout[:1000] if result.stdout else "",
             "stderr": result.stderr[:1000] if result.stderr else ""
         }
-        
+
         if gate_type == QualityGateType.SYNTAX:
             # Syntax check: pass if return code is 0
             score = 1.0 if result.returncode == 0 else 0.0
-            
+
         elif gate_type == QualityGateType.LINT:
             # Ruff linting: parse JSON output for issues
             try:
@@ -256,7 +255,7 @@ class ProgressiveQualityGates:
                     score = 1.0 if result.returncode == 0 else 0.5
             except (json.JSONDecodeError, KeyError):
                 score = 0.5 if result.returncode == 0 else 0.0
-                
+
         elif gate_type == QualityGateType.TESTS:
             # Pytest: parse output for pass/fail ratio
             if "failed" in result.stdout.lower():
@@ -265,7 +264,7 @@ class ProgressiveQualityGates:
                 score = 1.0  # All tests passed
             else:
                 score = 0.0  # No tests or error
-                
+
         elif gate_type == QualityGateType.COVERAGE:
             # Coverage: parse JSON report
             try:
@@ -279,7 +278,7 @@ class ProgressiveQualityGates:
                     score = 0.0
             except Exception:
                 score = 0.0
-                
+
         elif gate_type == QualityGateType.SECURITY:
             # Bandit: parse JSON output for security issues
             try:
@@ -289,28 +288,28 @@ class ProgressiveQualityGates:
                     # Score based on severity and number of issues
                     high_severity = len([i for i in issues if i.get("issue_severity") == "HIGH"])
                     medium_severity = len([i for i in issues if i.get("issue_severity") == "MEDIUM"])
-                    
+
                     # Penalty for security issues
                     penalty = high_severity * 0.3 + medium_severity * 0.1
                     score = max(0.0, 1.0 - penalty)
-                    
+
                     details["high_severity_issues"] = high_severity
                     details["medium_severity_issues"] = medium_severity
                 else:
                     score = 1.0 if result.returncode == 0 else 0.5
             except (json.JSONDecodeError, KeyError):
                 score = 0.5 if result.returncode == 0 else 0.0
-                
+
         elif gate_type == QualityGateType.TYPE_CHECK:
             # MyPy: basic pass/fail based on return code
             score = 1.0 if result.returncode == 0 else 0.5
-            
+
         else:
             # Default: pass/fail based on return code
             score = 1.0 if result.returncode == 0 else 0.0
-            
+
         return score, details
-    
+
     def _result_to_dict(self, result: QualityGateResult) -> Dict[str, Any]:
         """Convert QualityGateResult to dictionary for JSON serialization."""
         return {
@@ -323,11 +322,11 @@ class ProgressiveQualityGates:
             "execution_time": result.execution_time,
             "timestamp": result.timestamp
         }
-    
+
     def save_results(self, output_file: str = "quality_gates_report.json"):
         """Save quality gate results to JSON file."""
         output_path = self.repo_path / output_file
-        
+
         report_data = {
             "progressive_quality_gates": {
                 "version": "1.0",
@@ -341,12 +340,12 @@ class ProgressiveQualityGates:
                 }
             }
         }
-        
+
         with open(output_path, 'w') as f:
             json.dump(report_data, f, indent=2)
-            
+
         logger.info(f"Quality gates report saved to {output_path}")
-    
+
     def _is_required(self, gate_type: QualityGateType) -> bool:
         """Check if a gate type is required."""
         for config in self.config:
@@ -358,25 +357,25 @@ class ProgressiveQualityGates:
 def main():
     """Main entry point for running progressive quality gates."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Progressive Quality Gates System")
     parser.add_argument("--repo-path", default="/root/repo", help="Repository path")
     parser.add_argument("--output", default="quality_gates_report.json", help="Output file for results")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    
+
     args = parser.parse_args()
-    
+
     # Setup logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     # Run quality gates
     gates = ProgressiveQualityGates(args.repo_path)
     results = gates.run_all_gates()
     gates.save_results(args.output)
-    
+
     # Exit with appropriate code
     if results["overall_status"] == "FAILED":
         print("❌ Quality gates failed!")
@@ -388,4 +387,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```

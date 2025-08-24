@@ -125,9 +125,9 @@ def compute_fairness_metrics(
 
     Notes
     -----
-    Includes optimized computation of metrics such as selection rate, precision/recall, 
+    Includes optimized computation of metrics such as selection rate, precision/recall,
     log loss, ROC AUC, false discovery rate, and their differences across protected groups.
-    
+
     Performance optimizations:
     - Consolidated MetricFrame computation (3x speedup)
     - Vectorized operations for ratio calculations (5x speedup)
@@ -366,7 +366,7 @@ def compute_fairness_metrics(
 
 def get_performance_stats() -> dict:
     """Get performance statistics for fairness computations.
-    
+
     Returns
     -------
     dict
@@ -401,7 +401,7 @@ def reset_performance_stats():
 
 def configure_optimization(enable_caching: bool = True, cache_size: int = 500):
     """Configure optimization settings.
-    
+
     Parameters
     ----------
     enable_caching : bool, optional

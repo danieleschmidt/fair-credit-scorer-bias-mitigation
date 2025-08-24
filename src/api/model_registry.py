@@ -83,7 +83,7 @@ class ModelMetadata:
 class ModelRegistry:
     """
     Production model registry with versioning and metadata tracking.
-    
+
     Features:
     - Model versioning with semantic versioning
     - Metadata tracking (metrics, fairness, features)
@@ -95,7 +95,7 @@ class ModelRegistry:
     def __init__(self, registry_path: Union[str, Path] = "models"):
         """
         Initialize model registry.
-        
+
         Args:
             registry_path: Base path for storing models and metadata
         """
@@ -121,7 +121,7 @@ class ModelRegistry:
     ) -> str:
         """
         Register a new model version.
-        
+
         Args:
             model: Trained model to register
             name: Model name
@@ -130,7 +130,7 @@ class ModelRegistry:
             training_method: Training method (e.g., "baseline", "reweight")
             test_data: Tuple of (X_test, y_test, protected) for evaluation
             tags: Additional metadata tags
-            
+
         Returns:
             Model registration ID
         """
@@ -200,11 +200,11 @@ class ModelRegistry:
     def load_model(self, name: str, version: Optional[str] = None) -> tuple[BaseEstimator, ModelMetadata]:
         """
         Load a model and its metadata.
-        
+
         Args:
             name: Model name
             version: Model version (latest if None)
-            
+
         Returns:
             Tuple of (model, metadata)
         """
@@ -240,10 +240,10 @@ class ModelRegistry:
     def list_models(self, name_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         List all registered models.
-        
+
         Args:
             name_filter: Optional filter by model name
-            
+
         Returns:
             List of model metadata dictionaries
         """
@@ -270,10 +270,10 @@ class ModelRegistry:
     def compare_models(self, model_ids: List[str]) -> Dict[str, Any]:
         """
         Compare multiple models across metrics.
-        
+
         Args:
             model_ids: List of model IDs to compare
-            
+
         Returns:
             Comparison results
         """
@@ -327,11 +327,11 @@ class ModelRegistry:
     def promote_model(self, model_id: str, stage: str = "production") -> bool:
         """
         Promote a model to a specific stage.
-        
+
         Args:
             model_id: Model ID to promote
             stage: Target stage (e.g., "staging", "production")
-            
+
         Returns:
             Success status
         """
@@ -361,10 +361,10 @@ class ModelRegistry:
     def delete_model(self, model_id: str) -> bool:
         """
         Delete a model and its metadata.
-        
+
         Args:
             model_id: Model ID to delete
-            
+
         Returns:
             Success status
         """

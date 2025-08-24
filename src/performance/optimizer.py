@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from ..logging_config import get_logger
+from logging_config import get_logger
 from .benchmarks import BenchmarkSuite
 from .profiler import AdvancedProfiler
 
@@ -73,7 +73,7 @@ class PerformanceConfiguration:
 class PerformanceOptimizer:
     """
     Automated performance optimization system.
-    
+
     Analyzes performance bottlenecks and automatically optimizes
     model parameters, batch sizes, and processing configurations.
     """
@@ -86,7 +86,7 @@ class PerformanceOptimizer:
     ):
         """
         Initialize performance optimizer.
-        
+
         Args:
             optimization_level: Optimization aggressiveness level
             max_optimization_time: Maximum time for optimization (seconds)
@@ -115,13 +115,13 @@ class PerformanceOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize model inference performance.
-        
+
         Args:
             model: Model to optimize
             X: Input data for testing
             target_latency_ms: Target latency in milliseconds
             target_throughput: Target throughput (samples/second)
-            
+
         Returns:
             Optimization results and recommendations
         """
@@ -174,12 +174,12 @@ class PerformanceOptimizer:
     ) -> Dict[str, Any]:
         """
         Optimize data processing pipeline.
-        
+
         Args:
             processing_function: Function to optimize
             data_samples: Sample data for testing
             target_processing_time: Target processing time per sample
-            
+
         Returns:
             Optimization results and recommendations
         """
@@ -243,12 +243,12 @@ class PerformanceOptimizer:
     ) -> Dict[str, Any]:
         """
         Automatically tune system for optimal performance.
-        
+
         Args:
             workload_functions: List of functions representing typical workload
             performance_targets: Performance targets (latency, throughput, etc.)
             duration_minutes: Tuning duration
-            
+
         Returns:
             Auto-tuning results and optimal configuration
         """

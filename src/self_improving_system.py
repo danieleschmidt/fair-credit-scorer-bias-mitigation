@@ -66,7 +66,7 @@ class AdaptiveRule:
 class AdaptiveCache:
     """
     Self-adapting cache with usage pattern learning.
-    
+
     Features:
     - Access pattern analysis
     - Dynamic size adjustment
@@ -447,7 +447,7 @@ class PerformanceOptimizer:
 class SelfImprovingSystem:
     """
     Main orchestrator for self-improving system patterns.
-    
+
     Coordinates adaptive caching, auto-scaling, circuit breaking,
     and performance optimization based on real-time metrics.
     """

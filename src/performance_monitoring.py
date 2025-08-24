@@ -79,7 +79,7 @@ class PerformanceMonitor:
 
         start_time = time.time()
         start_memory = psutil.virtual_memory().used / 1024 / 1024  # MB
-        start_cpu = psutil.cpu_percent()
+        psutil.cpu_percent()
 
         try:
             yield

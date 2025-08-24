@@ -17,7 +17,7 @@ import pandas as pd
 import psutil
 from sklearn.base import BaseEstimator
 
-from ..logging_config import get_logger
+from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -85,7 +85,7 @@ class LoadTestResult:
 class BenchmarkSuite:
     """
     Comprehensive benchmarking suite for ML models and systems.
-    
+
     Provides standardized performance testing for models, data processing,
     and API endpoints with detailed metrics collection.
     """
@@ -93,7 +93,7 @@ class BenchmarkSuite:
     def __init__(self, warmup_iterations: int = 10, measurement_iterations: int = 100):
         """
         Initialize benchmark suite.
-        
+
         Args:
             warmup_iterations: Number of warmup iterations
             measurement_iterations: Number of measurement iterations
@@ -112,12 +112,12 @@ class BenchmarkSuite:
     ) -> List[BenchmarkResult]:
         """
         Benchmark model prediction performance.
-        
+
         Args:
             model: Trained model to benchmark
             X: Input data for predictions
             batch_sizes: List of batch sizes to test
-            
+
         Returns:
             List of benchmark results
         """
@@ -212,12 +212,12 @@ class BenchmarkSuite:
     ) -> List[BenchmarkResult]:
         """
         Benchmark data processing functions.
-        
+
         Args:
             processing_function: Function to benchmark
             data_sizes: List of data sizes to test
             **kwargs: Additional arguments for processing function
-            
+
         Returns:
             List of benchmark results
         """
@@ -303,13 +303,13 @@ class BenchmarkSuite:
     ) -> BenchmarkResult:
         """
         Benchmark memory usage of a function.
-        
+
         Args:
             test_function: Function to benchmark
             test_name: Name of the test
             *args: Arguments for test function
             **kwargs: Keyword arguments for test function
-            
+
         Returns:
             Benchmark result
         """
@@ -344,7 +344,7 @@ class BenchmarkSuite:
             tracker_thread.start()
 
             # Execute function
-            result = test_function(*args, **kwargs)
+            test_function(*args, **kwargs)
             execution_time = time.perf_counter() - start_time
 
             # Stop tracking
@@ -448,7 +448,7 @@ class BenchmarkSuite:
 class LoadTester:
     """
     Load testing framework for API endpoints and services.
-    
+
     Provides comprehensive load testing with configurable concurrency,
     request patterns, and detailed performance analytics.
     """
@@ -456,7 +456,7 @@ class LoadTester:
     def __init__(self, base_url: str = "http://localhost:8000"):
         """
         Initialize load tester.
-        
+
         Args:
             base_url: Base URL for load testing
         """
@@ -475,14 +475,14 @@ class LoadTester:
     ) -> LoadTestResult:
         """
         Run load test against an endpoint.
-        
+
         Args:
             endpoint: API endpoint to test
             concurrent_users: Number of concurrent users
             duration_seconds: Test duration in seconds
             request_data: Request payload for POST/PUT requests
             method: HTTP method
-            
+
         Returns:
             Load test results
         """
@@ -603,13 +603,13 @@ class LoadTester:
     ) -> List[LoadTestResult]:
         """
         Run stress test with gradually increasing load.
-        
+
         Args:
             endpoint: API endpoint to test
             max_users: Maximum number of concurrent users
             ramp_up_duration: Duration to ramp up to max users
             request_data: Request payload
-            
+
         Returns:
             List of load test results at different load levels
         """

@@ -32,8 +32,8 @@ try:
     from ..logging_config import get_logger
 except ImportError:
     # Fallback imports for standalone execution
-    import sys
     import os
+    import sys
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     from fairness_metrics import compute_fairness_metrics
     from logging_config import get_logger
@@ -54,17 +54,17 @@ class CausalFairnessClassifier:
         self.base_estimator = base_estimator or LogisticRegression()
         self.protected_attributes = protected_attributes or []
         self.fairness_penalty = fairness_penalty
-        
+
     def fit(self, X, y):
         # Use base estimator for now
         feature_cols = [col for col in X.columns if col not in self.protected_attributes]
         self.base_estimator.fit(X[feature_cols], y)
         return self
-        
+
     def predict(self, X):
         feature_cols = [col for col in X.columns if col not in self.protected_attributes]
         return self.base_estimator.predict(X[feature_cols])
-        
+
     def predict_proba(self, X):
         feature_cols = [col for col in X.columns if col not in self.protected_attributes]
         return self.base_estimator.predict_proba(X[feature_cols])
@@ -103,7 +103,7 @@ class ComparisonResult:
 class StatisticalTester:
     """
     Statistical testing framework for fairness algorithm evaluation.
-    
+
     Provides comprehensive statistical analysis including significance testing,
     effect size calculation, and power analysis.
     """
@@ -111,7 +111,7 @@ class StatisticalTester:
     def __init__(self, alpha: float = 0.05, power: float = 0.8):
         """
         Initialize statistical tester.
-        
+
         Args:
             alpha: Significance level for statistical tests
             power: Desired statistical power for power analysis
@@ -130,13 +130,13 @@ class StatisticalTester:
     ) -> Dict[str, Any]:
         """
         Perform paired comparison between two algorithms.
-        
+
         Args:
             results1: Results from first algorithm
             results2: Results from second algorithm
             metric_name: Name of metric being compared
             test_type: Type of statistical test ('auto', 'parametric', 'nonparametric')
-            
+
         Returns:
             Statistical test results including p-value, effect size, and power
         """
@@ -198,12 +198,12 @@ class StatisticalTester:
     ) -> Dict[str, Any]:
         """
         Perform multiple comparisons between algorithms.
-        
+
         Args:
             results_dict: Dictionary mapping algorithm names to result lists
             metric_name: Name of metric being compared
             correction_method: Multiple comparison correction method
-            
+
         Returns:
             Multiple comparison results with corrected p-values
         """
@@ -249,7 +249,7 @@ class StatisticalTester:
         corrected_p_values = self._apply_correction(p_values, correction_method)
 
         # Update pairwise results with corrected p-values
-        for i, (key, result) in enumerate(pairwise_results.items()):
+        for i, (_key, result) in enumerate(pairwise_results.items()):
             result['corrected_p_value'] = corrected_p_values[i]
             result['significant_corrected'] = corrected_p_values[i] < self.alpha
 
@@ -439,14 +439,14 @@ class StatisticalTester:
 class ReproducibilityTester:
     """
     Reproducibility testing framework for fairness algorithms.
-    
+
     Tests algorithm stability across multiple runs, seeds, and environments.
     """
 
     def __init__(self, n_runs: int = 10, seed_range: Tuple[int, int] = (0, 1000)):
         """
         Initialize reproducibility tester.
-        
+
         Args:
             n_runs: Number of runs for reproducibility testing
             seed_range: Range of random seeds to test
@@ -468,14 +468,14 @@ class ReproducibilityTester:
     ) -> Dict[str, Any]:
         """
         Test algorithm stability across multiple runs.
-        
+
         Args:
             algorithm_factory: Function that creates algorithm instance
             X_train, y_train: Training data
             X_test, y_test: Test data
             protected_attr: Name of protected attribute
             metrics: List of metrics to evaluate
-            
+
         Returns:
             Reproducibility analysis results
         """
@@ -662,7 +662,7 @@ class ReproducibilityTester:
 class AdvancedBenchmarkSuite:
     """
     Comprehensive benchmarking suite for fairness algorithms.
-    
+
     Combines statistical testing, reproducibility analysis, and performance evaluation
     for publication-ready research results.
     """
@@ -676,7 +676,7 @@ class AdvancedBenchmarkSuite:
     ):
         """
         Initialize advanced benchmark suite.
-        
+
         Args:
             n_cv_folds: Number of cross-validation folds
             n_reproducibility_runs: Number of runs for reproducibility testing
@@ -717,7 +717,7 @@ class AdvancedBenchmarkSuite:
     ) -> BenchmarkResult:
         """
         Comprehensive benchmark of a single algorithm.
-        
+
         Args:
             algorithm_name: Name of the algorithm
             algorithm_factory: Function that creates algorithm instances
@@ -727,7 +727,7 @@ class AdvancedBenchmarkSuite:
             dataset_name: Name of the dataset
             metrics: List of metrics to evaluate
             save_results: Whether to save results for later comparison
-            
+
         Returns:
             Comprehensive benchmark results
         """
@@ -748,7 +748,7 @@ class AdvancedBenchmarkSuite:
             X, y, test_size=0.3, random_state=42, stratify=y
         )
 
-        reproducibility_results = self.reproducibility_tester.test_algorithm_stability(
+        self.reproducibility_tester.test_algorithm_stability(
             algorithm_factory, X_train, y_train, X_test, y_test,
             protected_attributes[0], metrics
         )
@@ -791,12 +791,12 @@ class AdvancedBenchmarkSuite:
     ) -> ComparisonResult:
         """
         Compare multiple algorithms with statistical testing.
-        
+
         Args:
             algorithm_results: Dictionary of algorithm results to compare
             comparison_metrics: Metrics to use for comparison
             save_results: Whether to save comparison results
-            
+
         Returns:
             Comprehensive comparison results
         """
@@ -935,7 +935,7 @@ class AdvancedBenchmarkSuite:
 
         # Prediction time
         start_time = time.time()
-        y_pred = algorithm.predict(X_test.drop('protected', axis=1, errors='ignore'))
+        algorithm.predict(X_test.drop('protected', axis=1, errors='ignore'))
         prediction_time = time.time() - start_time
 
         # Memory usage (simplified)

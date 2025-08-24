@@ -129,7 +129,7 @@ class BenchmarkResult:
 class StandardDatasets:
     """
     Manager for standard fairness benchmark datasets.
-    
+
     Provides unified access to commonly used fairness benchmark datasets
     with proper preprocessing and ethical considerations.
     """
@@ -137,7 +137,7 @@ class StandardDatasets:
     def __init__(self, data_dir: str = "benchmark_data", download: bool = True):
         """
         Initialize dataset manager.
-        
+
         Args:
             data_dir: Directory to store datasets
             download: Whether to download missing datasets
@@ -221,12 +221,12 @@ class StandardDatasets:
                Tuple[pd.DataFrame, pd.Series, pd.DataFrame, DatasetInfo]]:
         """
         Load a benchmark dataset.
-        
+
         Args:
             dataset_name: Name of the dataset to load
             return_info: Whether to return dataset info
             preprocess: Whether to apply preprocessing
-            
+
         Returns:
             Tuple of (features, target, sensitive_attributes) and optionally dataset_info
         """
@@ -471,7 +471,7 @@ class StandardDatasets:
 class PerformanceMetrics:
     """
     Comprehensive performance metrics for fairness benchmarking.
-    
+
     Computes both traditional ML performance metrics and fairness-specific metrics
     with statistical significance testing.
     """
@@ -499,12 +499,12 @@ class PerformanceMetrics:
     ) -> Dict[str, float]:
         """
         Compute comprehensive performance metrics.
-        
+
         Args:
             y_true: True labels
             y_pred: Predicted labels
             y_proba: Predicted probabilities (optional)
-            
+
         Returns:
             Dictionary of performance metrics
         """
@@ -547,13 +547,13 @@ class PerformanceMetrics:
     ) -> Dict[str, Dict[str, Any]]:
         """
         Compute comprehensive fairness metrics.
-        
+
         Args:
             y_true: True labels
             y_pred: Predicted labels
             sensitive_attrs: Sensitive attributes
             y_proba: Predicted probabilities (optional)
-            
+
         Returns:
             Dictionary of fairness metrics by attribute
         """
@@ -634,12 +634,12 @@ class PerformanceMetrics:
     ) -> Dict[str, float]:
         """
         Compute computational performance metrics.
-        
+
         Args:
             fit_time: Training time in seconds
             predict_time: Prediction time in seconds
             memory_usage: Memory usage in MB (optional)
-            
+
         Returns:
             Dictionary of computational metrics
         """
@@ -658,7 +658,7 @@ class PerformanceMetrics:
 class FairnessBenchmarkSuite:
     """
     Comprehensive fairness benchmarking suite.
-    
+
     Provides standardized evaluation protocols for comparing fairness algorithms
     across multiple datasets and metrics.
     """
@@ -671,7 +671,7 @@ class FairnessBenchmarkSuite:
     ):
         """
         Initialize benchmark suite.
-        
+
         Args:
             output_dir: Directory for saving results
             datasets: List of datasets to use (defaults to all)
@@ -708,7 +708,7 @@ class FairnessBenchmarkSuite:
     ) -> List[BenchmarkResult]:
         """
         Benchmark an algorithm across specified datasets.
-        
+
         Args:
             algorithm: Algorithm to benchmark
             algorithm_name: Name for the algorithm
@@ -717,7 +717,7 @@ class FairnessBenchmarkSuite:
             test_size: Test set size for standard mode
             cv_folds: Number of folds for CV mode
             compute_statistical_significance: Whether to compute significance tests
-            
+
         Returns:
             List of benchmark results
         """
@@ -871,7 +871,7 @@ class FairnessBenchmarkSuite:
             # Split data
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-            sens_train, sens_test = sensitive_attrs.iloc[train_idx], sensitive_attrs.iloc[test_idx]
+            _sens_train, sens_test = sensitive_attrs.iloc[train_idx], sensitive_attrs.iloc[test_idx]
 
             # Train
             alg_fold = clone(algorithm)
@@ -1007,13 +1007,13 @@ class FairnessBenchmarkSuite:
     ) -> Dict[str, Any]:
         """
         Compare multiple algorithms across datasets.
-        
+
         Args:
             algorithms: List of algorithms to compare
             algorithm_names: Names for the algorithms
             datasets: Datasets to evaluate on
             primary_metric: Primary metric for comparison
-            
+
         Returns:
             Comparison results
         """
@@ -1149,7 +1149,7 @@ class FairnessBenchmarkSuite:
     <h1>Fairness Benchmark Report</h1>
     <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
     <p>Total benchmark results: {len(self.benchmark_results)}</p>
-    
+
     <h2>Results Summary</h2>
 """
 
@@ -1176,8 +1176,8 @@ class FairnessBenchmarkSuite:
             return
 
         # Performance comparison plot
-        algorithms = list(set(r.algorithm_name for r in self.benchmark_results))
-        datasets = list(set(r.dataset_name for r in self.benchmark_results))
+        algorithms = list({r.algorithm_name for r in self.benchmark_results})
+        datasets = list({r.dataset_name for r in self.benchmark_results})
 
         if len(algorithms) >= 2 and len(datasets) >= 1:
             plt.figure(figsize=(12, 6))
@@ -1201,7 +1201,7 @@ class FairnessBenchmarkSuite:
 
                 # Create grouped bar plot
                 pivot_df = df.pivot(index='Dataset', columns='Algorithm', values='Accuracy')
-                ax = pivot_df.plot(kind='bar', rot=45, alpha=0.7)
+                pivot_df.plot(kind='bar', rot=45, alpha=0.7)
                 plt.title('Algorithm Performance Comparison Across Datasets')
                 plt.ylabel('Accuracy')
                 plt.legend(title='Algorithm')

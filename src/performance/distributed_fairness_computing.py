@@ -14,46 +14,35 @@ Features:
 - Load balancing and fault tolerance
 """
 
-import asyncio
 import concurrent.futures
-import functools
 import gc
+import hashlib
 import json
 import multiprocessing
 import os
-import pickle
-import time
 import threading
-import warnings
-from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from queue import Queue, Empty
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-import hashlib
+from queue import Queue
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, clone
-from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score
 
-try:
-    from ..fairness_metrics import compute_fairness_metrics
-    from ..logging_config import get_logger
-    from ..robust_systems.advanced_error_handling import CircuitBreaker, RetryHandler
-except ImportError:
-    from src.fairness_metrics import compute_fairness_metrics
-    from src.logging_config import get_logger
-    from src.robust_systems.advanced_error_handling import CircuitBreaker, RetryHandler
+from fairness_metrics import compute_fairness_metrics
+from logging_config import get_logger
+from robust_systems.advanced_error_handling import CircuitBreaker
 
 logger = get_logger(__name__)
 
 class ComputingBackend(Enum):
     """Computing backend types."""
     CPU = "cpu"
-    GPU = "gpu" 
+    GPU = "gpu"
     DISTRIBUTED = "distributed"
     HYBRID = "hybrid"
 
@@ -113,7 +102,7 @@ class TrainingJob:
 class PerformanceOptimizer:
     """
     Advanced performance optimizer for ML workloads.
-    
+
     Implements intelligent optimization strategies including:
     - Dynamic memory management
     - CPU/GPU utilization optimization
@@ -131,7 +120,7 @@ class PerformanceOptimizer:
     ):
         """
         Initialize performance optimizer.
-        
+
         Args:
             max_memory_gb: Maximum memory usage limit
             enable_gpu: Whether to enable GPU acceleration
@@ -142,20 +131,20 @@ class PerformanceOptimizer:
         self.enable_gpu = enable_gpu
         self.cache_strategy = cache_strategy
         self.optimization_interval = optimization_interval
-        
+
         # Performance tracking
         self.metrics_history: List[WorkloadMetrics] = []
         self.cache: Dict[str, Any] = {}
         self.cache_stats = {'hits': 0, 'misses': 0, 'evictions': 0}
-        
+
         # Optimization state
         self.optimal_batch_size = 32
         self.optimal_worker_count = min(4, multiprocessing.cpu_count())
         self.memory_pressure = False
-        
+
         # Start optimization thread
         self._start_optimization_thread()
-        
+
         logger.info("PerformanceOptimizer initialized")
 
     def _start_optimization_thread(self):
@@ -168,7 +157,7 @@ class PerformanceOptimizer:
                 except Exception as e:
                     logger.error(f"Performance optimization error: {e}")
                     time.sleep(self.optimization_interval * 2)  # Back off on error
-        
+
         optimizer_thread = threading.Thread(target=optimize_periodically, daemon=True)
         optimizer_thread.start()
 
@@ -177,11 +166,11 @@ class PerformanceOptimizer:
         # Collect current metrics
         current_metrics = self._collect_metrics()
         self.metrics_history.append(current_metrics)
-        
+
         # Keep only recent metrics
         if len(self.metrics_history) > 100:
             self.metrics_history = self.metrics_history[-50:]
-        
+
         # Optimize based on metrics
         self._optimize_memory()
         self._optimize_cache()
@@ -200,7 +189,7 @@ class PerformanceOptimizer:
             # Fallback without psutil
             cpu_percent = 0.0
             memory_mb = 0.0
-        
+
         return WorkloadMetrics(
             cpu_utilization=cpu_percent,
             memory_utilization=memory_mb / 1024,  # Convert to GB
@@ -214,39 +203,39 @@ class PerformanceOptimizer:
         """Calculate processing throughput."""
         if len(self.metrics_history) < 2:
             return 0.0
-        
+
         # Simple throughput calculation based on recent metrics
         recent_metrics = self.metrics_history[-5:]
         if not recent_metrics:
             return 0.0
-        
+
         total_operations = len(recent_metrics)
         time_span = max(1, recent_metrics[-1].timestamp - recent_metrics[0].timestamp)
-        
+
         return total_operations / time_span
 
     def _calculate_average_latency(self) -> float:
         """Calculate average response latency."""
         if len(self.metrics_history) < 2:
             return 0.0
-        
+
         recent_latencies = [m.latency_ms for m in self.metrics_history[-10:] if m.latency_ms > 0]
         return np.mean(recent_latencies) if recent_latencies else 0.0
 
     def _optimize_memory(self):
         """Optimize memory usage."""
         current_memory = self.metrics_history[-1].memory_utilization if self.metrics_history else 0
-        
+
         if current_memory > self.max_memory_gb * 0.8:
             self.memory_pressure = True
             # Trigger garbage collection
             gc.collect()
-            
+
             # Clear old cache entries
             cache_size_limit = len(self.cache) // 2
             if len(self.cache) > cache_size_limit:
                 self._evict_cache_entries(len(self.cache) - cache_size_limit)
-            
+
             logger.warning(f"High memory usage detected: {current_memory:.1f}GB")
         else:
             self.memory_pressure = False
@@ -255,15 +244,15 @@ class PerformanceOptimizer:
         """Optimize cache performance."""
         if len(self.cache) == 0:
             return
-        
+
         hit_rate = self.cache_stats['hits'] / max(1, self.cache_stats['hits'] + self.cache_stats['misses'])
-        
+
         if hit_rate < 0.3:  # Low hit rate
             # Consider adjusting cache strategy
             if self.cache_strategy == CacheStrategy.LRU:
                 self.cache_strategy = CacheStrategy.LFU
                 logger.info("Switched cache strategy to LFU due to low hit rate")
-        
+
         # Periodic cache cleanup
         if len(self.cache) > 1000:
             self._evict_cache_entries(200)
@@ -272,10 +261,10 @@ class PerformanceOptimizer:
         """Optimize batch size based on performance."""
         if len(self.metrics_history) < 5:
             return
-        
+
         recent_throughput = [m.throughput for m in self.metrics_history[-5:]]
         avg_throughput = np.mean(recent_throughput)
-        
+
         # Simple batch size optimization heuristic
         if avg_throughput < 1.0 and self.optimal_batch_size > 16:
             self.optimal_batch_size = max(16, self.optimal_batch_size // 2)
@@ -288,12 +277,12 @@ class PerformanceOptimizer:
         """Optimize number of worker processes."""
         if len(self.metrics_history) < 3:
             return
-        
+
         recent_cpu = [m.cpu_utilization for m in self.metrics_history[-3:]]
         avg_cpu = np.mean(recent_cpu)
-        
+
         max_workers = multiprocessing.cpu_count()
-        
+
         if avg_cpu < 30 and self.optimal_worker_count > 1:
             self.optimal_worker_count = max(1, self.optimal_worker_count - 1)
             logger.debug(f"Reduced worker count to {self.optimal_worker_count}")
@@ -309,7 +298,7 @@ class PerformanceOptimizer:
             'access_count': 0,
             'ttl': ttl
         }
-        
+
         self.cache[key] = cache_entry
 
     def get_cached_result(self, key: str) -> Optional[Any]:
@@ -317,26 +306,26 @@ class PerformanceOptimizer:
         if key not in self.cache:
             self.cache_stats['misses'] += 1
             return None
-        
+
         entry = self.cache[key]
-        
+
         # Check TTL
         if entry.get('ttl') and time.time() - entry['timestamp'] > entry['ttl']:
             del self.cache[key]
             self.cache_stats['misses'] += 1
             return None
-        
+
         # Update access statistics
         entry['access_count'] += 1
         self.cache_stats['hits'] += 1
-        
+
         return entry['value']
 
     def _evict_cache_entries(self, count: int):
         """Evict cache entries based on strategy."""
         if len(self.cache) <= count:
             return
-        
+
         if self.cache_strategy == CacheStrategy.LRU:
             # Evict least recently used
             sorted_entries = sorted(
@@ -355,7 +344,7 @@ class PerformanceOptimizer:
                 self.cache.items(),
                 key=lambda x: x[1]['access_count'] / max(1, time.time() - x[1]['timestamp'])
             )
-        
+
         # Remove entries
         for key, _ in sorted_entries[:count]:
             del self.cache[key]
@@ -365,29 +354,29 @@ class PerformanceOptimizer:
         """Get performance optimization recommendations."""
         if not self.metrics_history:
             return {'recommendations': ['Insufficient data for recommendations']}
-        
+
         recent_metrics = self.metrics_history[-10:]
         avg_cpu = np.mean([m.cpu_utilization for m in recent_metrics])
         avg_memory = np.mean([m.memory_utilization for m in recent_metrics])
         avg_throughput = np.mean([m.throughput for m in recent_metrics])
-        
+
         recommendations = []
-        
+
         if avg_cpu < 30:
             recommendations.append("CPU underutilized - consider increasing batch size or workload")
         elif avg_cpu > 90:
             recommendations.append("CPU overutilized - consider scaling horizontally or reducing batch size")
-        
+
         if avg_memory > self.max_memory_gb * 0.8:
             recommendations.append("High memory usage - consider memory optimization or scaling")
-        
+
         if avg_throughput < 1.0:
             recommendations.append("Low throughput - consider performance optimization or scaling")
-        
+
         cache_hit_rate = self.cache_stats['hits'] / max(1, self.cache_stats['hits'] + self.cache_stats['misses'])
         if cache_hit_rate < 0.5:
             recommendations.append("Low cache hit rate - consider cache strategy adjustment")
-        
+
         return {
             'current_metrics': {
                 'avg_cpu_utilization': avg_cpu,
@@ -407,7 +396,7 @@ class PerformanceOptimizer:
 class DistributedTrainingManager:
     """
     Advanced distributed training manager.
-    
+
     Orchestrates distributed training across multiple workers with:
     - Automatic work distribution
     - Load balancing
@@ -423,7 +412,7 @@ class DistributedTrainingManager:
     ):
         """
         Initialize distributed training manager.
-        
+
         Args:
             max_workers: Maximum number of worker processes
             backend: Computing backend to use
@@ -432,25 +421,25 @@ class DistributedTrainingManager:
         self.max_workers = max_workers or min(8, multiprocessing.cpu_count())
         self.backend = backend
         self.checkpoint_dir = checkpoint_dir
-        
+
         # Create checkpoint directory
         os.makedirs(self.checkpoint_dir, exist_ok=True)
-        
+
         # Job management
         self.job_queue: Queue = Queue()
         self.active_jobs: Dict[str, TrainingJob] = {}
         self.completed_jobs: Dict[str, Dict[str, Any]] = {}
-        
+
         # Workers
         self.worker_pool: Optional[ProcessPoolExecutor] = None
         self.performance_optimizer = PerformanceOptimizer()
-        
+
         # Circuit breaker for fault tolerance
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=3,
             recovery_timeout=60.0
         )
-        
+
         logger.info(f"DistributedTrainingManager initialized with {self.max_workers} workers")
 
     def __enter__(self):
@@ -488,7 +477,7 @@ class DistributedTrainingManager:
     ) -> str:
         """
         Submit a distributed training job.
-        
+
         Args:
             model: Model to train
             X_train: Training features
@@ -498,13 +487,13 @@ class DistributedTrainingManager:
             job_id: Optional job identifier
             priority: Job priority (higher = more important)
             hyperparameters: Model hyperparameters
-            
+
         Returns:
             Job identifier
         """
         if job_id is None:
             job_id = f"job_{int(time.time())}_{len(self.active_jobs)}"
-        
+
         job = TrainingJob(
             job_id=job_id,
             model=model,
@@ -515,10 +504,10 @@ class DistributedTrainingManager:
             priority=priority,
             hyperparameters=hyperparameters or {}
         )
-        
+
         self.active_jobs[job_id] = job
         self.job_queue.put(job)
-        
+
         logger.info(f"Submitted training job {job_id}")
         return job_id
 
@@ -526,38 +515,38 @@ class DistributedTrainingManager:
     def execute_training_job(self, job: TrainingJob) -> Dict[str, Any]:
         """
         Execute a single training job.
-        
+
         Args:
             job: Training job to execute
-            
+
         Returns:
             Training results
         """
         logger.info(f"Executing training job {job.job_id}")
         start_time = time.time()
-        
+
         try:
             # Update job status
             job.status = "running"
-            
+
             # Apply performance optimizations
-            optimal_settings = self.performance_optimizer.get_optimization_recommendations()
-            
+            self.performance_optimizer.get_optimization_recommendations()
+
             # Create cache key for this job
             job_signature = self._create_job_signature(job)
             cached_result = self.performance_optimizer.get_cached_result(job_signature)
-            
+
             if cached_result:
                 logger.info(f"Using cached result for job {job.job_id}")
                 return cached_result
-            
+
             # Split data for distributed training
             data_splits = self._split_training_data(job.X_train, job.y_train, self.max_workers)
-            
+
             # Train model splits in parallel
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 training_futures = []
-                
+
                 for i, (X_split, y_split) in enumerate(data_splits):
                     future = executor.submit(
                         self._train_model_split,
@@ -569,7 +558,7 @@ class DistributedTrainingManager:
                         f"{job.job_id}_split_{i}"
                     )
                     training_futures.append(future)
-                
+
                 # Collect results
                 split_results = []
                 for future in concurrent.futures.as_completed(training_futures):
@@ -579,17 +568,17 @@ class DistributedTrainingManager:
                     except Exception as e:
                         logger.error(f"Training split failed: {e}")
                         # Continue with other splits
-            
+
             if not split_results:
                 raise Exception("All training splits failed")
-            
+
             # Ensemble the trained models
             final_model = self._ensemble_models([r['model'] for r in split_results])
-            
+
             # Evaluate final model
             predictions = final_model.predict(job.X_train)
             accuracy = accuracy_score(job.y_train, predictions)
-            
+
             # Compute fairness metrics
             if job.protected_attributes:
                 protected_data = job.X_train[job.protected_attributes[0]]
@@ -602,12 +591,12 @@ class DistributedTrainingManager:
             else:
                 overall_metrics = {'accuracy': accuracy}
                 by_group_metrics = {}
-            
+
             # Check fairness constraints
             constraint_violations = self._check_fairness_constraints(overall_metrics, job.fairness_constraints)
-            
+
             training_time = time.time() - start_time
-            
+
             result = {
                 'job_id': job.job_id,
                 'model': final_model,
@@ -619,17 +608,17 @@ class DistributedTrainingManager:
                 'num_splits': len(split_results),
                 'split_performance': [r['performance'] for r in split_results]
             }
-            
+
             # Cache result
             self.performance_optimizer.cache_result(job_signature, result, ttl=3600)
-            
+
             # Update job status
             job.status = "completed"
-            
+
             logger.info(f"Training job {job.job_id} completed in {training_time:.2f}s")
-            
+
             return result
-            
+
         except Exception as e:
             job.status = "failed"
             logger.error(f"Training job {job.job_id} failed: {e}")
@@ -646,7 +635,7 @@ class DistributedTrainingManager:
             'hyperparameters': job.hyperparameters,
             'fairness_constraints': job.fairness_constraints
         }
-        
+
         signature_str = json.dumps(signature_data, sort_keys=True)
         return hashlib.md5(signature_str.encode()).hexdigest()
 
@@ -654,22 +643,22 @@ class DistributedTrainingManager:
         """Split training data for distributed processing."""
         if num_splits <= 1:
             return [(X, y)]
-        
+
         # Stratified split to maintain class distribution
         from sklearn.model_selection import StratifiedKFold
-        
+
         if len(np.unique(y)) <= 10:  # Classification
             splitter = StratifiedKFold(n_splits=min(num_splits, len(np.unique(y))), shuffle=True, random_state=42)
         else:  # Regression - use regular split
             from sklearn.model_selection import KFold
             splitter = KFold(n_splits=num_splits, shuffle=True, random_state=42)
-        
+
         splits = []
         for train_idx, _ in splitter.split(X, y):
             X_split = X.iloc[train_idx]
             y_split = y.iloc[train_idx]
             splits.append((X_split, y_split))
-        
+
         return splits
 
     def _train_model_split(
@@ -683,24 +672,24 @@ class DistributedTrainingManager:
     ) -> Dict[str, Any]:
         """Train model on a data split."""
         start_time = time.time()
-        
+
         try:
             # Apply hyperparameters
             if hyperparameters:
                 model.set_params(**hyperparameters)
-            
+
             # Prepare features (remove protected attributes for training)
             X_features = X_train.drop(protected_attributes, axis=1, errors='ignore')
-            
+
             # Train model
             model.fit(X_features, y_train)
-            
+
             # Evaluate performance
             predictions = model.predict(X_features)
             accuracy = accuracy_score(y_train, predictions)
-            
+
             training_time = time.time() - start_time
-            
+
             return {
                 'split_id': split_id,
                 'model': model,
@@ -710,7 +699,7 @@ class DistributedTrainingManager:
                     'samples': len(X_train)
                 }
             }
-            
+
         except Exception as e:
             logger.error(f"Model split training failed for {split_id}: {e}")
             raise
@@ -719,29 +708,29 @@ class DistributedTrainingManager:
         """Ensemble multiple trained models."""
         if len(models) == 1:
             return models[0]
-        
+
         # Simple voting ensemble
         from sklearn.ensemble import VotingClassifier
-        
+
         estimators = [(f'model_{i}', model) for i, model in enumerate(models)]
         ensemble = VotingClassifier(estimators=estimators, voting='soft')
-        
+
         # The ensemble is already "fitted" since component models are fitted
         ensemble.estimators_ = models
         ensemble.classes_ = models[0].classes_ if hasattr(models[0], 'classes_') else None
-        
+
         return ensemble
 
     def _check_fairness_constraints(self, metrics: Dict[str, float], constraints: Dict[str, float]) -> List[str]:
         """Check fairness constraint violations."""
         violations = []
-        
+
         for metric, threshold in constraints.items():
             if metric in metrics:
                 value = abs(metrics[metric])
                 if value > threshold:
                     violations.append(f"{metric}: {value:.3f} > {threshold}")
-        
+
         return violations
 
     def get_job_status(self, job_id: str) -> Optional[str]:
@@ -757,7 +746,7 @@ class DistributedTrainingManager:
         """Get system performance metrics."""
         active_job_count = len([job for job in self.active_jobs.values() if job.status == "running"])
         pending_job_count = len([job for job in self.active_jobs.values() if job.status == "pending"])
-        
+
         return {
             'active_jobs': active_job_count,
             'pending_jobs': pending_job_count,
@@ -771,7 +760,7 @@ class DistributedTrainingManager:
 class AutoScaler:
     """
     Intelligent auto-scaling system for ML workloads.
-    
+
     Automatically adjusts computing resources based on:
     - Current workload
     - Performance metrics
@@ -789,7 +778,7 @@ class AutoScaler:
     ):
         """
         Initialize auto-scaler.
-        
+
         Args:
             min_workers: Minimum number of workers
             max_workers: Maximum number of workers
@@ -802,37 +791,37 @@ class AutoScaler:
         self.target_cpu_utilization = target_cpu_utilization
         self.scaling_cooldown = scaling_cooldown
         self.strategy = strategy
-        
+
         # Scaling state
         self.current_workers = min_workers
         self.last_scaling_time = 0
         self.metrics_history: List[WorkloadMetrics] = []
-        
+
         # Predictive model (simple moving average for demo)
         self.demand_forecast: List[float] = []
-        
+
         logger.info(f"AutoScaler initialized with {strategy.value} strategy")
 
     def should_scale(self, current_metrics: WorkloadMetrics) -> Tuple[bool, int, str]:
         """
         Determine if scaling is needed.
-        
+
         Args:
             current_metrics: Current workload metrics
-            
+
         Returns:
             Tuple of (should_scale, new_worker_count, reason)
         """
         self.metrics_history.append(current_metrics)
-        
+
         # Keep only recent metrics
         if len(self.metrics_history) > 60:  # Last 30 minutes if called every 30s
             self.metrics_history = self.metrics_history[-30:]
-        
+
         # Check cooldown period
         if time.time() - self.last_scaling_time < self.scaling_cooldown:
             return False, self.current_workers, "Scaling cooldown active"
-        
+
         if self.strategy == ScalingStrategy.REACTIVE:
             return self._reactive_scaling(current_metrics)
         elif self.strategy == ScalingStrategy.PREDICTIVE:
@@ -844,47 +833,47 @@ class AutoScaler:
         """Reactive scaling based on current metrics."""
         cpu_util = metrics.cpu_utilization
         queue_length = metrics.queue_length
-        
+
         # Scale up conditions
         if cpu_util > self.target_cpu_utilization + 15 or queue_length > 10:
             new_workers = min(self.max_workers, self.current_workers + 1)
             if new_workers > self.current_workers:
                 return True, new_workers, f"High load: CPU {cpu_util:.1f}%, Queue {queue_length}"
-        
+
         # Scale down conditions
         elif cpu_util < self.target_cpu_utilization - 15 and queue_length == 0:
             new_workers = max(self.min_workers, self.current_workers - 1)
             if new_workers < self.current_workers:
                 return True, new_workers, f"Low load: CPU {cpu_util:.1f}%"
-        
+
         return False, self.current_workers, "No scaling needed"
 
     def _predictive_scaling(self, metrics: WorkloadMetrics) -> Tuple[bool, int, str]:
         """Predictive scaling based on forecasted demand."""
         # Simple demand forecasting using moving averages
         recent_metrics = self.metrics_history[-10:] if len(self.metrics_history) >= 10 else self.metrics_history
-        
+
         if len(recent_metrics) < 3:
             return False, self.current_workers, "Insufficient data for prediction"
-        
+
         # Calculate trend in CPU utilization
         cpu_utilizations = [m.cpu_utilization for m in recent_metrics]
         trend = np.polyfit(range(len(cpu_utilizations)), cpu_utilizations, 1)[0]
-        
+
         current_cpu = metrics.cpu_utilization
         predicted_cpu = current_cpu + trend * 5  # Predict 5 time periods ahead
-        
+
         # Scale based on prediction
         if predicted_cpu > self.target_cpu_utilization + 10:
             new_workers = min(self.max_workers, self.current_workers + 1)
             if new_workers > self.current_workers:
                 return True, new_workers, f"Predicted high load: {predicted_cpu:.1f}%"
-        
+
         elif predicted_cpu < self.target_cpu_utilization - 20:
             new_workers = max(self.min_workers, self.current_workers - 1)
             if new_workers < self.current_workers:
                 return True, new_workers, f"Predicted low load: {predicted_cpu:.1f}%"
-        
+
         return False, self.current_workers, f"Predicted load acceptable: {predicted_cpu:.1f}%"
 
     def _hybrid_scaling(self, metrics: WorkloadMetrics) -> Tuple[bool, int, str]:
@@ -892,7 +881,7 @@ class AutoScaler:
         # Get recommendations from both strategies
         reactive_scale, reactive_workers, reactive_reason = self._reactive_scaling(metrics)
         predictive_scale, predictive_workers, predictive_reason = self._predictive_scaling(metrics)
-        
+
         # Combine decisions with weights
         if reactive_scale and predictive_scale:
             # Both recommend scaling
@@ -902,17 +891,17 @@ class AutoScaler:
                 # Take the more conservative approach
                 new_workers = min(reactive_workers, predictive_workers) if reactive_workers > self.current_workers else max(reactive_workers, predictive_workers)
                 return True, new_workers, f"Hybrid decision: Reactive={reactive_workers}, Predictive={predictive_workers}"
-        
+
         elif reactive_scale:
             # Only reactive recommends scaling - be more cautious
             if abs(reactive_workers - self.current_workers) == 1:
                 return True, reactive_workers, f"Reactive scaling: {reactive_reason}"
-        
+
         elif predictive_scale:
             # Only predictive recommends scaling - be more cautious
             if abs(predictive_workers - self.current_workers) == 1:
                 return True, predictive_workers, f"Predictive scaling: {predictive_reason}"
-        
+
         return False, self.current_workers, "Hybrid: No consensus for scaling"
 
     def execute_scaling(self, new_worker_count: int, reason: str):
@@ -920,7 +909,7 @@ class AutoScaler:
         old_count = self.current_workers
         self.current_workers = new_worker_count
         self.last_scaling_time = time.time()
-        
+
         logger.info(f"Scaled from {old_count} to {new_worker_count} workers. Reason: {reason}")
 
     def get_scaling_history(self, limit: int = 20) -> List[Dict[str, Any]]:
@@ -939,21 +928,21 @@ class AutoScaler:
 def demonstrate_distributed_computing():
     """Demonstrate distributed fairness computing capabilities."""
     print("⚡ Distributed Fairness Computing Demonstration")
-    
+
     # Generate sample dataset
     np.random.seed(42)
     n_samples = 5000
-    
+
     # Create features
     feature1 = np.random.normal(0, 1, n_samples)
-    feature2 = np.random.normal(0, 1, n_samples) 
+    feature2 = np.random.normal(0, 1, n_samples)
     feature3 = np.random.normal(0, 1, n_samples)
     protected = np.random.binomial(1, 0.3, n_samples)
-    
+
     # Create target with some bias
     linear_combination = feature1 + 0.5 * feature2 + 0.3 * feature3 + 0.4 * protected
     target = (linear_combination + np.random.normal(0, 0.3, n_samples) > 0).astype(int)
-    
+
     X = pd.DataFrame({
         'feature1': feature1,
         'feature2': feature2,
@@ -961,39 +950,39 @@ def demonstrate_distributed_computing():
         'protected': protected
     })
     y = pd.Series(target)
-    
+
     print(f"📊 Dataset: {X.shape[0]} samples, {X.shape[1]} features")
     print(f"   Target distribution: {np.bincount(target)}")
-    
+
     # Test performance optimizer
     print("\n🚀 Testing Performance Optimizer...")
-    
+
     optimizer = PerformanceOptimizer(
         max_memory_gb=4.0,
         cache_strategy=CacheStrategy.SMART
     )
-    
+
     # Simulate some workload
     for i in range(5):
         # Cache some results
         cache_key = f"test_result_{i}"
         optimizer.cache_result(cache_key, {'accuracy': 0.8 + i * 0.01})
-        
+
         # Retrieve some results
         if i % 2 == 0:
-            cached = optimizer.get_cached_result(cache_key)
-    
+            optimizer.get_cached_result(cache_key)
+
     recommendations = optimizer.get_optimization_recommendations()
     print(f"   Optimal batch size: {recommendations['optimal_settings']['batch_size']}")
     print(f"   Optimal worker count: {recommendations['optimal_settings']['worker_count']}")
     print(f"   Cache hit rate: {recommendations['current_metrics']['cache_hit_rate']:.2f}")
     print(f"   Recommendations: {len(recommendations['recommendations'])}")
-    
+
     # Test distributed training manager
     print("\n🔧 Testing Distributed Training Manager...")
-    
+
     from sklearn.linear_model import LogisticRegression
-    
+
     with DistributedTrainingManager(max_workers=2) as trainer:
         # Submit training job
         job_id = trainer.submit_training_job(
@@ -1007,33 +996,33 @@ def demonstrate_distributed_computing():
             },
             priority=1
         )
-        
+
         print(f"   ✅ Submitted training job: {job_id}")
-        
+
         # Execute the job
         job = trainer.active_jobs[job_id]
         result = trainer.execute_training_job(job)
-        
+
         print(f"   Training completed in {result['training_time']:.2f}s")
         print(f"   Model accuracy: {result['accuracy']:.3f}")
         print(f"   Fairness violations: {len(result['constraint_violations'])}")
         print(f"   Data splits used: {result['num_splits']}")
-        
+
         # Get system metrics
         system_metrics = trainer.get_system_metrics()
         print(f"   System workers: {system_metrics['total_workers']}")
         print(f"   Computing backend: {system_metrics['backend']}")
-    
+
     # Test auto-scaler
     print("\n📈 Testing Auto-Scaler...")
-    
+
     auto_scaler = AutoScaler(
         min_workers=1,
         max_workers=8,
         target_cpu_utilization=70.0,
         strategy=ScalingStrategy.HYBRID
     )
-    
+
     # Simulate different load conditions
     test_scenarios = [
         WorkloadMetrics(cpu_utilization=30.0, queue_length=0),  # Low load
@@ -1041,20 +1030,20 @@ def demonstrate_distributed_computing():
         WorkloadMetrics(cpu_utilization=90.0, queue_length=15), # Very high load
         WorkloadMetrics(cpu_utilization=20.0, queue_length=0),  # Very low load
     ]
-    
+
     for i, metrics in enumerate(test_scenarios):
         should_scale, new_workers, reason = auto_scaler.should_scale(metrics)
-        
+
         print(f"   Scenario {i+1}: CPU {metrics.cpu_utilization}%, Queue {metrics.queue_length}")
         print(f"     Scale decision: {should_scale}, New workers: {new_workers}")
         print(f"     Reason: {reason}")
-        
+
         if should_scale:
             auto_scaler.execute_scaling(new_workers, reason)
-        
+
         # Add small delay to simulate time passing
         auto_scaler.last_scaling_time -= 310  # Simulate cooldown passed
-    
+
     print("\n✅ Distributed computing demonstration completed! ⚡")
 
 

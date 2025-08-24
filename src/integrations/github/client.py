@@ -84,7 +84,7 @@ class RateLimitInfo:
 class GitHubClient:
     """
     Production-ready GitHub API client.
-    
+
     Features:
     - Automatic rate limit handling with exponential backoff
     - Retry logic for transient errors
@@ -102,7 +102,7 @@ class GitHubClient:
     ):
         """
         Initialize GitHub client.
-        
+
         Args:
             token: GitHub token (personal access token or app token)
             base_url: GitHub API base URL
@@ -160,12 +160,12 @@ class GitHubClient:
     ) -> List[GitHubRepository]:
         """
         Get repositories for a user.
-        
+
         Args:
             username: GitHub username (current user if None)
             per_page: Number of repositories per page
             repository_type: Type of repositories (all, owner, member)
-            
+
         Returns:
             List of GitHubRepository objects
         """
@@ -206,11 +206,11 @@ class GitHubClient:
     def get_repository(self, owner: str, repo: str) -> GitHubRepository:
         """
         Get information about a specific repository.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
-            
+
         Returns:
             GitHubRepository object
         """
@@ -233,7 +233,7 @@ class GitHubClient:
     ) -> GitHubRepository:
         """
         Update repository settings.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
@@ -244,7 +244,7 @@ class GitHubClient:
             has_issues: Whether issues are enabled
             has_projects: Whether projects are enabled
             has_wiki: Whether wiki is enabled
-            
+
         Returns:
             Updated GitHubRepository object
         """
@@ -277,12 +277,12 @@ class GitHubClient:
     def update_repository_topics(self, owner: str, repo: str, topics: List[str]) -> List[str]:
         """
         Update repository topics.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
             topics: List of topics
-            
+
         Returns:
             Updated list of topics
         """
@@ -304,7 +304,7 @@ class GitHubClient:
     ) -> Dict[str, Any]:
         """
         Create a file in repository.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
@@ -312,7 +312,7 @@ class GitHubClient:
             content: File content
             message: Commit message
             branch: Target branch (default branch if None)
-            
+
         Returns:
             GitHub API response
         """
@@ -343,7 +343,7 @@ class GitHubClient:
     ) -> Dict[str, Any]:
         """
         Update an existing file in repository.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
@@ -352,7 +352,7 @@ class GitHubClient:
             message: Commit message
             sha: Current file SHA
             branch: Target branch
-            
+
         Returns:
             GitHub API response
         """
@@ -374,13 +374,13 @@ class GitHubClient:
     def get_file(self, owner: str, repo: str, path: str, ref: Optional[str] = None) -> Dict[str, Any]:
         """
         Get file contents from repository.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
             path: File path
             ref: Git reference (branch, tag, commit)
-            
+
         Returns:
             File information including content
         """
@@ -404,7 +404,7 @@ class GitHubClient:
     ) -> Dict[str, Any]:
         """
         Create a pull request.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
@@ -413,7 +413,7 @@ class GitHubClient:
             base: Target branch
             body: Pull request body
             draft: Whether PR is a draft
-            
+
         Returns:
             Pull request information
         """
@@ -442,7 +442,7 @@ class GitHubClient:
     ) -> Dict[str, Any]:
         """
         Create an issue.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
@@ -450,7 +450,7 @@ class GitHubClient:
             body: Issue body
             labels: Issue labels
             assignees: Issue assignees
-            
+
         Returns:
             Issue information
         """
@@ -470,11 +470,11 @@ class GitHubClient:
     def enable_vulnerability_alerts(self, owner: str, repo: str) -> bool:
         """
         Enable vulnerability alerts for repository.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
-            
+
         Returns:
             Success status
         """
@@ -490,11 +490,11 @@ class GitHubClient:
     def enable_automated_security_fixes(self, owner: str, repo: str) -> bool:
         """
         Enable automated security fixes for repository.
-        
+
         Args:
             owner: Repository owner
             repo: Repository name
-            
+
         Returns:
             Success status
         """
@@ -515,12 +515,12 @@ class GitHubClient:
     ) -> List[Dict[str, Any]]:
         """
         Batch update multiple repositories with rate limiting.
-        
+
         Args:
             repositories: List of (owner, repo) tuples
             update_func: Function to apply to each repository
             max_concurrent: Maximum concurrent operations
-            
+
         Returns:
             List of update results
         """
@@ -553,14 +553,14 @@ class GitHubClient:
     ) -> Any:
         """
         Make authenticated request to GitHub API with rate limiting.
-        
+
         Args:
             method: HTTP method
             endpoint: API endpoint
             params: Query parameters
             json: JSON payload
             **kwargs: Additional request arguments
-            
+
         Returns:
             API response data
         """

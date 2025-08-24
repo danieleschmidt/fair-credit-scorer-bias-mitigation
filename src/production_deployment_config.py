@@ -18,12 +18,10 @@ Features:
 
 import json
 import logging
-import os
-import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -126,12 +124,12 @@ class NetworkConfig:
 
 class ProductionDeploymentOrchestrator:
     """Production deployment orchestrator with full DevSecOps automation."""
-    
+
     def __init__(self, environment: Environment = Environment.PRODUCTION):
         self.environment = environment
         self.deployment_config = self._get_deployment_config()
         self.deployment_history: List[Dict[str, Any]] = []
-        
+
     def _get_deployment_config(self) -> Dict[str, Any]:
         """Get deployment configuration based on environment."""
         base_config = {
@@ -188,27 +186,27 @@ class ProductionDeploymentOrchestrator:
                 ]
             }
         }
-        
+
         # Environment-specific overrides
         if self.environment == Environment.DEVELOPMENT:
             base_config["infrastructure"]["scaling"].min_replicas = 1
             base_config["infrastructure"]["scaling"].max_replicas = 5
             base_config["infrastructure"]["database"].multi_az = False
             base_config["deployment"]["strategy"] = DeploymentStrategy.ROLLING.value
-            
+
         elif self.environment == Environment.STAGING:
             base_config["infrastructure"]["scaling"].min_replicas = 2
             base_config["infrastructure"]["scaling"].max_replicas = 10
             base_config["deployment"]["strategy"] = DeploymentStrategy.CANARY.value
-            
+
         return base_config
-    
+
     def generate_kubernetes_manifests(self) -> Dict[str, str]:
         """Generate Kubernetes manifests for deployment."""
         app_config = self.deployment_config["application"]
         scaling_config = self.deployment_config["infrastructure"]["scaling"]
-        security_config = self.deployment_config["infrastructure"]["security"]
-        
+        self.deployment_config["infrastructure"]["security"]
+
         # Deployment manifest
         deployment_manifest = f"""
 apiVersion: apps/v1
@@ -284,7 +282,7 @@ spec:
             drop:
             - ALL
 """
-        
+
         # Service manifest
         service_manifest = f"""
 apiVersion: v1
@@ -304,7 +302,7 @@ spec:
     protocol: TCP
   type: ClusterIP
 """
-        
+
         # HPA manifest
         hpa_manifest = f"""
 apiVersion: autoscaling/v2
@@ -346,7 +344,7 @@ spec:
         value: 10
         periodSeconds: 60
 """
-        
+
         # Ingress manifest
         ingress_manifest = f"""
 apiVersion: networking.k8s.io/v1
@@ -378,19 +376,19 @@ spec:
             port:
               number: 80
 """
-        
+
         return {
             "deployment.yaml": deployment_manifest.strip(),
             "service.yaml": service_manifest.strip(),
             "hpa.yaml": hpa_manifest.strip(),
             "ingress.yaml": ingress_manifest.strip()
         }
-    
+
     def generate_terraform_config(self) -> str:
         """Generate Terraform configuration for infrastructure."""
         network_config = self.deployment_config["infrastructure"]["network"]
         database_config = self.deployment_config["infrastructure"]["database"]
-        
+
         terraform_config = f"""
 # Terraform configuration for production deployment
 terraform {{
@@ -417,7 +415,7 @@ resource "aws_vpc" "main" {{
   cidr_block           = "{network_config.vpc_cidr}"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  
+
   tags = {{
     Name        = "fair-credit-scorer-vpc"
     Environment = "{self.environment.value}"
@@ -428,7 +426,7 @@ resource "aws_vpc" "main" {{
 # Internet Gateway
 resource "aws_internet_gateway" "main" {{
   vpc_id = aws_vpc.main.id
-  
+
   tags = {{
     Name = "fair-credit-scorer-igw"
   }}
@@ -440,7 +438,7 @@ resource "aws_subnet" "private" {{
   vpc_id            = aws_vpc.main.id
   cidr_block        = "{network_config.private_subnets[0]}"  # Would iterate in real implementation
   availability_zone = var.availability_zones[count.index]
-  
+
   tags = {{
     Name = "fair-credit-scorer-private-${{count.index + 1}}"
     Type = "private"
@@ -454,7 +452,7 @@ resource "aws_subnet" "public" {{
   cidr_block              = "{network_config.public_subnets[0]}"  # Would iterate in real implementation
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
-  
+
   tags = {{
     Name = "fair-credit-scorer-public-${{count.index + 1}}"
     Type = "public"
@@ -466,21 +464,21 @@ resource "aws_eks_cluster" "main" {{
   name     = "fair-credit-scorer-cluster"
   role_arn = aws_iam_role.eks_cluster.arn
   version  = "1.28"
-  
+
   vpc_config {{
     subnet_ids         = concat(aws_subnet.private[*].id, aws_subnet.public[*].id)
     endpoint_private_access = true
     endpoint_public_access  = true
     public_access_cidrs    = ["0.0.0.0/0"]
   }}
-  
+
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-  
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy,
     aws_iam_role_policy_attachment.eks_service_policy,
   ]
-  
+
   tags = {{
     Environment = "{self.environment.value}"
     Project     = "autonomous-sdlc"
@@ -493,35 +491,35 @@ resource "aws_db_instance" "main" {{
   engine         = "{database_config.engine}"
   engine_version = "{database_config.version}"
   instance_class = "{database_config.instance_class}"
-  
+
   allocated_storage     = 100
   max_allocated_storage = 1000
   storage_type          = "gp3"
   storage_encrypted     = {str(database_config.encryption).lower()}
-  
+
   db_name  = "fairscorer"
   username = "fairscorer_user"
   password = var.db_password
-  
+
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
-  
+
   backup_retention_period = {database_config.backup_retention}
   backup_window          = "03:00-04:00"
   maintenance_window     = "sun:04:00-sun:05:00"
-  
+
   multi_az               = {str(database_config.multi_az).lower()}
   publicly_accessible    = false
-  
+
   skip_final_snapshot = false
   final_snapshot_identifier = "fair-credit-scorer-final-snapshot"
-  
+
   monitoring_interval = 60
   monitoring_role_arn = aws_iam_role.rds_monitoring.arn
-  
+
   performance_insights_enabled = true
   performance_insights_retention_period = 7
-  
+
   tags = {{
     Name        = "fair-credit-scorer-db"
     Environment = "{self.environment.value}"
@@ -564,14 +562,14 @@ output "database_endpoint" {{
   sensitive   = true
 }}
 """
-        
+
         return terraform_config.strip()
-    
+
     def generate_cicd_pipeline(self) -> str:
         """Generate CI/CD pipeline configuration."""
-        quality_gates = self.deployment_config["quality_gates"]
-        
-        github_actions_workflow = f"""
+        self.deployment_config["quality_gates"]
+
+        github_actions_workflow = """
 name: Production Deployment Pipeline
 
 on:
@@ -582,7 +580,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{{{ github.repository }}}}
+  IMAGE_NAME: ${{ github.repository }}
   PROGRESSIVE_QUALITY_GATES: true
 
 jobs:
@@ -592,59 +590,59 @@ jobs:
     name: Quality Gates - Generation 1 (MAKE IT WORK)
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-    
+
     - name: Run Progressive Quality Gates - Generation 1
       run: |
         python -m src.progressive_quality_gates_enhanced --generation 1 --verbose
-    
+
     - name: Upload Generation 1 Results
       uses: actions/upload-artifact@v3
       with:
         name: quality-gates-gen1-report
         path: enhanced_quality_gates_report.json
 
-  # Generation 2: MAKE IT ROBUST  
+  # Generation 2: MAKE IT ROBUST
   quality-gates-generation-2:
     runs-on: ubuntu-latest
     needs: quality-gates-generation-1
     name: Quality Gates - Generation 2 (MAKE IT ROBUST)
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-    
+
     - name: Run Security Hardening Tests
       run: |
-        python -c "from src.security_hardening_enhanced import save_security_report; save_security_report()"
-    
-    - name: Run Error Handling Tests  
+        python -c "from security_hardening_enhanced import save_security_report; save_security_report()"
+
+    - name: Run Error Handling Tests
       run: |
-        python -c "from src.robust_error_handling_enhanced import save_error_report; save_error_report()"
-    
+        python -c "from robust_error_handling_enhanced import save_error_report; save_error_report()"
+
     - name: Run Progressive Quality Gates - Generation 2
       run: |
         python -m src.progressive_quality_gates_enhanced --generation 2 --verbose
-    
+
     - name: Upload Generation 2 Results
       uses: actions/upload-artifact@v3
       with:
@@ -658,26 +656,26 @@ jobs:
     name: Quality Gates - Generation 3 (MAKE IT SCALE)
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-    
+
     - name: Run Performance Scaling Tests
       run: |
         python src/performance_scaling_engine.py
-    
+
     - name: Run Progressive Quality Gates - Generation 3
       run: |
         python -m src.progressive_quality_gates_enhanced --generation 3 --verbose
-    
+
     - name: Upload Generation 3 Results
       uses: actions/upload-artifact@v3
       with:
@@ -690,17 +688,17 @@ jobs:
     needs: quality-gates-generation-3
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Run Bandit Security Scanner
       run: |
         pip install bandit
         bandit -r src/ -f json -o bandit-report.json || true
-    
+
     - name: Run Safety Vulnerability Scanner
       run: |
         pip install safety
         safety check --json --output safety-report.json || true
-    
+
     - name: Upload Security Reports
       uses: actions/upload-artifact@v3
       with:
@@ -716,32 +714,32 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{{{ env.REGISTRY }}}}
-        username: ${{{{ github.actor }}}}
-        password: ${{{{ secrets.GITHUB_TOKEN }}}}
-    
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{{{ env.REGISTRY }}}}/${{{{ env.IMAGE_NAME }}}}
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
           type=ref,event=pr
           type=sha
-          type=raw,value=latest,enable={{{{is_default_branch}}}}
-    
+          type=raw,value=latest,enable={{is_default_branch}}
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
-        tags: ${{{{ steps.meta.outputs.tags }}}}
-        labels: ${{{{ steps.meta.outputs.labels }}}}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
 
   # Deploy to Production
   deploy-production:
@@ -751,37 +749,37 @@ jobs:
     environment: production
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{{{ secrets.AWS_ACCESS_KEY_ID }}}}
-        aws-secret-access-key: ${{{{ secrets.AWS_SECRET_ACCESS_KEY }}}}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-    
+
     - name: Configure kubectl
       run: |
         aws eks update-kubeconfig --region us-east-1 --name fair-credit-scorer-cluster
-    
+
     - name: Deploy to Kubernetes
       run: |
         # Apply Kubernetes manifests with progressive rollout
         kubectl apply -f k8s/
         kubectl rollout status deployment/fair-credit-scorer-bias-mitigation -n production --timeout=600s
-    
+
     - name: Run Post-Deployment Health Checks
       run: |
         # Wait for deployment to be ready
         kubectl wait --for=condition=available --timeout=300s deployment/fair-credit-scorer-bias-mitigation -n production
-        
+
         # Run health checks
         kubectl get pods -n production
         kubectl get svc -n production
-        
+
         # Test application endpoint
         sleep 30
         curl -f http://api.fair-credit-scorer-bias-mitigation.com/health || exit 1
-    
+
     - name: Notify Deployment Success
       run: |
         echo "🚀 Production deployment successful!"
@@ -789,13 +787,13 @@ jobs:
         echo "🌍 Multi-region deployment active"
         echo "📊 Performance monitoring enabled"
 """
-        
+
         return github_actions_workflow.strip()
-    
+
     def generate_monitoring_config(self) -> Dict[str, str]:
         """Generate monitoring and observability configuration."""
-        monitoring_config = self.deployment_config["infrastructure"]["monitoring"]
-        
+        self.deployment_config["infrastructure"]["monitoring"]
+
         # Prometheus configuration
         prometheus_config = """
 global:
@@ -817,7 +815,7 @@ scrape_configs:
       - targets: ['fair-credit-scorer-service:80']
     metrics_path: '/metrics'
     scrape_interval: 10s
-    
+
   - job_name: 'kubernetes-pods'
     kubernetes_sd_configs:
       - role: pod
@@ -829,14 +827,14 @@ scrape_configs:
         action: replace
         target_label: __metrics_path__
         regex: (.+)
-        
+
   - job_name: 'progressive-quality-gates'
     static_configs:
       - targets: ['quality-gates-service:8081']
     metrics_path: '/quality-gates/metrics'
     scrape_interval: 30s
 """
-        
+
         # Grafana dashboard
         grafana_dashboard = json.dumps({
             "dashboard": {
@@ -899,7 +897,7 @@ scrape_configs:
                 ]
             }
         }, indent=2)
-        
+
         # Alert rules
         alert_rules = """
 groups:
@@ -913,7 +911,7 @@ groups:
       annotations:
         summary: "High error rate detected"
         description: "Error rate is above 5% for 2 minutes"
-    
+
     - alert: QualityGateFailure
       expr: quality_gates_overall_status != 1
       for: 1m
@@ -922,7 +920,7 @@ groups:
       annotations:
         summary: "Progressive Quality Gates failure"
         description: "One or more quality gates have failed"
-    
+
     - alert: HighResponseTime
       expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
       for: 5m
@@ -931,7 +929,7 @@ groups:
       annotations:
         summary: "High response time"
         description: "95th percentile response time is above 2 seconds"
-    
+
     - alert: SecurityIncident
       expr: increase(security_events_total{severity="high"}[5m]) > 0
       for: 0m
@@ -941,62 +939,62 @@ groups:
         summary: "Security incident detected"
         description: "High severity security event occurred"
 """
-        
+
         return {
             "prometheus.yml": prometheus_config.strip(),
             "grafana-dashboard.json": grafana_dashboard,
             "alert-rules.yml": alert_rules.strip()
         }
-    
+
     def save_deployment_artifacts(self, output_dir: str = "deployment"):
         """Save all deployment artifacts to specified directory."""
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
-        
+
         # Save Kubernetes manifests
         k8s_dir = output_path / "k8s"
         k8s_dir.mkdir(exist_ok=True)
-        
+
         k8s_manifests = self.generate_kubernetes_manifests()
         for filename, content in k8s_manifests.items():
             (k8s_dir / filename).write_text(content)
-        
+
         # Save Terraform configuration
         terraform_dir = output_path / "terraform"
         terraform_dir.mkdir(exist_ok=True)
-        
+
         terraform_config = self.generate_terraform_config()
         (terraform_dir / "main.tf").write_text(terraform_config)
-        
+
         # Save CI/CD pipeline
         cicd_dir = output_path / ".github" / "workflows"
         cicd_dir.mkdir(parents=True, exist_ok=True)
-        
+
         cicd_config = self.generate_cicd_pipeline()
         (cicd_dir / "production-deployment.yml").write_text(cicd_config)
-        
+
         # Save monitoring configuration
         monitoring_dir = output_path / "monitoring"
         monitoring_dir.mkdir(exist_ok=True)
-        
+
         monitoring_configs = self.generate_monitoring_config()
         for filename, content in monitoring_configs.items():
             (monitoring_dir / filename).write_text(content)
-        
+
         # Save deployment configuration
         config_file = output_path / "deployment-config.json"
         with open(config_file, 'w') as f:
             # Convert dataclass objects to dictionaries for JSON serialization
             serializable_config = self._make_serializable(self.deployment_config)
             json.dump(serializable_config, f, indent=2, default=str)
-        
+
         logger.info(f"Deployment artifacts saved to {output_path}")
         return output_path
-    
+
     def _make_serializable(self, obj):
         """Convert objects to JSON-serializable format."""
         import dataclasses
-        
+
         if dataclasses.is_dataclass(obj):
             return {k: self._make_serializable(v) for k, v in dataclasses.asdict(obj).items()}
         elif isinstance(obj, dict):
@@ -1012,10 +1010,10 @@ groups:
 def save_production_deployment_report(output_file: str = "production_deployment_report.json"):
     """Save comprehensive production deployment report."""
     orchestrator = ProductionDeploymentOrchestrator()
-    
+
     report = {
         "production_deployment": {
-            "version": "1.0", 
+            "version": "1.0",
             "autonomous_sdlc_complete": True,
             "deployment_config": orchestrator._make_serializable(orchestrator.deployment_config),
             "features": {
@@ -1036,7 +1034,7 @@ def save_production_deployment_report(output_file: str = "production_deployment_
             "global_regions": orchestrator.deployment_config["infrastructure"]["regions"],
             "quality_gates_integration": {
                 "generation_1": "Basic functionality validation",
-                "generation_2": "Robustness and security validation", 
+                "generation_2": "Robustness and security validation",
                 "generation_3": "Performance and scaling validation"
             },
             "autonomous_capabilities": {
@@ -1049,23 +1047,23 @@ def save_production_deployment_report(output_file: str = "production_deployment_
             }
         }
     }
-    
+
     with open(output_file, 'w') as f:
         json.dump(report, f, indent=2)
-    
+
     logger.info(f"Production deployment report saved to {output_file}")
 
 
 if __name__ == "__main__":
     # Generate production deployment configuration
     orchestrator = ProductionDeploymentOrchestrator()
-    
+
     # Save all deployment artifacts
     artifacts_path = orchestrator.save_deployment_artifacts()
-    
+
     # Generate comprehensive report
     save_production_deployment_report()
-    
+
     print("🚀 Production Deployment Configuration Complete!")
     print(f"📁 Deployment artifacts saved to: {artifacts_path}")
     print("🌍 Multi-region, multi-cloud deployment ready")

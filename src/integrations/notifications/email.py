@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 class EmailService(NotificationService):
     """
     Production-ready email notification service.
-    
+
     Features:
     - Multiple provider support (SMTP, SendGrid, AWS SES)
     - HTML and plain text templates
@@ -41,7 +41,7 @@ class EmailService(NotificationService):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize email service.
-        
+
         Args:
             config: Email service configuration
         """
@@ -85,10 +85,10 @@ class EmailService(NotificationService):
     async def send_notification(self, notification: Notification) -> bool:
         """
         Send email notification.
-        
+
         Args:
             notification: Notification to send
-            
+
         Returns:
             Success status
         """
@@ -153,7 +153,7 @@ class EmailService(NotificationService):
     ) -> bool:
         """
         Send templated email.
-        
+
         Args:
             template_name: Name of email template
             recipients: Email recipients
@@ -161,7 +161,7 @@ class EmailService(NotificationService):
             variables: Template variables
             priority: Email priority
             attachments: File attachments
-            
+
         Returns:
             Success status
         """
@@ -195,12 +195,12 @@ class EmailService(NotificationService):
     ) -> Dict[str, Any]:
         """
         Send bulk emails with batching and rate limiting.
-        
+
         Args:
             emails: List of email configurations
             batch_size: Number of emails per batch
             delay_between_batches: Delay between batches in seconds
-            
+
         Returns:
             Bulk send results
         """

@@ -26,8 +26,8 @@ import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 
-from src.backlog_manager import BacklogItem, TaskStatus, TaskType
-from src.security_quality_gates import GateResult, QualityGate
+from backlog_manager import BacklogItem, TaskStatus, TaskType
+from security_quality_gates import GateResult, QualityGate
 
 logger = logging.getLogger(__name__)
 
@@ -401,7 +401,7 @@ class TrendAnalyzer:
         x_values = [(ts - base_time).days for ts in timestamps]
 
         # Linear regression
-        n = len(values)
+        len(values)
         x_mean = statistics.mean(x_values)
         y_mean = statistics.mean(values)
 
@@ -734,7 +734,7 @@ class ReportGenerator:
         plt.xlabel('Metrics')
 
         # Add direction labels
-        for bar, direction, strength in zip(bars, trend_directions, trend_strengths):
+        for bar, direction, _strength in zip(bars, trend_directions, trend_strengths):
             plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02,
                     direction, ha='center', va='bottom', fontsize=8)
 

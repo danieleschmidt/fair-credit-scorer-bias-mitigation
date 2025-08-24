@@ -13,8 +13,8 @@ import pandas as pd
 from sklearn.datasets import make_classification
 
 try:
-    from src.baseline_model import train_baseline_model
-    from src.model_explainability import ModelExplainer
+    from baseline_model import train_baseline_model
+    from model_explainability import ModelExplainer
 except ImportError:
     # For CLI usage
     from baseline_model import train_baseline_model
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ExplainabilityAPI:
     """
     REST API endpoints for model explainability.
-    
+
     Provides endpoints to explain individual predictions and get
     feature importance visualizations.
     """
@@ -35,7 +35,7 @@ class ExplainabilityAPI:
     def __init__(self, model_path: Optional[str] = None):
         """
         Initialize the explainability API.
-        
+
         Args:
             model_path: Path to saved model file (optional)
         """
@@ -74,10 +74,10 @@ class ExplainabilityAPI:
     def explain_prediction(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         API endpoint to explain a single prediction.
-        
+
         Args:
             request_data: Dictionary containing feature values
-            
+
         Returns:
             JSON response with explanation data
         """
@@ -114,7 +114,7 @@ class ExplainabilityAPI:
     def get_feature_importance(self) -> Dict[str, Any]:
         """
         API endpoint to get global feature importance.
-        
+
         Returns:
             JSON response with feature importance data
         """
@@ -143,7 +143,7 @@ class ExplainabilityAPI:
     def health_check(self) -> Dict[str, Any]:
         """
         API endpoint for health checking.
-        
+
         Returns:
             JSON response with API status
         """
@@ -158,7 +158,7 @@ class ExplainabilityAPI:
 def create_flask_app():
     """
     Create a Flask application with explainability endpoints.
-    
+
     Returns:
         Flask application instance
     """

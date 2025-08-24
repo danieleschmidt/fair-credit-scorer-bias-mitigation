@@ -7,7 +7,7 @@ and GPU acceleration capabilities.
 
 Research contributions:
 - Distributed fairness evaluation across multiple nodes
-- Advanced memory streaming for large-scale datasets  
+- Advanced memory streaming for large-scale datasets
 - GPU-accelerated fairness metric computation
 - Intelligent workload balancing and resource optimization
 """
@@ -20,20 +20,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-try:
-    from ..fairness_metrics import compute_fairness_metrics
-    from ..logging_config import get_logger
-except ImportError:
-    import sys
-    import os
-    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    from fairness_metrics import compute_fairness_metrics
-    from logging_config import get_logger
+from fairness_metrics import compute_fairness_metrics
+from logging_config import get_logger
 
 # Define CachingStrategy and ComputationCache locally to avoid dependency
 from enum import Enum
 from functools import lru_cache
-from typing import Any, Callable, Dict
+
 
 class CachingStrategy(Enum):
     """Caching strategies for fairness computations."""
@@ -48,7 +41,7 @@ class ComputationCache:
         self.strategy = strategy
         self.max_size = max_size
         self.cache = {}
-        
+
     def cached_function(self, func):
         if self.strategy == CachingStrategy.LRU:
             return lru_cache(maxsize=self.max_size)(func)
@@ -60,7 +53,7 @@ logger = get_logger(__name__)
 class MemoryEfficientProcessor:
     """
     Memory-efficient processing for large-scale fairness evaluation.
-    
+
     Implements streaming computation and chunked processing to handle
     datasets that exceed available memory.
     """
@@ -68,7 +61,7 @@ class MemoryEfficientProcessor:
     def __init__(self, chunk_size: int = 10000, memory_limit_mb: int = 4000):
         """
         Initialize memory-efficient processor.
-        
+
         Args:
             chunk_size: Size of data chunks for streaming processing
             memory_limit_mb: Memory limit in MB before triggering streaming mode
@@ -112,14 +105,14 @@ class MemoryEfficientProcessor:
     ) -> Dict[str, Any]:
         """
         Process fairness evaluation using streaming approach.
-        
+
         Args:
             X: Feature matrix
             y: Target vector
             protected_attr: Protected attributes
             model: Trained model
             compute_func: Function to compute fairness metrics
-            
+
         Returns:
             Aggregated fairness metrics
         """
@@ -228,7 +221,7 @@ class MemoryEfficientProcessor:
 class DistributedFairnessProcessor:
     """
     Distributed fairness evaluation across multiple processes/nodes.
-    
+
     Enables scaling fairness research to very large datasets and
     multiple evaluation scenarios through intelligent workload distribution.
     """
@@ -236,7 +229,7 @@ class DistributedFairnessProcessor:
     def __init__(self, max_workers: Optional[int] = None, use_processes: bool = True):
         """
         Initialize distributed processor.
-        
+
         Args:
             max_workers: Maximum number of worker processes/threads
             use_processes: Use processes instead of threads for true parallelism
@@ -258,15 +251,15 @@ class DistributedFairnessProcessor:
     ) -> Dict[str, Any]:
         """
         Perform distributed cross-validation evaluation.
-        
+
         Args:
             X: Feature matrix
-            y: Target vector  
+            y: Target vector
             protected_attr: Protected attributes
             model_factory: Function to create model instances
             cv_folds: List of (train_idx, test_idx) tuples
             method: Training method to use
-            
+
         Returns:
             Cross-validation results with performance metrics
         """
@@ -328,7 +321,7 @@ class DistributedFairnessProcessor:
             # Split data
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-            protected_train = protected_attr.iloc[train_idx]
+            protected_attr.iloc[train_idx]
             protected_test = protected_attr.iloc[test_idx]
 
             # Train model
@@ -416,7 +409,7 @@ class DistributedFairnessProcessor:
 class GPUAcceleratedProcessor:
     """
     GPU-accelerated fairness computation.
-    
+
     Leverages GPU acceleration for compatible fairness metrics
     and large-scale matrix operations.
     """
@@ -482,13 +475,13 @@ class GPUAcceleratedProcessor:
     ) -> Dict[str, Any]:
         """
         Compute fairness metrics using GPU acceleration where possible.
-        
+
         Args:
             y_true: Ground truth labels
             y_pred: Predicted labels
             protected: Protected attributes
             y_scores: Prediction scores (optional)
-            
+
         Returns:
             Fairness metrics computed with GPU acceleration
         """
@@ -523,9 +516,9 @@ class GPUAcceleratedProcessor:
         protected_gpu = torch.from_numpy(protected).to(device)
 
         if y_scores is not None:
-            y_scores_gpu = torch.from_numpy(y_scores).to(device)
+            torch.from_numpy(y_scores).to(device)
         else:
-            y_scores_gpu = None
+            pass
 
         # GPU-accelerated computations
         start_time = time.time()
@@ -642,7 +635,7 @@ class GPUAcceleratedProcessor:
 class AdvancedOptimizationSuite:
     """
     Comprehensive optimization suite combining all advanced techniques.
-    
+
     Provides a unified interface to all advanced optimization capabilities
     including memory efficiency, distributed processing, and GPU acceleration.
     """
@@ -657,7 +650,7 @@ class AdvancedOptimizationSuite:
     ):
         """
         Initialize advanced optimization suite.
-        
+
         Args:
             enable_gpu: Enable GPU acceleration
             enable_distributed: Enable distributed processing
@@ -698,7 +691,7 @@ class AdvancedOptimizationSuite:
     ) -> Dict[str, Any]:
         """
         Perform optimized fairness evaluation with automatic optimization selection.
-        
+
         Args:
             X: Feature matrix
             y: Target vector
@@ -706,7 +699,7 @@ class AdvancedOptimizationSuite:
             model: Trained model
             evaluation_type: Type of evaluation ('single', 'cross_validation', 'bootstrap')
             **kwargs: Additional arguments for specific evaluation types
-            
+
         Returns:
             Optimized evaluation results with performance metrics
         """
@@ -796,10 +789,11 @@ class AdvancedOptimizationSuite:
         """Optimized streaming evaluation."""
         if use_gpu:
             # Combine streaming with GPU acceleration
-            compute_func = lambda *args, **kwargs: self.gpu_processor.gpu_accelerated_metrics(
-                args[0].values, args[1].values, args[2].values,
-                kwargs.get('y_scores').values if kwargs.get('y_scores') is not None else None
-            )
+            def compute_func(*args, **kwargs):
+                return self.gpu_processor.gpu_accelerated_metrics(
+                            args[0].values, args[1].values, args[2].values,
+                            kwargs.get('y_scores').values if kwargs.get('y_scores') is not None else None
+                        )
         else:
             compute_func = compute_fairness_metrics
 

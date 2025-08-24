@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ModelExplainer:
     """
     Provides SHAP-based explainability for credit scoring models.
-    
+
     This class wraps SHAP explainers to provide interpretable explanations
     for model predictions, helping understand feature importance and bias.
     """
@@ -32,7 +32,7 @@ class ModelExplainer:
     def __init__(self, model, background_data: pd.DataFrame, max_evals: int = 100):
         """
         Initialize the ModelExplainer.
-        
+
         Args:
             model: Trained ML model with predict_proba method
             background_data: Representative dataset for SHAP background
@@ -94,10 +94,10 @@ class ModelExplainer:
     def explain_prediction(self, instance: pd.DataFrame) -> Dict[str, Any]:
         """
         Explain a single prediction using SHAP values.
-        
+
         Args:
             instance: Single row DataFrame with features to explain
-            
+
         Returns:
             Dictionary containing SHAP values, feature importance, and prediction
         """
@@ -141,7 +141,7 @@ class ModelExplainer:
     def get_feature_importance_plot(self) -> Dict[str, List]:
         """
         Get data for feature importance visualization.
-        
+
         Returns:
             Dictionary with features and their average importance scores
         """
@@ -182,10 +182,10 @@ class ModelExplainer:
     def explain_for_api(self, instance: pd.DataFrame) -> Dict[str, Any]:
         """
         Generate explanation in API-friendly format.
-        
+
         Args:
             instance: Single row DataFrame with features to explain
-            
+
         Returns:
             JSON-serializable dictionary with explanation data
         """
@@ -214,7 +214,7 @@ class ModelExplainer:
     def get_model_summary(self) -> Dict[str, Any]:
         """
         Get summary statistics about the explainer and model.
-        
+
         Returns:
             Dictionary with model and explainer metadata
         """

@@ -10,15 +10,14 @@ and quantum approximate optimization algorithm (QAOA) inspired methods.
 import asyncio
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.optimize import minimize, differential_evolution
+from scipy.optimize import minimize
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.model_selection import cross_val_score
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ class QuantumFairnessParameters:
     noise_model: Optional[str] = None
 
 
-@dataclass 
+@dataclass
 class FairnessConstraint:
     """Fairness constraint specification."""
     metric_name: str
@@ -57,7 +56,7 @@ class FairnessConstraint:
 class QuantumInspiredOptimizer:
     """
     Quantum-inspired optimization engine for fairness constraints.
-    
+
     Uses quantum computing concepts like superposition, entanglement, and
     quantum interference to explore the solution space more efficiently
     than classical methods.
@@ -89,19 +88,19 @@ class QuantumInspiredOptimizer:
                 ])
                 # Apply rotation to qubit i (simplified)
                 state = self._apply_single_qubit_gate(state, rotation_matrix, i)
-        
+
         elif gate_type == "entangling":
             # Simulate entangling gates between qubits
             state = self._apply_entangling_gates(state, params)
-        
+
         return state
 
     def _apply_single_qubit_gate(self, state: np.ndarray, gate: np.ndarray, qubit_idx: int) -> np.ndarray:
         """Apply single qubit gate to the state."""
-        n_qubits = int(np.log2(len(state)))
+        int(np.log2(len(state)))
         # Simplified gate application
         new_state = np.zeros_like(state)
-        
+
         for i in range(len(state)):
             # Extract bit for target qubit
             bit = (i >> qubit_idx) & 1
@@ -109,100 +108,100 @@ class QuantumInspiredOptimizer:
             for j in range(2):
                 new_bit_state = (i & ~(1 << qubit_idx)) | (j << qubit_idx)
                 new_state[new_bit_state] += gate[j, bit] * state[i]
-        
+
         return new_state
 
     def _apply_entangling_gates(self, state: np.ndarray, params: np.ndarray) -> np.ndarray:
         """Apply entangling gates to create quantum correlations."""
         n_qubits = int(np.log2(len(state)))
-        
+
         # Apply CNOT-like entangling gates
         for i in range(n_qubits - 1):
             # Simplified entangling operation
             angle = params[i % len(params)]
-            entangling_strength = np.sin(angle)
-            
+            np.sin(angle)
+
             new_state = np.copy(state)
             for j in range(len(state)):
                 control_bit = (j >> i) & 1
-                target_bit = (j >> (i + 1)) & 1
-                
+                (j >> (i + 1)) & 1
+
                 if control_bit == 1:
                     # Apply controlled operation
                     flipped_target = j ^ (1 << (i + 1))
                     new_state[j] = np.cos(angle) * state[j] + np.sin(angle) * state[flipped_target]
                     new_state[flipped_target] = np.cos(angle) * state[flipped_target] - np.sin(angle) * state[j]
-            
+
             state = new_state / np.linalg.norm(new_state)
-        
+
         return state
 
     def _quantum_measurement(self, state: np.ndarray) -> Dict[str, float]:
         """Simulate quantum measurement with shot noise."""
         probabilities = np.abs(state) ** 2
-        
+
         # Simulate measurement shots
         measurements = np.random.choice(
-            len(probabilities), 
-            size=self.parameters.measurement_shots, 
+            len(probabilities),
+            size=self.parameters.measurement_shots,
             p=probabilities
         )
-        
+
         # Count measurement outcomes
         measurement_counts = np.bincount(measurements, minlength=len(probabilities))
         measured_probs = measurement_counts / self.parameters.measurement_shots
-        
+
         return {f"state_{i}": prob for i, prob in enumerate(measured_probs)}
 
-    def _qaoa_inspired_optimization(self, objective_function, constraints: List[FairnessConstraint], 
+    def _qaoa_inspired_optimization(self, objective_function, constraints: List[FairnessConstraint],
                                   bounds: List[Tuple[float, float]]) -> Dict[str, Any]:
         """QAOA-inspired optimization for fairness constraints."""
         n_variables = len(bounds)
-        
+
         def quantum_objective(params):
             # Split parameters into mixing and cost parameters
             mid_point = len(params) // 2
             mixing_params = params[:mid_point]
             cost_params = params[mid_point:]
-            
+
             # Initialize quantum state
             state = self._initialize_quantum_state(min(n_variables, self.parameters.n_qubits))
-            
+
             # Apply QAOA-like layered circuit
             for layer in range(self.parameters.n_layers):
                 # Cost Hamiltonian evolution
                 if layer < len(cost_params):
                     state = self._apply_quantum_gate(state, "rotation", [cost_params[layer]])
-                
+
                 # Mixing Hamiltonian evolution
                 if layer < len(mixing_params):
                     state = self._apply_quantum_gate(state, "entangling", [mixing_params[layer]])
-            
+
             # Measure quantum state
             measurements = self._quantum_measurement(state)
-            
+
             # Convert measurement to classical solution
             best_measurement = max(measurements, key=measurements.get)
             classical_solution = self._measurement_to_solution(best_measurement, bounds)
-            
+
             # Evaluate classical objective
             return objective_function(classical_solution)
-        
+
         # Optimize quantum circuit parameters
         n_params = 2 * self.parameters.n_layers
         initial_params = np.random.uniform(0, 2*np.pi, n_params)
-        
+
         result = minimize(
             quantum_objective,
             initial_params,
             method='COBYLA',
             options={'maxiter': self.parameters.optimization_rounds}
         )
-        
+
         # Extract final solution
         final_params = result.x
         mid_point = len(final_params) // 2
-        
+
         # Get final quantum state
         state = self._initialize_quantum_state(min(n_variables, self.parameters.n_qubits))
         for layer in range(self.parameters.n_layers):
@@ -210,11 +209,11 @@ class QuantumInspiredOptimizer:
                 state = self._apply_quantum_gate(state, "rotation", [final_params[layer + mid_point]])
             if layer < len(final_params) - mid_point:
                 state = self._apply_quantum_gate(state, "entangling", [final_params[layer]])
-        
+
         measurements = self._quantum_measurement(state)
         best_measurement = max(measurements, key=measurements.get)
         best_solution = self._measurement_to_solution(best_measurement, bounds)
-        
+
         return {
             'solution': best_solution,
             'objective_value': result.fun,
@@ -228,7 +227,7 @@ class QuantumInspiredOptimizer:
         # Extract state index from measurement key
         state_idx = int(measurement_key.split('_')[1])
         n_variables = len(bounds)
-        
+
         # Convert binary representation to solution
         solution = np.zeros(n_variables)
         for i in range(min(n_variables, self.parameters.n_qubits)):
@@ -236,53 +235,53 @@ class QuantumInspiredOptimizer:
             # Map bit to continuous variable range
             low, high = bounds[i]
             solution[i] = low + bit_value * (high - low)
-        
+
         # Handle remaining variables if needed
         for i in range(min(n_variables, self.parameters.n_qubits), n_variables):
             low, high = bounds[i]
             solution[i] = np.random.uniform(low, high)
-        
+
         return solution
 
     def _vqe_inspired_optimization(self, objective_function, constraints: List[FairnessConstraint],
                                  bounds: List[Tuple[float, float]]) -> Dict[str, Any]:
         """VQE-inspired optimization using variational quantum eigensolvers."""
         n_variables = len(bounds)
-        
+
         def vqe_objective(params):
             # Create parameterized quantum circuit
             state = self._initialize_quantum_state(min(n_variables, self.parameters.n_qubits))
-            
+
             # Apply parameterized gates
             for layer in range(self.parameters.n_layers):
                 layer_params = params[layer * n_variables:(layer + 1) * n_variables]
                 if len(layer_params) < n_variables:
                     layer_params = np.pad(layer_params, (0, n_variables - len(layer_params)))
-                
+
                 state = self._apply_quantum_gate(state, "rotation", layer_params[:min(n_variables, self.parameters.n_qubits)])
                 if layer < self.parameters.n_layers - 1:
                     state = self._apply_quantum_gate(state, "entangling", layer_params[:min(n_variables, self.parameters.n_qubits)])
-            
+
             # Measure expectation values
             measurements = self._quantum_measurement(state)
-            
+
             # Convert to classical solution
             expectation_values = np.array([measurements.get(f"state_{i}", 0) for i in range(2**min(n_variables, self.parameters.n_qubits))])
             classical_solution = self._expectation_to_solution(expectation_values, bounds)
-            
+
             return objective_function(classical_solution)
-        
+
         # Optimize variational parameters
         n_params = self.parameters.n_layers * n_variables
         initial_params = np.random.uniform(0, 2*np.pi, n_params)
-        
+
         result = minimize(
             vqe_objective,
             initial_params,
             method='L-BFGS-B',
             options={'maxiter': self.parameters.optimization_rounds}
         )
-        
+
         # Extract final solution
         final_state = self._initialize_quantum_state(min(n_variables, self.parameters.n_qubits))
         for layer in range(self.parameters.n_layers):
@@ -291,15 +290,15 @@ class QuantumInspiredOptimizer:
             layer_params = result.x[start_idx:end_idx]
             if len(layer_params) < n_variables:
                 layer_params = np.pad(layer_params, (0, n_variables - len(layer_params)))
-            
+
             final_state = self._apply_quantum_gate(final_state, "rotation", layer_params[:min(n_variables, self.parameters.n_qubits)])
             if layer < self.parameters.n_layers - 1:
                 final_state = self._apply_quantum_gate(final_state, "entangling", layer_params[:min(n_variables, self.parameters.n_qubits)])
-        
+
         measurements = self._quantum_measurement(final_state)
         expectation_values = np.array([measurements.get(f"state_{i}", 0) for i in range(2**min(n_variables, self.parameters.n_qubits))])
         best_solution = self._expectation_to_solution(expectation_values, bounds)
-        
+
         return {
             'solution': best_solution,
             'objective_value': result.fun,
@@ -312,7 +311,7 @@ class QuantumInspiredOptimizer:
         """Convert quantum expectation values to classical solution."""
         n_variables = len(bounds)
         solution = np.zeros(n_variables)
-        
+
         # Use expectation values to construct solution
         for i in range(n_variables):
             if i < len(expectation_values):
@@ -325,14 +324,14 @@ class QuantumInspiredOptimizer:
                 # Random initialization for extra variables
                 low, high = bounds[i]
                 solution[i] = np.random.uniform(low, high)
-        
+
         return solution
 
     def _quantum_annealing_optimization(self, objective_function, constraints: List[FairnessConstraint],
                                       bounds: List[Tuple[float, float]]) -> Dict[str, Any]:
         """Quantum annealing-inspired optimization."""
         n_variables = len(bounds)
-        
+
         # Initialize temperature schedule
         def temperature(t, schedule_type="exponential"):
             if schedule_type == "exponential":
@@ -341,35 +340,35 @@ class QuantumInspiredOptimizer:
                 return self.parameters.coupling_strength * (1 - t)
             else:
                 return self.parameters.coupling_strength / (1 + t)
-        
+
         # Simulated quantum annealing
         current_solution = np.array([
             np.random.uniform(low, high) for low, high in bounds
         ])
         current_energy = objective_function(current_solution)
-        
+
         best_solution = current_solution.copy()
         best_energy = current_energy
-        
+
         energy_history = []
-        
+
         for iteration in range(self.parameters.optimization_rounds):
             t = iteration / self.parameters.optimization_rounds
             temp = temperature(t, self.parameters.temperature_schedule)
-            
+
             # Quantum tunneling-inspired moves
             for variable_idx in range(n_variables):
                 # Generate quantum-inspired perturbation
                 tunnel_strength = temp * np.random.normal(0, 1)
                 low, high = bounds[variable_idx]
-                
+
                 # Apply tunneling move
                 new_solution = current_solution.copy()
                 new_solution[variable_idx] += tunnel_strength * (high - low) * 0.1
                 new_solution[variable_idx] = np.clip(new_solution[variable_idx], low, high)
-                
+
                 new_energy = objective_function(new_solution)
-                
+
                 # Quantum acceptance probability
                 if new_energy < current_energy:
                     # Always accept better solutions
@@ -379,27 +378,27 @@ class QuantumInspiredOptimizer:
                     # Quantum tunneling acceptance
                     delta_energy = new_energy - current_energy
                     acceptance_prob = np.exp(-delta_energy / (temp + 1e-10))
-                    
+
                     # Add quantum coherence factor
                     coherence_factor = np.cos(2 * np.pi * t) * 0.1 + 1
                     quantum_acceptance = acceptance_prob * coherence_factor
-                    
+
                     if np.random.random() < quantum_acceptance:
                         current_solution = new_solution
                         current_energy = new_energy
-                
+
                 # Update best solution
                 if current_energy < best_energy:
                     best_solution = current_solution.copy()
                     best_energy = current_energy
-            
+
             energy_history.append(current_energy)
-            
+
             # Early convergence check
             if iteration > 10 and np.std(energy_history[-10:]) < self.parameters.convergence_threshold:
                 logger.info(f"Quantum annealing converged at iteration {iteration}")
                 break
-        
+
         return {
             'solution': best_solution,
             'objective_value': best_energy,
@@ -412,9 +411,9 @@ class QuantumInspiredOptimizer:
                 bounds: List[Tuple[float, float]]) -> Dict[str, Any]:
         """Main optimization interface."""
         start_time = time.time()
-        
+
         logger.info(f"Starting quantum-inspired optimization using {self.method.value}")
-        
+
         if self.method == QuantumOptimizationMethod.QAOA_INSPIRED:
             result = self._qaoa_inspired_optimization(objective_function, constraints, bounds)
         elif self.method == QuantumOptimizationMethod.VQE_INSPIRED:
@@ -423,12 +422,12 @@ class QuantumInspiredOptimizer:
             result = self._quantum_annealing_optimization(objective_function, constraints, bounds)
         else:
             raise ValueError(f"Unknown optimization method: {self.method}")
-        
+
         optimization_time = time.time() - start_time
         result['optimization_time'] = optimization_time
         result['method'] = self.method.value
         result['parameters'] = self.parameters
-        
+
         logger.info(f"Quantum optimization completed in {optimization_time:.2f}s")
         return result
 
@@ -436,12 +435,12 @@ class QuantumInspiredOptimizer:
 class QuantumEnhancedFairnessOptimizer(BaseEstimator, TransformerMixin):
     """
     Quantum-enhanced fairness optimizer for ML models.
-    
+
     This optimizer uses quantum-inspired algorithms to find optimal model
     parameters that balance accuracy and fairness constraints.
     """
 
-    def __init__(self, 
+    def __init__(self,
                  fairness_constraints: List[FairnessConstraint],
                  quantum_method: QuantumOptimizationMethod = QuantumOptimizationMethod.QUANTUM_ANNEALING,
                  quantum_params: Optional[QuantumFairnessParameters] = None,
@@ -456,72 +455,72 @@ class QuantumEnhancedFairnessOptimizer(BaseEstimator, TransformerMixin):
         self.fairness_weight = fairness_weight
         self.max_iterations = max_iterations
         self.n_jobs = n_jobs
-        
+
         self.optimizer = QuantumInspiredOptimizer(quantum_method, self.quantum_params)
         self.optimization_results_ = []
         self.best_parameters_ = None
         self.convergence_history_ = []
 
-    def _compute_fairness_metrics(self, y_true: np.ndarray, y_pred: np.ndarray, 
+    def _compute_fairness_metrics(self, y_true: np.ndarray, y_pred: np.ndarray,
                                 sensitive_attributes: np.ndarray) -> Dict[str, float]:
         """Compute fairness metrics for the given predictions."""
         metrics = {}
-        
+
         # Demographic parity difference
         group_0_mask = sensitive_attributes == 0
         group_1_mask = sensitive_attributes == 1
-        
+
         if np.any(group_0_mask) and np.any(group_1_mask):
             group_0_rate = np.mean(y_pred[group_0_mask])
             group_1_rate = np.mean(y_pred[group_1_mask])
             metrics['demographic_parity_difference'] = abs(group_1_rate - group_0_rate)
-        
+
         # Equalized odds difference
         for group_val in [0, 1]:
             group_mask = sensitive_attributes == group_val
             if np.any(group_mask):
                 group_y_true = y_true[group_mask]
                 group_y_pred = y_pred[group_mask]
-                
+
                 # True positive rate
                 if np.any(group_y_true == 1):
                     tpr = np.mean(group_y_pred[group_y_true == 1])
                     metrics[f'tpr_group_{group_val}'] = tpr
-                
-                # False positive rate  
+
+                # False positive rate
                 if np.any(group_y_true == 0):
                     fpr = np.mean(group_y_pred[group_y_true == 0])
                     metrics[f'fpr_group_{group_val}'] = fpr
-        
+
         # Equalized odds difference
         if 'tpr_group_0' in metrics and 'tpr_group_1' in metrics:
             metrics['equalized_odds_tpr_diff'] = abs(metrics['tpr_group_1'] - metrics['tpr_group_0'])
         if 'fpr_group_0' in metrics and 'fpr_group_1' in metrics:
             metrics['equalized_odds_fpr_diff'] = abs(metrics['fpr_group_1'] - metrics['fpr_group_0'])
-        
+
         return metrics
 
-    def _objective_function(self, parameters: np.ndarray, model, X_train: np.ndarray, 
+    def _objective_function(self, parameters: np.ndarray, model, X_train: np.ndarray,
                           y_train: np.ndarray, sensitive_attributes: np.ndarray) -> float:
         """Objective function combining accuracy and fairness."""
         try:
             # Set model parameters
             param_dict = dict(zip(model.get_params().keys(), parameters))
             model.set_params(**param_dict)
-            
+
             # Train model with current parameters
             model.fit(X_train, y_train)
-            
+
             # Get predictions
             y_pred_proba = model.predict_proba(X_train)[:, 1] if hasattr(model, 'predict_proba') else model.predict(X_train)
             y_pred = (y_pred_proba > 0.5).astype(int)
-            
+
             # Compute accuracy
             accuracy = np.mean(y_pred == y_train)
-            
+
             # Compute fairness metrics
             fairness_metrics = self._compute_fairness_metrics(y_train, y_pred, sensitive_attributes)
-            
+
             # Compute fairness violations
             fairness_violations = 0
             for constraint in self.fairness_constraints:
@@ -529,25 +528,25 @@ class QuantumEnhancedFairnessOptimizer(BaseEstimator, TransformerMixin):
                     metric_value = fairness_metrics[constraint.metric_name]
                     violation = max(0, abs(metric_value - constraint.target_value) - constraint.tolerance)
                     fairness_violations += constraint.weight * violation
-            
+
             # Combined objective (minimize)
             objective = -self.accuracy_weight * accuracy + self.fairness_weight * fairness_violations
-            
+
             return objective
-            
+
         except Exception as e:
             logger.warning(f"Objective function evaluation failed: {e}")
             return float('inf')
 
-    async def _async_optimization_round(self, model, X_train: np.ndarray, y_train: np.ndarray, 
+    async def _async_optimization_round(self, model, X_train: np.ndarray, y_train: np.ndarray,
                                       sensitive_attributes: np.ndarray, round_idx: int) -> Dict[str, Any]:
         """Run single optimization round asynchronously."""
         logger.info(f"Starting optimization round {round_idx + 1}/{self.max_iterations}")
-        
+
         # Get parameter bounds
         param_names = list(model.get_params().keys())
         bounds = []
-        
+
         for param_name in param_names:
             current_value = getattr(model, param_name)
             if isinstance(current_value, (int, float)):
@@ -565,56 +564,56 @@ class QuantumEnhancedFairnessOptimizer(BaseEstimator, TransformerMixin):
             else:
                 # Non-numeric parameters - keep fixed
                 bounds.append((0, 1))  # Placeholder
-        
+
         # Define objective function for this round
         def objective_func(params):
             return self._objective_function(params, model, X_train, y_train, sensitive_attributes)
-        
+
         # Run quantum optimization
         result = self.optimizer.optimize(objective_func, self.fairness_constraints, bounds)
         result['round'] = round_idx
-        
+
         return result
 
-    def fit(self, X: np.ndarray, y: np.ndarray, sensitive_attributes: np.ndarray, 
+    def fit(self, X: np.ndarray, y: np.ndarray, sensitive_attributes: np.ndarray,
             base_model: Optional[Any] = None):
         """Fit the quantum-enhanced fairness optimizer."""
         if base_model is None:
             from sklearn.linear_model import LogisticRegression
             base_model = LogisticRegression(random_state=42)
-        
+
         logger.info("Starting quantum-enhanced fairness optimization")
         start_time = time.time()
-        
+
         # Run optimization rounds
         async def run_optimization():
             tasks = []
-            with ThreadPoolExecutor(max_workers=min(4, self.max_iterations)) as executor:
+            with ThreadPoolExecutor(max_workers=min(4, self.max_iterations)):
                 for round_idx in range(self.max_iterations):
                     task = asyncio.create_task(
                         self._async_optimization_round(base_model, X, y, sensitive_attributes, round_idx)
                     )
                     tasks.append(task)
-                    
+
                     # Limit concurrent tasks
                     if len(tasks) >= 4:
                         completed_task = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
                         for task in completed_task[0]:
                             result = await task
                             self.optimization_results_.append(result)
-                            
+
                             # Update best parameters
-                            if (self.best_parameters_ is None or 
+                            if (self.best_parameters_ is None or
                                 result['objective_value'] < min(r['objective_value'] for r in self.optimization_results_[:-1])):
                                 self.best_parameters_ = result['solution']
-                        
+
                         tasks = list(completed_task[1])
-                
+
                 # Wait for remaining tasks
                 for task in tasks:
                     result = await task
                     self.optimization_results_.append(result)
-        
+
         # Run async optimization
         try:
             asyncio.run(run_optimization())
@@ -624,24 +623,24 @@ class QuantumEnhancedFairnessOptimizer(BaseEstimator, TransformerMixin):
             for round_idx in range(min(5, self.max_iterations)):  # Reduced iterations for fallback
                 result = asyncio.run(self._async_optimization_round(base_model, X, y, sensitive_attributes, round_idx))
                 self.optimization_results_.append(result)
-                
-                if (self.best_parameters_ is None or 
+
+                if (self.best_parameters_ is None or
                     result['objective_value'] < min(r['objective_value'] for r in self.optimization_results_[:-1])):
                     self.best_parameters_ = result['solution']
-        
+
         # Set best parameters to model
         if self.best_parameters_ is not None and len(self.best_parameters_) > 0:
             param_names = list(base_model.get_params().keys())
             param_dict = dict(zip(param_names, self.best_parameters_))
             base_model.set_params(**param_dict)
             base_model.fit(X, y)
-        
+
         self.model_ = base_model
         optimization_time = time.time() - start_time
-        
+
         logger.info(f"Quantum fairness optimization completed in {optimization_time:.2f}s")
         logger.info(f"Best objective value: {min(r['objective_value'] for r in self.optimization_results_):.4f}")
-        
+
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -668,9 +667,9 @@ class QuantumEnhancedFairnessOptimizer(BaseEstimator, TransformerMixin):
         """Get comprehensive optimization summary."""
         if not self.optimization_results_:
             return {"status": "not_fitted"}
-        
+
         best_result = min(self.optimization_results_, key=lambda x: x['objective_value'])
-        
+
         return {
             "status": "fitted",
             "quantum_method": self.quantum_method.value,
@@ -694,10 +693,10 @@ def create_quantum_fairness_optimizer(
     optimization_rounds: int = 100
 ) -> QuantumEnhancedFairnessOptimizer:
     """Factory function to create quantum fairness optimizer."""
-    
+
     if fairness_metrics is None:
         fairness_metrics = ["demographic_parity_difference", "equalized_odds_tpr_diff"]
-    
+
     # Create fairness constraints
     constraints = []
     for metric in fairness_metrics:
@@ -708,7 +707,7 @@ def create_quantum_fairness_optimizer(
             weight=1.0
         )
         constraints.append(constraint)
-    
+
     # Parse quantum method
     method_map = {
         "qaoa": QuantumOptimizationMethod.QAOA_INSPIRED,
@@ -716,9 +715,9 @@ def create_quantum_fairness_optimizer(
         "quantum_annealing": QuantumOptimizationMethod.QUANTUM_ANNEALING,
         "quantum_genetic": QuantumOptimizationMethod.QUANTUM_GENETIC
     }
-    
+
     quantum_method_enum = method_map.get(quantum_method, QuantumOptimizationMethod.QUANTUM_ANNEALING)
-    
+
     # Create quantum parameters
     quantum_params = QuantumFairnessParameters(
         n_qubits=n_qubits,
@@ -726,14 +725,14 @@ def create_quantum_fairness_optimizer(
         n_layers=3,
         temperature_schedule="exponential"
     )
-    
+
     # Create and return optimizer
     optimizer = QuantumEnhancedFairnessOptimizer(
         fairness_constraints=constraints,
         quantum_method=quantum_method_enum,
         quantum_params=quantum_params
     )
-    
+
     return optimizer
 
 
@@ -741,7 +740,7 @@ def create_quantum_fairness_optimizer(
 if __name__ == "__main__":
     # Example usage
     np.random.seed(42)
-    
+
     # Generate synthetic data
     n_samples = 1000
     n_features = 10
@@ -750,7 +749,7 @@ if __name__ == "__main__":
     # Introduce bias in the target
     bias_factor = 0.5 * sensitive_attr
     y = (np.sum(X[:, :3], axis=1) + bias_factor + np.random.randn(n_samples) * 0.1 > 0).astype(int)
-    
+
     # Create quantum fairness optimizer
     optimizer = create_quantum_fairness_optimizer(
         fairness_metrics=["demographic_parity_difference"],
@@ -758,20 +757,20 @@ if __name__ == "__main__":
         n_qubits=6,
         optimization_rounds=50
     )
-    
+
     # Fit the optimizer
     print("🔬 Starting quantum-enhanced fairness optimization...")
     optimizer.fit(X, y, sensitive_attr)
-    
+
     # Get predictions
     predictions = optimizer.predict(X)
     probabilities = optimizer.predict_proba(X)
-    
+
     # Print results
     summary = optimizer.get_optimization_summary()
     print(f"✅ Optimization completed: {summary['status']}")
     print(f"📊 Best objective value: {summary['best_objective_value']:.4f}")
     print(f"⏱️ Total optimization time: {summary['optimization_time']:.2f}s")
     print(f"🎯 Quantum method: {summary['quantum_method']}")
-    
+
     logger.info("Quantum-enhanced fairness optimization demonstration completed successfully")

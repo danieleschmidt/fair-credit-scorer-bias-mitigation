@@ -23,10 +23,10 @@ Functions:
 
 Usage:
     >>> from performance_benchmarking import PerformanceBenchmark, benchmark_method
-    >>> 
+    >>>
     >>> # Benchmark a single method
     >>> results = benchmark_method("baseline", n_samples=10000, n_runs=5)
-    >>> 
+    >>>
     >>> # Comprehensive benchmarking
     >>> from performance_benchmarking import BenchmarkSuite
     >>> suite = BenchmarkSuite()
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BenchmarkResults:
     """Data class for storing performance benchmark results.
-    
+
     Attributes:
         method_name: Name of the fairness method being benchmarked
         training_time_ms: Average training time in milliseconds
@@ -96,14 +96,14 @@ class BenchmarkResults:
 
 class PerformanceBenchmark:
     """Performance benchmarking utilities for fairness methods.
-    
+
     This class provides timing and memory monitoring capabilities for evaluating
     the computational performance of different bias mitigation techniques.
     """
 
     def __init__(self, enable_memory_tracking: bool = True):
         """Initialize performance benchmark.
-        
+
         Args:
             enable_memory_tracking: Whether to enable memory usage tracking
         """
@@ -113,7 +113,7 @@ class PerformanceBenchmark:
     @contextmanager
     def measure_time_and_memory(self):
         """Context manager for measuring execution time and memory usage.
-        
+
         Yields:
             dict: Performance metrics including time_ms and memory_mb
         """
@@ -140,13 +140,13 @@ class PerformanceBenchmark:
 
     def benchmark_function(self, func: Callable, *args, n_runs: int = 5, **kwargs) -> Dict[str, float]:
         """Benchmark a function with multiple runs.
-        
+
         Args:
             func: Function to benchmark
             *args: Positional arguments for function
             n_runs: Number of runs for averaging
             **kwargs: Keyword arguments for function
-            
+
         Returns:
             Dictionary with timing statistics
         """
@@ -189,14 +189,14 @@ class PerformanceBenchmark:
 def benchmark_method(method_name: str, n_samples: int = 10000, n_runs: int = 5,
                     test_size: float = 0.3, random_state: int = 42) -> BenchmarkResults:
     """Benchmark a specific fairness method.
-    
+
     Args:
         method_name: Name of method to benchmark ("baseline", "reweight", etc.)
         n_samples: Number of data samples to generate
         test_size: Proportion of data for testing
         n_runs: Number of benchmark runs
         random_state: Random seed for reproducibility
-        
+
     Returns:
         BenchmarkResults object with performance metrics
     """
@@ -255,14 +255,14 @@ def benchmark_method(method_name: str, n_samples: int = 10000, n_runs: int = 5,
 
 class BenchmarkSuite:
     """Comprehensive benchmarking suite for fairness methods.
-    
+
     This class provides systematic benchmarking across multiple methods,
     data sizes, and configurations to provide comprehensive performance insights.
     """
 
     def __init__(self, methods: Optional[List[str]] = None):
         """Initialize benchmark suite.
-        
+
         Args:
             methods: List of methods to benchmark. If None, uses all available methods.
         """
@@ -273,11 +273,11 @@ class BenchmarkSuite:
                                   sample_sizes: Optional[List[int]] = None,
                                   n_runs: int = 5) -> Dict[str, List[BenchmarkResults]]:
         """Run comprehensive benchmarking across methods and data sizes.
-        
+
         Args:
             sample_sizes: List of sample sizes to test
             n_runs: Number of runs per configuration
-            
+
         Returns:
             Dictionary mapping method names to benchmark results
         """
@@ -317,7 +317,7 @@ class BenchmarkSuite:
     def save_results(self, results: Dict[str, List[BenchmarkResults]],
                     output_path: str) -> None:
         """Save benchmark results to JSON file.
-        
+
         Args:
             results: Benchmark results from run_comprehensive_benchmark
             output_path: Path to save JSON results
@@ -334,10 +334,10 @@ class BenchmarkSuite:
 
 def analyze_performance_trends(results: Dict[str, List[BenchmarkResults]]) -> Dict[str, Any]:
     """Analyze performance trends across methods and data sizes.
-    
+
     Args:
         results: Benchmark results from BenchmarkSuite
-        
+
     Returns:
         Dictionary with performance analysis and recommendations
     """

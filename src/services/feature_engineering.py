@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 class FairnessAwareFeatureSelector(BaseEstimator, TransformerMixin):
     """
     Feature selector that considers fairness implications.
-    
+
     Removes features that are highly correlated with protected attributes
     to prevent proxy discrimination.
     """
@@ -32,7 +32,7 @@ class FairnessAwareFeatureSelector(BaseEstimator, TransformerMixin):
     def __init__(self, protected_attributes: List[str], correlation_threshold: float = 0.7):
         """
         Initialize fairness-aware feature selector.
-        
+
         Args:
             protected_attributes: List of protected attribute column names
             correlation_threshold: Threshold for removing correlated features
@@ -45,11 +45,11 @@ class FairnessAwareFeatureSelector(BaseEstimator, TransformerMixin):
     def fit(self, X: pd.DataFrame, y=None):
         """
         Fit the feature selector.
-        
+
         Args:
             X: Feature matrix
             y: Target variable (ignored)
-            
+
         Returns:
             Self
         """
@@ -98,10 +98,10 @@ class FairnessAwareFeatureSelector(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Transform the feature matrix.
-        
+
         Args:
             X: Feature matrix
-            
+
         Returns:
             Transformed feature matrix
         """
@@ -117,11 +117,11 @@ class FairnessAwareFeatureSelector(BaseEstimator, TransformerMixin):
     def _cramers_v(self, x: pd.Series, y: pd.Series) -> float:
         """
         Calculate Cramér's V statistic for categorical association.
-        
+
         Args:
             x: First categorical variable
             y: Second categorical variable
-            
+
         Returns:
             Cramér's V statistic (0-1)
         """
@@ -148,7 +148,7 @@ class OutlierDetector(BaseEstimator, TransformerMixin):
     def __init__(self, method: str = "iqr", threshold: float = 1.5, protected_attributes: List[str] = None):
         """
         Initialize outlier detector.
-        
+
         Args:
             method: Detection method ('iqr', 'zscore', 'isolation')
             threshold: Threshold for outlier detection
@@ -162,11 +162,11 @@ class OutlierDetector(BaseEstimator, TransformerMixin):
     def fit(self, X: pd.DataFrame, y=None):
         """
         Fit the outlier detector.
-        
+
         Args:
             X: Feature matrix
             y: Target variable (ignored)
-            
+
         Returns:
             Self
         """
@@ -201,10 +201,10 @@ class OutlierDetector(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Transform the feature matrix by handling outliers.
-        
+
         Args:
             X: Feature matrix
-            
+
         Returns:
             Transformed feature matrix
         """
@@ -227,7 +227,7 @@ class OutlierDetector(BaseEstimator, TransformerMixin):
 class FeatureEngineeringService:
     """
     Comprehensive feature engineering service with fairness considerations.
-    
+
     Provides advanced feature engineering capabilities including:
     - Automated feature selection with bias prevention
     - Outlier detection and handling
@@ -247,7 +247,7 @@ class FeatureEngineeringService:
     ):
         """
         Initialize feature engineering service.
-        
+
         Args:
             protected_attributes: List of protected attribute names
             feature_selection_method: Method for feature selection
@@ -273,10 +273,10 @@ class FeatureEngineeringService:
     def create_preprocessing_pipeline(self, X: pd.DataFrame) -> Pipeline:
         """
         Create preprocessing pipeline based on data characteristics.
-        
+
         Args:
             X: Training feature matrix
-            
+
         Returns:
             Configured preprocessing pipeline
         """
@@ -359,11 +359,11 @@ class FeatureEngineeringService:
     def fit(self, X: pd.DataFrame, y: pd.Series) -> 'FeatureEngineeringService':
         """
         Fit the feature engineering pipeline.
-        
+
         Args:
             X: Training feature matrix
             y: Target variable
-            
+
         Returns:
             Self
         """
@@ -409,10 +409,10 @@ class FeatureEngineeringService:
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Transform feature matrix using fitted pipeline.
-        
+
         Args:
             X: Feature matrix to transform
-            
+
         Returns:
             Transformed feature matrix
         """
@@ -440,11 +440,11 @@ class FeatureEngineeringService:
     def fit_transform(self, X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
         """
         Fit pipeline and transform data in one step.
-        
+
         Args:
             X: Training feature matrix
             y: Target variable
-            
+
         Returns:
             Transformed feature matrix
         """
@@ -453,7 +453,7 @@ class FeatureEngineeringService:
     def get_feature_importance(self) -> Optional[Dict[str, float]]:
         """
         Get feature importance scores.
-        
+
         Returns:
             Dictionary of feature names and importance scores
         """
@@ -462,7 +462,7 @@ class FeatureEngineeringService:
     def get_feature_info(self) -> Dict[str, Any]:
         """
         Get comprehensive information about features.
-        
+
         Returns:
             Dictionary with feature information
         """
@@ -477,10 +477,10 @@ class FeatureEngineeringService:
     def validate_fairness(self, X: pd.DataFrame) -> Dict[str, Any]:
         """
         Validate fairness properties of engineered features.
-        
+
         Args:
             X: Transformed feature matrix
-            
+
         Returns:
             Fairness validation results
         """
@@ -583,7 +583,7 @@ class DerivedFeatureCreator(BaseEstimator, TransformerMixin):
     def __init__(self, numeric_features: List[str]):
         """
         Initialize derived feature creator.
-        
+
         Args:
             numeric_features: List of numeric feature names
         """
@@ -593,11 +593,11 @@ class DerivedFeatureCreator(BaseEstimator, TransformerMixin):
     def fit(self, X: pd.DataFrame, y=None):
         """
         Fit the derived feature creator.
-        
+
         Args:
             X: Feature matrix
             y: Target variable (ignored)
-            
+
         Returns:
             Self
         """
@@ -606,7 +606,7 @@ class DerivedFeatureCreator(BaseEstimator, TransformerMixin):
 
         # Create interaction features for pairs of numeric features
         for i, feat1 in enumerate(self.numeric_features):
-            for j, feat2 in enumerate(self.numeric_features[i+1:], i+1):
+            for _j, feat2 in enumerate(self.numeric_features[i+1:], i+1):
                 if feat1 in X.columns and feat2 in X.columns:
                     # Avoid creating too many features
                     if len(self.derived_features_) < 10:
@@ -631,10 +631,10 @@ class DerivedFeatureCreator(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Transform the feature matrix by adding derived features.
-        
+
         Args:
             X: Feature matrix
-            
+
         Returns:
             Transformed feature matrix with derived features
         """

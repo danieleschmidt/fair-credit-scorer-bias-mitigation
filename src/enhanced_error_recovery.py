@@ -13,23 +13,20 @@ Features:
 - Fallback model serving
 """
 
-import asyncio
 import functools
 import json
 import time
 import traceback
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
 
-from .logging_config import get_logger
+from logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -127,7 +124,7 @@ class ErrorClassifier:
                 'severity': ErrorSeverity.HIGH,
                 'keywords': ['file', 'path', 'directory']
             },
-            
+
             # Model errors
             'NotFittedError': {
                 'category': ErrorCategory.MODEL_ERROR,
@@ -139,7 +136,7 @@ class ErrorClassifier:
                 'severity': ErrorSeverity.MEDIUM,
                 'keywords': ['convergence', 'iteration', 'optimization']
             },
-            
+
             # Network errors
             'ConnectionError': {
                 'category': ErrorCategory.NETWORK_ERROR,
@@ -151,7 +148,7 @@ class ErrorClassifier:
                 'severity': ErrorSeverity.MEDIUM,
                 'keywords': ['timeout', 'slow', 'response']
             },
-            
+
             # System errors
             'MemoryError': {
                 'category': ErrorCategory.SYSTEM_ERROR,
@@ -168,41 +165,41 @@ class ErrorClassifier:
     def classify_error(self, error: Exception, context: Dict[str, Any] = None) -> Tuple[ErrorCategory, ErrorSeverity]:
         """
         Classify error by category and severity.
-        
+
         Args:
             error: Exception to classify
             context: Additional context for classification
-            
+
         Returns:
             Tuple of (category, severity)
         """
         error_type = type(error).__name__
         error_message = str(error).lower()
-        
+
         # Check direct mapping
         if error_type in self.classification_rules:
             rule = self.classification_rules[error_type]
             return rule['category'], rule['severity']
-        
+
         # Check message content
-        for rule_name, rule in self.classification_rules.items():
+        for _rule_name, rule in self.classification_rules.items():
             if any(keyword in error_message for keyword in rule['keywords']):
                 return rule['category'], rule['severity']
-        
+
         # Check context for additional hints
         if context:
             if 'fairness' in str(context).lower():
                 return ErrorCategory.FAIRNESS_ERROR, ErrorSeverity.HIGH
             if 'validation' in str(context).lower():
                 return ErrorCategory.VALIDATION_ERROR, ErrorSeverity.MEDIUM
-        
+
         # Default classification
         return ErrorCategory.UNKNOWN, ErrorSeverity.MEDIUM
 
 
 class RetryConfig:
     """Configuration for retry mechanism."""
-    
+
     def __init__(
         self,
         max_attempts: int = 3,
@@ -221,19 +218,19 @@ class RetryConfig:
         """Calculate delay for given attempt number."""
         delay = self.base_delay * (self.exponential_base ** attempt)
         delay = min(delay, self.max_delay)
-        
+
         if self.jitter:
             # Add random jitter (±25%)
             import random
             jitter_range = delay * 0.25
             delay += random.uniform(-jitter_range, jitter_range)
-        
+
         return max(0, delay)
 
 
 class CircuitBreaker:
     """Circuit breaker implementation for external dependencies."""
-    
+
     def __init__(
         self,
         name: str,
@@ -246,7 +243,7 @@ class CircuitBreaker:
         self.recovery_timeout = recovery_timeout
         self.expected_exception = expected_exception
         self.state = CircuitBreakerState()
-        
+
         logger.info(f"CircuitBreaker '{name}' initialized")
 
     def __call__(self, func: Callable) -> Callable:
@@ -264,12 +261,12 @@ class CircuitBreaker:
                 logger.info(f"CircuitBreaker '{self.name}' transitioning to half-open")
             else:
                 raise Exception(f"CircuitBreaker '{self.name}' is open")
-        
+
         try:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-            
+
         except self.expected_exception as e:
             self._on_failure()
             raise e
@@ -285,7 +282,7 @@ class CircuitBreaker:
         if self.state.state == "half_open":
             self.state.state = "closed"
             logger.info(f"CircuitBreaker '{self.name}' closed after successful recovery")
-        
+
         self.state.failure_count = 0
         self.state.success_count += 1
 
@@ -293,7 +290,7 @@ class CircuitBreaker:
         """Handle failed function call."""
         self.state.failure_count += 1
         self.state.last_failure_time = datetime.now()
-        
+
         if self.state.failure_count >= self.failure_threshold:
             self.state.state = "open"
             self.state.next_attempt_time = datetime.now() + timedelta(seconds=self.recovery_timeout)
@@ -302,12 +299,12 @@ class CircuitBreaker:
 
 class FallbackModel:
     """Simple fallback model for graceful degradation."""
-    
+
     def __init__(self, name: str = "fallback"):
         self.name = name
         self.fitted = False
         self.fallback_prediction = 0.5  # Default neutral prediction
-        
+
     def fit(self, X: pd.DataFrame, y: pd.Series):
         """Fit simple fallback model."""
         # Use simple majority class or mean prediction
@@ -317,7 +314,7 @@ class FallbackModel:
         else:
             # Regression: use mean
             self.fallback_prediction = y.mean()
-        
+
         self.fitted = True
         logger.info(f"FallbackModel '{self.name}' fitted with prediction: {self.fallback_prediction}")
 
@@ -325,13 +322,13 @@ class FallbackModel:
         """Make fallback predictions."""
         if not self.fitted:
             logger.warning(f"FallbackModel '{self.name}' not fitted, using default prediction")
-        
+
         return np.full(len(X), self.fallback_prediction)
 
 
 class HealthMonitor:
     """Monitor system health and performance."""
-    
+
     def __init__(self, window_size: int = 100):
         self.window_size = window_size
         self.metrics = {
@@ -341,7 +338,7 @@ class HealthMonitor:
             'memory_usage': [],
             'last_health_check': None
         }
-        
+
     def record_success(self, response_time: float = None):
         """Record successful operation."""
         self.metrics['success_count'] += 1
@@ -357,14 +354,14 @@ class HealthMonitor:
         """Get current health status."""
         total_ops = self.metrics['success_count'] + self.metrics['error_count']
         error_rate = self.metrics['error_count'] / max(1, total_ops)
-        
+
         avg_response_time = (
-            np.mean(self.metrics['response_times']) 
+            np.mean(self.metrics['response_times'])
             if self.metrics['response_times'] else 0
         )
-        
+
         health_score = max(0, 1 - error_rate)
-        
+
         status = {
             'health_score': health_score,
             'error_rate': error_rate,
@@ -372,7 +369,7 @@ class HealthMonitor:
             'average_response_time': avg_response_time,
             'status': 'healthy' if health_score > 0.8 else 'degraded' if health_score > 0.5 else 'unhealthy'
         }
-        
+
         self.metrics['last_health_check'] = datetime.now()
         return status
 
@@ -385,10 +382,10 @@ class HealthMonitor:
 class ErrorRecoveryManager:
     """
     Comprehensive error recovery and resilience manager.
-    
+
     Orchestrates various recovery strategies and maintains system resilience.
     """
-    
+
     def __init__(
         self,
         enable_circuit_breaker: bool = True,
@@ -400,26 +397,26 @@ class ErrorRecoveryManager:
         self.enable_retry = enable_retry
         self.enable_fallback = enable_fallback
         self.error_log_path = Path(error_log_path)
-        
+
         # Components
         self.error_classifier = ErrorClassifier()
         self.health_monitor = HealthMonitor()
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         self.fallback_models: Dict[str, FallbackModel] = {}
         self.error_events: List[ErrorEvent] = []
-        
+
         # Load existing error log
         self._load_error_log()
-        
+
         logger.info("ErrorRecoveryManager initialized")
 
     def _load_error_log(self):
         """Load existing error log from disk."""
         if self.error_log_path.exists():
             try:
-                with open(self.error_log_path, 'r') as f:
+                with open(self.error_log_path) as f:
                     error_data = json.load(f)
-                
+
                 for event_data in error_data:
                     event = ErrorEvent(
                         timestamp=datetime.fromisoformat(event_data['timestamp']),
@@ -431,13 +428,13 @@ class ErrorRecoveryManager:
                         stack_trace=event_data.get('stack_trace'),
                         recovery_attempted=event_data.get('recovery_attempted', False),
                         recovery_successful=event_data.get('recovery_successful', False),
-                        resolution_time=datetime.fromisoformat(event_data['resolution_time']) 
+                        resolution_time=datetime.fromisoformat(event_data['resolution_time'])
                                       if event_data.get('resolution_time') else None
                     )
                     self.error_events.append(event)
-                
+
                 logger.info(f"Loaded {len(self.error_events)} error events from log")
-                
+
             except Exception as e:
                 logger.error(f"Failed to load error log: {e}")
 
@@ -478,7 +475,7 @@ class ErrorRecoveryManager:
         """Decorator for retry functionality."""
         if retry_config is None:
             retry_config = RetryConfig()
-            
+
         def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -496,43 +493,43 @@ class ErrorRecoveryManager:
     ):
         """Execute function with retry logic."""
         last_exception = None
-        
+
         for attempt in range(retry_config.max_attempts):
             try:
                 start_time = time.time()
                 result = func(*args, **kwargs)
-                
+
                 # Record success
                 response_time = time.time() - start_time
                 self.health_monitor.record_success(response_time)
-                
+
                 if attempt > 0:
                     logger.info(f"Function succeeded on attempt {attempt + 1}")
-                
+
                 return result
-                
+
             except retry_on as e:
                 last_exception = e
                 self.health_monitor.record_error()
-                
+
                 # Classify and log error
                 category, severity = self.error_classifier.classify_error(e)
                 self._log_error_event(e, category, severity, {'attempt': attempt + 1})
-                
+
                 if attempt < retry_config.max_attempts - 1:
                     delay = retry_config.get_delay(attempt)
                     logger.warning(f"Attempt {attempt + 1} failed, retrying in {delay:.2f}s: {e}")
                     time.sleep(delay)
                 else:
                     logger.error(f"All {retry_config.max_attempts} attempts failed: {e}")
-            
+
             except Exception as e:
                 # Non-retryable exception
                 self.health_monitor.record_error()
                 category, severity = self.error_classifier.classify_error(e)
                 self._log_error_event(e, category, severity, {'attempt': attempt + 1, 'non_retryable': True})
                 raise e
-        
+
         # All retries exhausted
         raise last_exception
 
@@ -545,11 +542,11 @@ class ErrorRecoveryManager:
                     return func(*args, **kwargs)
                 except Exception as e:
                     logger.warning(f"Function failed, using fallback: {e}")
-                    
+
                     # Log error
                     category, severity = self.error_classifier.classify_error(e)
                     self._log_error_event(e, category, severity, {'fallback_used': True})
-                    
+
                     # Use fallback
                     if fallback_model_name and fallback_model_name in self.fallback_models:
                         # Try to extract input data for model prediction
@@ -559,14 +556,14 @@ class ErrorRecoveryManager:
                                 return self.fallback_models[fallback_model_name].predict(X)
                             except:
                                 pass
-                    
+
                     # Use fallback value
                     if fallback_value is not None:
                         return fallback_value
-                    
+
                     # If no fallback available, re-raise
                     raise e
-                    
+
             return wrapper
         return decorator
 
@@ -587,13 +584,13 @@ class ErrorRecoveryManager:
             context=context or {},
             stack_trace=traceback.format_exc()
         )
-        
+
         self.error_events.append(event)
-        
+
         # Trim old events (keep last 1000)
         if len(self.error_events) > 1000:
             self.error_events = self.error_events[-1000:]
-        
+
         # Save to disk periodically
         if len(self.error_events) % 10 == 0:
             self._save_error_log()
@@ -602,7 +599,7 @@ class ErrorRecoveryManager:
         """Get error statistics for the last N hours."""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         recent_errors = [e for e in self.error_events if e.timestamp >= cutoff_time]
-        
+
         if not recent_errors:
             return {
                 'total_errors': 0,
@@ -611,24 +608,24 @@ class ErrorRecoveryManager:
                 'severities': {},
                 'top_errors': []
             }
-        
+
         # Count by category
         category_counts = {}
         for error in recent_errors:
             category_counts[error.category.value] = category_counts.get(error.category.value, 0) + 1
-        
+
         # Count by severity
         severity_counts = {}
         for error in recent_errors:
             severity_counts[error.severity.value] = severity_counts.get(error.severity.value, 0) + 1
-        
+
         # Top error types
         error_type_counts = {}
         for error in recent_errors:
             error_type_counts[error.error_type] = error_type_counts.get(error.error_type, 0) + 1
-        
+
         top_errors = sorted(error_type_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        
+
         return {
             'total_errors': len(recent_errors),
             'error_rate': len(recent_errors) / max(1, hours),
@@ -654,33 +651,33 @@ class ErrorRecoveryManager:
             enable_fallback = self.enable_fallback
         if retry_config is None:
             retry_config = RetryConfig()
-        
+
         def decorator(func: Callable) -> Callable:
             wrapped_func = func
-            
+
             # Apply retry
             if self.enable_retry:
                 wrapped_func = self.with_retry(retry_config)(wrapped_func)
-            
+
             # Apply circuit breaker
             if enable_circuit_breaker:
                 if name not in self.circuit_breakers:
                     self.register_circuit_breaker(name)
                 wrapped_func = self.circuit_breakers[name](wrapped_func)
-            
+
             # Apply fallback
             if enable_fallback:
                 wrapped_func = self.with_fallback(fallback_model_name, fallback_value)(wrapped_func)
-            
+
             return wrapped_func
-        
+
         return decorator
 
     def generate_resilience_report(self, output_path: str = None) -> str:
         """Generate comprehensive resilience report."""
         stats = self.get_error_statistics()
         health = self.health_monitor.get_health_status()
-        
+
         report = f"""
 # System Resilience Report
 
@@ -699,31 +696,31 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ### By Category
 """
-        
+
         for category, count in stats['categories'].items():
             report += f"- {category}: {count}\n"
-        
+
         report += "\n### By Severity\n"
         for severity, count in stats['severities'].items():
             report += f"- {severity}: {count}\n"
-        
+
         report += "\n### Top Error Types\n"
         for error_type, count in stats['top_errors']:
             report += f"- {error_type}: {count}\n"
-        
-        report += f"\n## Circuit Breakers\n"
+
+        report += "\n## Circuit Breakers\n"
         for name, cb in self.circuit_breakers.items():
             report += f"- {name}: {cb.state.state} (failures: {cb.state.failure_count})\n"
-        
-        report += f"\n## Fallback Models\n"
+
+        report += "\n## Fallback Models\n"
         for name, model in self.fallback_models.items():
             report += f"- {name}: {'fitted' if model.fitted else 'not fitted'}\n"
-        
+
         if output_path:
             with open(output_path, 'w') as f:
                 f.write(report)
             logger.info(f"Resilience report saved to {output_path}")
-        
+
         return report
 
 
@@ -732,29 +729,29 @@ def main():
     """Demonstration of error recovery framework."""
     import argparse
     import random
-    
+
     parser = argparse.ArgumentParser(description="Error Recovery Framework Demo")
     parser.add_argument("--demo", action="store_true", help="Run demonstration")
     parser.add_argument("--report", action="store_true", help="Generate resilience report")
-    
+
     args = parser.parse_args()
-    
+
     # Initialize recovery manager
     recovery_manager = ErrorRecoveryManager()
-    
+
     if args.demo:
         print("Running Error Recovery Framework Demo...")
-        
+
         # Create a fallback model
         fallback_model = FallbackModel("demo_fallback")
-        
+
         # Simulate training data
         X_train = pd.DataFrame({'feature1': range(100), 'feature2': range(100, 200)})
         y_train = pd.Series([random.choice([0, 1]) for _ in range(100)])
         fallback_model.fit(X_train, y_train)
-        
+
         recovery_manager.register_fallback_model("demo_fallback", fallback_model)
-        
+
         # Demo function that fails sometimes
         @recovery_manager.create_resilient_wrapper(
             name="demo_function",
@@ -768,10 +765,10 @@ def main():
             if random.random() < 0.3:
                 raise ValueError("Random failure for demo")
             return np.random.random(len(X))
-        
+
         # Test the resilient function
         test_data = pd.DataFrame({'feature1': range(10), 'feature2': range(10, 20)})
-        
+
         print("Testing resilient function...")
         for i in range(10):
             try:
@@ -779,14 +776,14 @@ def main():
                 print(f"Call {i+1}: Success (result shape: {result.shape})")
             except Exception as e:
                 print(f"Call {i+1}: Failed - {e}")
-        
+
         # Show statistics
         stats = recovery_manager.get_error_statistics(hours=1)
-        print(f"\nError Statistics:")
+        print("\nError Statistics:")
         print(f"- Total errors: {stats['total_errors']}")
         print(f"- Categories: {stats['categories']}")
         print(f"- Health status: {stats['health_status']['status']}")
-    
+
     if args.report:
         print("Generating resilience report...")
         report = recovery_manager.generate_resilience_report("resilience_report.md")

@@ -139,7 +139,7 @@ class AccessResult:
 class RBACManager:
     """
     Role-Based Access Control Manager.
-    
+
     Manages roles, permissions, and access control decisions
     for the fair credit scoring system.
     """
@@ -243,10 +243,10 @@ class RBACManager:
     def create_role(self, role: Role) -> bool:
         """
         Create a new role.
-        
+
         Args:
             role: Role to create
-            
+
         Returns:
             True if successful
         """
@@ -267,10 +267,10 @@ class RBACManager:
     def delete_role(self, role_name: str) -> bool:
         """
         Delete a role.
-        
+
         Args:
             role_name: Name of role to delete
-            
+
         Returns:
             True if successful
         """
@@ -295,11 +295,11 @@ class RBACManager:
     def assign_role_to_user(self, user_id: str, role_name: str) -> bool:
         """
         Assign role to user.
-        
+
         Args:
             user_id: User ID
             role_name: Role name to assign
-            
+
         Returns:
             True if successful
         """
@@ -321,11 +321,11 @@ class RBACManager:
     def remove_role_from_user(self, user_id: str, role_name: str) -> bool:
         """
         Remove role from user.
-        
+
         Args:
             user_id: User ID
             role_name: Role name to remove
-            
+
         Returns:
             True if successful
         """
@@ -342,10 +342,10 @@ class RBACManager:
     def check_access(self, request: AccessRequest) -> AccessResult:
         """
         Check if user has access to perform action on resource.
-        
+
         Args:
             request: Access request to evaluate
-            
+
         Returns:
             AccessResult with decision and details
         """
@@ -395,10 +395,10 @@ class RBACManager:
     def get_user_permissions(self, user_id: str) -> List[str]:
         """
         Get all permissions for a user.
-        
+
         Args:
             user_id: User ID
-            
+
         Returns:
             List of permission strings
         """
@@ -424,11 +424,11 @@ class RBACManager:
     def get_access_logs(self, user_id: Optional[str] = None, hours: int = 24) -> List[Dict[str, Any]]:
         """
         Get access logs.
-        
+
         Args:
             user_id: Filter by user ID (optional)
             hours: Hours of history to return
-            
+
         Returns:
             List of access log entries
         """
@@ -501,12 +501,12 @@ class RBACManager:
 def create_permission(resource_type: str, resource_id: Optional[str], action: str) -> Permission:
     """
     Helper function to create permission from strings.
-    
+
     Args:
         resource_type: Resource type string
         resource_id: Resource ID (optional)
         action: Action string
-        
+
     Returns:
         Permission object
     """
@@ -520,13 +520,13 @@ def create_permission(resource_type: str, resource_id: Optional[str], action: st
 def create_access_request(user_id: str, resource_type: str, resource_id: str, action: str) -> AccessRequest:
     """
     Helper function to create access request from strings.
-    
+
     Args:
         user_id: User ID
         resource_type: Resource type string
         resource_id: Resource ID
         action: Action string
-        
+
     Returns:
         AccessRequest object
     """

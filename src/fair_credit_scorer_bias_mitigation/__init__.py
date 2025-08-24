@@ -15,10 +15,10 @@ try:
     from ..fairness_metrics import compute_fairness_metrics
 except ImportError:
     # Fallback for direct execution
-    import sys
     import os
+    import sys
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    
+
     from architecture_review import ArchitectureReview
     from baseline_model import evaluate_model, train_baseline_model
     from bias_mitigator import (

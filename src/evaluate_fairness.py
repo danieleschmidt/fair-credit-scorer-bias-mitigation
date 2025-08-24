@@ -7,7 +7,7 @@ both single train/test splits and cross-validation evaluation workflows.
 Evaluation methods supported:
 - baseline: Standard logistic regression without bias mitigation
 - reweight: Sample reweighting for demographic parity
-- postprocess: Post-processing with equalized odds optimization  
+- postprocess: Post-processing with equalized odds optimization
 - expgrad: Exponentiated gradient optimization for demographic parity
 
 The module can be used both programmatically and via command-line interface,
@@ -24,7 +24,7 @@ Programmatic usage:
     >>> from evaluate_fairness import run_pipeline, run_cross_validation
     >>> # Single evaluation
     >>> results = run_pipeline(method="reweight", test_size=0.3)
-    >>> 
+    >>>
     >>> # Cross-validation evaluation
     >>> cv_results = run_cross_validation(method="expgrad", cv=5)
 
@@ -52,14 +52,14 @@ import json
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
-from src.baseline_model import evaluate_model, train_baseline_model
-from src.bias_mitigator import (
+from baseline_model import evaluate_model, train_baseline_model
+from bias_mitigator import (
     expgrad_demographic_parity,
     postprocess_equalized_odds,
     reweight_samples,
 )
-from src.data_loader_preprocessor import load_credit_data, load_credit_dataset
-from src.fairness_metrics import compute_fairness_metrics
+from data_loader_preprocessor import load_credit_data, load_credit_dataset
+from fairness_metrics import compute_fairness_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -99,14 +99,14 @@ def _serialize_metrics(results):
 
 def _save_metrics_json(results, path):
     """Write metrics dictionary to ``path`` as JSON.
-    
+
     Parameters
     ----------
     results : dict
         Metrics dictionary to serialize
     path : str
         Output file path
-        
+
     Raises
     ------
     ValueError
@@ -141,16 +141,16 @@ def _save_metrics_json(results, path):
 
 def _validate_common_parameters(method, threshold=None, output_path=None):
     """Validate common parameters used by both run_pipeline and run_cross_validation.
-    
+
     Parameters
     ----------
     method : str
         Training approach name to validate
-    threshold : float or None, optional  
+    threshold : float or None, optional
         Custom decision threshold to validate
     output_path : str or None, optional
         Output file path to validate
-        
+
     Raises
     ------
     ValueError
@@ -212,7 +212,7 @@ def run_pipeline(
         Path to load data from, by default "data/credit_data.csv".
     X : array-like, optional
         Pre-loaded feature matrix. If provided, data_path is ignored.
-    y : array-like, optional  
+    y : array-like, optional
         Pre-loaded target vector. Required if X is provided.
     sensitive_features : array-like, optional
         Pre-loaded sensitive feature vector. Required if X is provided.
@@ -223,7 +223,7 @@ def run_pipeline(
     -------
     dict
         Dictionary containing ``accuracy``, ``overall``, and ``by_group`` metrics.
-        
+
     Raises
     ------
     ValueError
@@ -354,7 +354,7 @@ def run_cross_validation(
         Enable parallel processing of CV folds. Default is True.
     max_workers : int or None, optional
         Maximum number of parallel workers. If None, uses CPU count.
-        
+
     Raises
     ------
     ValueError
@@ -448,12 +448,12 @@ def run_cross_validation(
 
 def _process_single_fold(fold_info):
     """Process a single cross-validation fold.
-    
+
     Parameters
     ----------
     fold_info : dict
         Dictionary containing fold information including indices, data, method, and threshold.
-        
+
     Returns
     -------
     dict
@@ -536,14 +536,14 @@ def _process_single_fold(fold_info):
 
 def _run_folds_parallel(fold_data, max_workers):
     """Run CV folds in parallel using ProcessPoolExecutor.
-    
+
     Parameters
     ----------
     fold_data : list
         List of fold information dictionaries.
     max_workers : int
         Maximum number of parallel workers.
-        
+
     Returns
     -------
     list
@@ -572,12 +572,12 @@ def _run_folds_parallel(fold_data, max_workers):
 
 def _run_folds_sequential(fold_data):
     """Run CV folds sequentially.
-    
+
     Parameters
     ----------
     fold_data : list
         List of fold information dictionaries.
-        
+
     Returns
     -------
     list

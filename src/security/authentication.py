@@ -133,7 +133,7 @@ class Session:
 class AuthenticationManager:
     """
     Secure authentication management system.
-    
+
     Handles user registration, login, password management, and
     multi-factor authentication with security best practices.
     """
@@ -148,7 +148,7 @@ class AuthenticationManager:
     ):
         """
         Initialize authentication manager.
-        
+
         Args:
             secret_key: Secret key for token signing
             token_expiry_hours: Token expiration time
@@ -185,13 +185,13 @@ class AuthenticationManager:
     ) -> Optional[User]:
         """
         Register a new user.
-        
+
         Args:
             username: Unique username
             email: User email address
             password: Plain text password
             roles: List of user roles
-            
+
         Returns:
             User object if successful, None otherwise
         """
@@ -240,13 +240,13 @@ class AuthenticationManager:
     ) -> Optional[Dict[str, Any]]:
         """
         Authenticate user credentials.
-        
+
         Args:
             username: Username or email
             password: Plain text password
             ip_address: Client IP address
             user_agent: Client user agent
-            
+
         Returns:
             Authentication result with user and tokens
         """
@@ -292,10 +292,10 @@ class AuthenticationManager:
     def validate_token(self, token_value: str) -> Optional[Dict[str, Any]]:
         """
         Validate authentication token.
-        
+
         Args:
             token_value: Token to validate
-            
+
         Returns:
             Token validation result
         """
@@ -340,10 +340,10 @@ class AuthenticationManager:
     def refresh_token(self, refresh_token_value: str) -> Optional[Dict[str, Any]]:
         """
         Refresh access token using refresh token.
-        
+
         Args:
             refresh_token_value: Refresh token
-            
+
         Returns:
             New access token or None
         """
@@ -374,10 +374,10 @@ class AuthenticationManager:
     def revoke_token(self, token_value: str) -> bool:
         """
         Revoke authentication token.
-        
+
         Args:
             token_value: Token to revoke
-            
+
         Returns:
             True if successful
         """
@@ -403,12 +403,12 @@ class AuthenticationManager:
     ) -> bool:
         """
         Change user password.
-        
+
         Args:
             user_id: User ID
             current_password: Current password
             new_password: New password
-            
+
         Returns:
             True if successful
         """
@@ -606,14 +606,14 @@ class AuthenticationManager:
 class SessionManager:
     """
     Session management system.
-    
+
     Manages user sessions with automatic cleanup and security monitoring.
     """
 
     def __init__(self, cleanup_interval_minutes: int = 60):
         """
         Initialize session manager.
-        
+
         Args:
             cleanup_interval_minutes: Interval for session cleanup
         """
@@ -625,10 +625,10 @@ class SessionManager:
     def validate_session(self, session_id: str) -> Optional[Session]:
         """
         Validate session.
-        
+
         Args:
             session_id: Session ID to validate
-            
+
         Returns:
             Session if valid, None otherwise
         """
@@ -644,10 +644,10 @@ class SessionManager:
     def end_session(self, session_id: str) -> bool:
         """
         End user session.
-        
+
         Args:
             session_id: Session ID to end
-            
+
         Returns:
             True if successful
         """
@@ -661,7 +661,7 @@ class SessionManager:
     def cleanup_expired_sessions(self) -> int:
         """
         Clean up expired sessions.
-        
+
         Returns:
             Number of sessions cleaned up
         """

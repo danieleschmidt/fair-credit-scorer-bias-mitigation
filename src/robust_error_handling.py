@@ -381,7 +381,7 @@ class ErrorRecoveryManager:
 class RobustErrorHandler:
     """
     Main error handling system with comprehensive error processing.
-    
+
     Features:
     - Automatic error classification and severity assessment
     - Context capture and detailed logging
@@ -412,14 +412,14 @@ class RobustErrorHandler:
                     attempt_recovery: bool = True) -> Tuple[bool, Any]:
         """
         Comprehensive error handling with recovery attempts.
-        
+
         Args:
             exception: The exception that occurred
             context: Error context information
             severity: Override error severity
             category: Override error category
             attempt_recovery: Whether to attempt automatic recovery
-            
+
         Returns:
             Tuple of (recovery_successful, recovery_result)
         """
@@ -683,10 +683,10 @@ def robust_error_handler(severity: Optional[ErrorSeverity] = None,
                         fallback_result: Any = None):
     """
     Decorator for automatic robust error handling.
-    
+
     Args:
         severity: Override error severity
-        category: Override error category  
+        category: Override error category
         attempt_recovery: Whether to attempt recovery
         fallback_result: Result to return if error occurs and no recovery
     """

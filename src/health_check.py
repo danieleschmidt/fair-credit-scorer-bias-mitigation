@@ -13,9 +13,9 @@ from typing import Any, Dict, Optional
 import numpy as np
 import psutil
 
-from src.config import Config
-from src.data_loader_preprocessor import generate_data
-from src.fairness_metrics import compute_fairness_metrics
+from config import Config
+from data_loader_preprocessor import generate_data
+from fairness_metrics import compute_fairness_metrics
 
 
 class HealthCheck:
@@ -23,7 +23,7 @@ class HealthCheck:
 
     def __init__(self, config: Optional[Config] = None):
         """Initialize health checker.
-        
+
         Args:
             config: Application configuration
         """
@@ -208,7 +208,7 @@ class HealthCheck:
             versions = {}
             incompatible = []
 
-            for package, min_version in required_packages.items():
+            for package, _min_version in required_packages.items():
                 try:
                     version = importlib.metadata.version(package)
                     versions[package] = version
@@ -462,7 +462,7 @@ class HealthCheck:
         try:
             from sklearn.model_selection import train_test_split
 
-            from src.baseline_model import train_baseline_model
+            from baseline_model import train_baseline_model
 
             # Generate minimal test data
             np.random.seed(42)

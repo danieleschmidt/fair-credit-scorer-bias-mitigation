@@ -19,7 +19,7 @@ Example:
     >>> model = train_baseline_model(X_train, y_train)
     >>> # Evaluate with custom threshold
     >>> accuracy, predictions = evaluate_model(model, X_test, y_test, threshold=0.6)
-    >>> 
+    >>>
     >>> # Train with custom parameters
     >>> model = train_baseline_model(X_train, y_train, solver='lbfgs', max_iter=200)
 
