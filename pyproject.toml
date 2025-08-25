@@ -45,7 +45,7 @@ dev = [
     "locust==2.34.0",
     "faker==37.5.3",
     "pylint==3.3.8",
-    "ruff==0.12.9",
+    "ruff==0.12.10",
     "black==25.1.0",
     "bandit==1.8.6",
     "mypy==1.17.1",
@@ -59,7 +59,7 @@ test = [
     "pytest-mock==3.14.1",
 ]
 lint = [
-    "ruff==0.12.9",
+    "ruff==0.12.10",
     "black==25.1.0",
     "bandit==1.8.6",
     "mypy==1.17.1",
