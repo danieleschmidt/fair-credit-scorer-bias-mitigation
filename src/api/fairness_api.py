@@ -23,12 +23,12 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from ..baseline_model import train_baseline_model
-from ..data_loader_preprocessor import load_credit_data
-from ..evaluate_fairness import run_cross_validation, run_pipeline
-from ..fairness_metrics import compute_fairness_metrics
-from ..logging_config import get_logger
-from ..model_explainability import ModelExplainer
+from baseline_model import train_baseline_model
+from data_loader_preprocessor import load_credit_data
+from evaluate_fairness import run_cross_validation, run_pipeline
+from fairness_metrics import compute_fairness_metrics
+from logging_config import get_logger
+from model_explainability import ModelExplainer
 
 logger = get_logger(__name__)
 
