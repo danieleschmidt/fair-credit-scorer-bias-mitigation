@@ -46,7 +46,7 @@ dev = [
     "faker==37.5.3",
     "pylint==3.3.8",
     "ruff==0.12.10",
-    "black==25.1.0",
+    "black==25.9.0",
     "bandit==1.8.6",
     "mypy==1.17.1",
     "pre-commit==4.3.0",
@@ -60,7 +60,7 @@ test = [
 ]
 lint = [
     "ruff==0.12.10",
-    "black==25.1.0",
+    "black==25.9.0",
     "bandit==1.8.6",
     "mypy==1.17.1",
 ]
