@@ -8,6 +8,6 @@ pytest==8.4.1
 pytest-cov==6.2.1
 ruff==0.12.10
 bandit==1.8.6
-PyYAML==6.0.2
+PyYAML==6.0.3
 shap==0.48.0
 requests==2.32.5
