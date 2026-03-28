@@ -35,7 +35,7 @@ py-modules = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest==8.4.1",
+    "pytest==8.4.2",
     "pytest-cov==6.2.1",
     "pytest-xdist==3.8.0",
     "pytest-mock==3.14.1",
@@ -53,7 +53,7 @@ dev = [
     "tox==4.28.4",
 ]
 test = [
-    "pytest==8.4.1",
+    "pytest==8.4.2",
     "pytest-cov==6.2.1",
     "pytest-xdist==3.8.0",
     "pytest-mock==3.14.1",
